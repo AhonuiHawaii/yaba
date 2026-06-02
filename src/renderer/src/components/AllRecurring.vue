@@ -23,15 +23,15 @@
       </div>
 
       <!-- Filter chips -->
-      <div class="d-flex gap-2 mb-4">
+      <div class="d-flex ga-2 mb-4">
         <v-chip
           v-for="f in filterOptions"
           :key="f.key"
-          :variant="activeFilter === f.key ? 'flat' : 'outlined'"
+          :variant="activeFilter === f.key ? 'flat' : 'solo'"
           :color="activeFilter === f.key ? 'primary' : undefined"
           :prepend-icon="activeFilter === f.key ? 'mdi-check' : undefined"
           size="small"
-          rounded="sm"
+          rounded
           class="cursor-pointer"
           @click="activeFilter = f.key"
           >{{ f.label }}</v-chip
@@ -39,7 +39,7 @@
       </div>
 
       <!-- Table -->
-      <v-sheet rounded="sm" elevation="1">
+      <v-card rounded="sm" elevation="1">
         <div
           class="sub-row sub-row--header text-caption text-uppercase font-weight-bold text-medium-emphasis"
         >
@@ -64,7 +64,7 @@
         <template v-for="(sub, i) in filtered" :key="sub.name">
           <div class="sub-row">
             <!-- Service -->
-            <div class="d-flex align-center gap-3">
+            <div class="d-flex align-center ga-3">
               <v-avatar
                 color="primary"
                 variant="tonal"
@@ -169,7 +169,7 @@
           </div>
           <v-divider v-if="i < filtered.length - 1" />
         </template>
-      </v-sheet>
+      </v-card>
     </template>
   </v-container>
 </template>

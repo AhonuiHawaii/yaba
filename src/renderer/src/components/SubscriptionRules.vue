@@ -1,25 +1,28 @@
 <template>
   <v-container fluid class="pa-4">
-    <v-sheet rounded="sm" elevation="1" class="pa-4">
-      <div class="d-flex align-center mb-5">
-        <div>
-          <div class="text-body-1 font-weight-bold">Subscription detection rules</div>
-          <div class="text-caption text-medium-emphasis">
-            Payees matching these are tracked as subscriptions
-          </div>
+    <!-- Header -->
+    <div class="d-flex align-center mb-5">
+      <div>
+        <div class="text-body-1 font-weight-bold">Subscription detection rules</div>
+        <div class="text-caption text-medium-emphasis">
+          Payees matching these are tracked as subscriptions
         </div>
-        <v-spacer />
-        <v-btn
-          size="small"
-          variant="flat"
-          color="primary"
-          rounded="sm"
-          prepend-icon="mdi-plus"
-          @click="openAdd"
-        >
-          Add rule
-        </v-btn>
       </div>
+      <v-spacer />
+      <v-btn
+        size="small"
+        variant="flat"
+        color="primary"
+        rounded="sm"
+        prepend-icon="mdi-plus"
+        @click="openAdd"
+      >
+        Add rule
+      </v-btn>
+    </div>
+
+    <!-- Table Card -->
+    <v-card rounded="sm" elevation="1">
 
       <div v-if="!rules.length" class="d-flex flex-column align-center pa-12 text-medium-emphasis">
         <v-icon size="48" class="mb-3" style="opacity: 0.3" icon="mdi-tune-variant" />
@@ -76,7 +79,7 @@
           <v-divider v-if="i < rules.length - 1" />
         </template>
       </template>
-    </v-sheet>
+    </v-card>
 
     <!-- Add rule dialog -->
     <v-dialog v-model="addDialog" max-width="420">

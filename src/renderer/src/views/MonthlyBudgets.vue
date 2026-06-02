@@ -1,14 +1,14 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Header -->
-    <div class="d-flex flex-wrap align-start justify-space-between gap-4 mb-6">
+    <div class="d-flex flex-wrap align-start justify-space-between ga-4 mb-6">
       <div>
         <div class="text-h5 font-weight-bold">Monthly budget</div>
         <div class="text-body-2 text-medium-emphasis mt-1">
           Budgeted vs actual · {{ periodLabel }}
         </div>
       </div>
-      <div class="d-flex align-center gap-3 flex-wrap">
+      <div class="d-flex align-center ga-3 flex-wrap">
         <div class="d-flex align-center">
           <v-btn
             icon="mdi-chevron-left"
@@ -42,9 +42,7 @@
           <v-btn value="annual" size="small">Annual</v-btn>
         </v-btn-toggle>
         <v-btn
-          variant="outlined"
-          size="small"
-          density="comfortable"
+          color="primary"
           prepend-icon="mdi-content-copy"
           :loading="copying"
           @click="copyLastPeriod"
@@ -53,8 +51,6 @@
         </v-btn>
         <v-btn
           color="primary"
-          size="small"
-          density="comfortable"
           prepend-icon="mdi-plus"
           @click="openAddCategoryDialog"
         >
@@ -173,6 +169,7 @@
                   variant="solo"
                   density="compact"
                   hide-details
+                  rounded
                   @update:model-value="(v) => updateBudget(row.id, v)"
                 />
               </td>
@@ -235,7 +232,7 @@
     <v-dialog v-model="addCategoryDialog" max-width="360">
       <v-card rounded="lg">
         <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">Add category</v-card-title>
-        <v-card-text class="pa-5 pt-0 d-flex flex-column gap-3">
+        <v-card-text class="pa-5 pt-0 d-flex flex-column ga-3">
           <v-select
             v-model="addCategoryType"
             :items="SECTION_TYPES"

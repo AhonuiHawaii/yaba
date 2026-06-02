@@ -1,5 +1,5 @@
 <template>
-  <v-container class="pa-6" style="max-width: 1400px">
+  <v-container fluid class="pa-6">
     <!-- Header: period nav + Export/Import -->
     <div class="d-flex align-center justify-space-between mb-4">
       <div>
@@ -9,7 +9,7 @@
         </div>
       </div>
 
-      <div class="d-flex align-center gap-2">
+      <div class="d-flex align-center ga-2">
         <v-btn icon="mdi-chevron-left" variant="text" density="compact" @click="prevPeriod" />
         <span class="text-body-1 font-weight-medium">{{ periodLabel }}</span>
         <v-btn
@@ -20,7 +20,7 @@
           @click="nextPeriod"
         />
 
-        <v-btn-group variant="outlined" color="primary" density="comfortable" rounded="sm" class="ml-2">
+        <v-btn-group variant="flat" rounded color="primary" density="comfortable" class="ml-2">
           <v-btn :variant="period === 'month' ? 'flat' : 'outlined'" :color="period === 'month' ? 'primary' : undefined" @click="period = 'month'"
             >Month</v-btn
           >
@@ -35,13 +35,13 @@
           >
         </v-btn-group>
 
-        <v-btn variant="outlined" color="primary" prepend-icon="mdi-export" @click="emit('navigate', 'Backup')"
+        <v-btn variant="flat" color="primary" prepend-icon="mdi-export" @click="emit('navigate', 'Backup')"
           >Export</v-btn
         >
         <v-btn
           variant="flat"
           color="primary"
-          prepend-icon="mdi-import"
+          prepend-icon="mdi-upload"
           @click="emit('navigate', 'Import')"
           >Import</v-btn
         >
@@ -62,7 +62,7 @@
           <v-card rounded="sm">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-3">
+                <div class="d-flex align-center ga-3">
                   <v-icon color="primary" size="22">mdi-file-import-outline</v-icon>
                   <span class="text-h6 font-weight-bold">Import Transactions</span>
                 </div>
@@ -115,7 +115,7 @@
         </v-dialog>
 
         <!-- Filter bar -->
-        <v-sheet rounded="lg" border class="d-flex align-center gap-3 px-4 py-3 mb-4">
+        <v-sheet rounded="lg" color="primary-container" border class="d-flex align-center ga-3 px-4 py-3 mb-4">
           <v-text-field
             v-model="search"
             prepend-inner-icon="mdi-magnify"
@@ -124,15 +124,14 @@
             density="compact"
             hide-details
             rounded="pill"
-            style="max-width: 260px"
            color="primary" />
 
-          <div class="d-flex" style="gap: 8px;">
+          <div class="d-flex ga-2">
             <v-btn
               v-for="k in filterKinds"
               :key="k.value"
               :variant="'flat'"
-              :color="filterKind === k.value ? 'primary' : 'surface-variant'"
+              :color="filterKind === k.value ? 'flat' : 'primary'"
               size="small"
               rounded="pill"
               @click="filterKind = k.value"
@@ -154,16 +153,16 @@
             density="compact"
             hide-details
             rounded="lg"
-            style="max-width: 200px"
+            max-width="200"
            color="primary" />
         </v-sheet>
 
         <!-- Bulk Action Bar -->
         <v-slide-y-transition>
           <div v-if="selectedRows.length > 0" class="mb-3">
-            <v-sheet rounded color="primary" class="pa-3 d-flex align-center gap-3">
+            <v-sheet rounded color="primary" class="pa-3 d-flex align-center ga-3">
               <v-btn-group variant="flat" color="surface" size="small" divided>
-                <v-btn class="font-weight-bold" style="pointer-events: none"
+                <v-btn class="font-weight-bold pe-none"
                   >{{ selectedRows.length }} selected</v-btn
                 >
                 <v-btn prepend-icon="mdi-tag-multiple-outline" @click="openBulkCategoryDialog"
@@ -292,7 +291,7 @@
           <v-card rounded="sm">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-3">
+                <div class="d-flex align-center ga-3">
                   <v-icon color="primary" size="20">mdi-tag-outline</v-icon>
                   <span class="text-h6 font-weight-bold">Edit Category</span>
                 </div>
@@ -340,7 +339,7 @@
           <v-card rounded="sm">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-3">
+                <div class="d-flex align-center ga-3">
                   <v-icon color="primary" size="20">mdi-account-outline</v-icon>
                   <span class="text-h6 font-weight-bold">Edit Payee</span>
                 </div>
@@ -387,7 +386,7 @@
           <v-card rounded="sm">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-3">
+                <div class="d-flex align-center ga-3">
                   <v-icon color="primary" size="20">mdi-call-split</v-icon>
                   <span class="text-h6 font-weight-bold">Split Transaction</span>
                 </div>
@@ -430,7 +429,7 @@
               </div>
 
               <!-- Split 1 -->
-              <div class="d-flex align-start gap-3 mb-3">
+              <div class="d-flex align-start ga-3 mb-3">
                 <v-autocomplete
                   v-model="splitState.category1"
                   :items="categoriesForTransaction(splitTarget)"
@@ -455,7 +454,7 @@
               </div>
 
               <!-- Split 2 -->
-              <div class="d-flex align-start gap-3">
+              <div class="d-flex align-start ga-3">
                 <v-autocomplete
                   v-model="splitState.category2"
                   :items="categoriesForTransaction(splitTarget)"
@@ -501,7 +500,7 @@
           <v-card rounded="sm">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-3">
+                <div class="d-flex align-center ga-3">
                   <v-icon color="warning" size="20">mdi-note-text-outline</v-icon>
                   <span class="text-h6 font-weight-bold">Notes</span>
                 </div>
@@ -547,7 +546,7 @@
           <v-card rounded="sm">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-3">
+                <div class="d-flex align-center ga-3">
                   <v-icon color="primary" size="20">mdi-tag-multiple-outline</v-icon>
                   <span class="text-h6 font-weight-bold">Set Category</span>
                 </div>
@@ -607,7 +606,7 @@
           <v-card rounded="sm">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-3">
+                <div class="d-flex align-center ga-3">
                   <v-icon color="primary" size="20">mdi-account-edit-outline</v-icon>
                   <span class="text-h6 font-weight-bold">Set Payee</span>
                 </div>
@@ -656,7 +655,7 @@
           <v-card rounded="sm">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-3">
+                <div class="d-flex align-center ga-3">
                   <v-icon color="primary" size="20">mdi-tag-multiple-outline</v-icon>
                   <span class="text-h6 font-weight-bold">Create Rule</span>
                 </div>
@@ -784,7 +783,7 @@
               <strong>{{ deleteTarget?.MEMO || deleteTarget?.NAME || deleteTarget?.FITID }}</strong
               >? This action cannot be undone.
             </v-card-text>
-            <v-card-actions class="pa-6 pt-0 gap-2">
+            <v-card-actions class="pa-6 pt-0 ga-2">
               <v-spacer />
               <v-btn variant="text" @click="deleteDialog = false">Cancel</v-btn>
               <v-btn

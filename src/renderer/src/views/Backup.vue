@@ -61,9 +61,9 @@
       <!-- Export Card -->
       <v-card class="action-card" elevation="1">
         <div class="card-title-row">
-          <div class="icon-container">
-            <v-icon color="primary" size="18">mdi-export</v-icon>
-          </div>
+          <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
+            <v-icon size="18">mdi-export</v-icon>
+          </v-avatar>
           <h2 class="card-header-title">Export a backup</h2>
         </div>
         
@@ -135,9 +135,9 @@
       <!-- Restore Card -->
       <v-card class="action-card" elevation="1">
         <div class="card-title-row">
-          <div class="icon-container">
-            <v-icon color="primary" size="18">mdi-import</v-icon>
-          </div>
+          <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
+            <v-icon size="18">mdi-import</v-icon>
+          </v-avatar>
           <h2 class="card-header-title">Restore from a backup</h2>
         </div>
 
@@ -451,15 +451,6 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-.icon-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  background-color: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
-}
 
 .card-header-title {
   font-size: 16px;

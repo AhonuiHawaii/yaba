@@ -15,12 +15,12 @@
         item-title="title"
         item-value="value"
         label="Method"
-        variant="outlined"
+        variant="solo"
         density="compact"
         hide-details
         style="max-width: 180px"
         @update:model-value="debtsStore.setStrategy"
-       color="primary" />
+       color="secondary" />
     </div>
 
     <!-- Summary Cards -->

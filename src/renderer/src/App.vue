@@ -13,7 +13,6 @@ import Import from './views/Import.vue'
 import MonthlyBudgets from './views/MonthlyBudgets.vue'
 import Income from './views/Income.vue'
 import NetWorth from './views/NetWorth.vue'
-import Goals from './views/Goals.vue'
 import Rules from './views/Rules.vue'
 import Recurring from './views/Recurring.vue'
 import AppBar from './components/AppBar.vue'
@@ -33,7 +32,6 @@ const views = {
   MonthlyBudgets,
   Income,
   NetWorth,
-  Goals,
   Rules,
   Recurring,
   Backup,

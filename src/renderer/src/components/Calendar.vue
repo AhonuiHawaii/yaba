@@ -1,8 +1,8 @@
 <template>
   <v-container fluid class="pa-4">
-    <v-sheet rounded="sm" elevation="1" class="pa-4">
+    <v-card rounded="sm" elevation="1" class="pa-4">
       <!-- Navigation -->
-      <div class="d-flex align-center gap-2 mb-5">
+      <div class="d-flex align-center ga-2 mb-5">
         <v-btn
           icon="mdi-chevron-left"
           variant="text"
@@ -138,7 +138,7 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-    </v-sheet>
+    </v-card>
   </v-container>
 </template>
 

@@ -9,10 +9,10 @@
     </div>
 
     <!-- Stepper -->
-    <v-card rounded="sm" elevation="1" class="mb-4 px-6 py-4">
+    <v-card rounded="lg" elevation="1" class="mb-4 px-6 py-4">
       <div class="d-flex align-center">
         <template v-for="(label, i) in STEPS" :key="i">
-          <div class="d-flex align-center gap-2">
+          <div class="d-flex align-center ga-2">
             <div
               class="d-flex align-center justify-center rounded-circle text-caption font-weight-bold"
               :class="step >= i + 1 ? ['bg-primary', 'text-white'] : ['text-medium-emphasis']"
@@ -43,7 +43,7 @@
     </v-card>
 
     <!-- Step content -->
-    <v-card rounded="sm" elevation="1">
+    <v-card rounded elevation="1">
       <!-- Step 1: Upload -->
       <v-card-text v-if="step === 1" class="pa-6">
         <v-file-input
@@ -52,7 +52,7 @@
           label="Choose OFX / QFX files"
           prepend-icon=""
           prepend-inner-icon="mdi-folder-open-outline"
-          variant="solo-filled"
+          variant="solo"
           density="comfortable"
           rounded="sm"
           hide-details="auto"
@@ -86,14 +86,14 @@
             <div style="flex: 0 0 140px">
               <v-chip
                 size="small"
-                variant="outlined"
+                variant="solo"
                 :color="accountTypeColor(m.parsedAccount.ACCTTYPE)"
               >
                 {{ m.parsedAccount.ACCTTYPE }}
               </v-chip>
             </div>
             <div class="flex-1">
-              <div v-if="m.autoMatched" class="d-flex align-center gap-2">
+              <div v-if="m.autoMatched" class="d-flex align-center ga-2">
                 <v-chip size="small" color="success" variant="tonal" prepend-icon="mdi-check">
                   {{ accountLabel(m.targetAcctId) }}
                 </v-chip>
@@ -105,7 +105,7 @@
                 :items="accountOptions"
                 item-title="title"
                 item-value="value"
-                variant="outlined"
+                variant="solo"
                 density="compact"
                 rounded="sm"
                 hide-details
@@ -129,7 +129,7 @@
               <v-icon size="14" class="mx-1 text-medium-emphasis">mdi-arrow-right</v-icon>
               <span>{{ m.targetAcctId ? accountLabel(m.targetAcctId) : 'New account' }}</span>
             </div>
-            <div class="d-flex align-center gap-4 text-body-2">
+            <div class="d-flex align-center ga-4 text-body-2">
               <span class="text-success font-weight-medium">{{ m.newCount }} new</span>
               <span v-if="m.dupCount" class="text-medium-emphasis">
                 {{ m.dupCount }} duplicate{{ m.dupCount !== 1 ? 's' : '' }} (skipped)
@@ -143,7 +143,7 @@
       <!-- Step 4: Confirm -->
       <v-card-text v-else-if="step === 4" class="pa-6">
         <div class="text-subtitle-1 font-weight-medium mb-4">Ready to import</div>
-        <div v-for="(m, i) in mappings" :key="i" class="d-flex align-center gap-2 mb-2">
+        <div v-for="(m, i) in mappings" :key="i" class="d-flex align-center ga-2 mb-2">
           <v-icon size="16" color="primary">mdi-bank-outline</v-icon>
           <span class="text-body-2">
             {{ m.parsedAccount.ORG || 'Unknown' }} ••{{ m.parsedAccount.ACCTID }}:
@@ -167,14 +167,13 @@
 
       <!-- Navigation -->
       <v-card-actions class="pa-4">
-        <v-btn v-if="step > 1" variant="text" @click="step--">Back</v-btn>
+        <v-btn v-if="step > 1" variant="flat" @click="step--">Back</v-btn>
         <v-spacer />
 
         <v-btn
           v-if="step === 1"
           variant="flat"
           rounded="sm"
-          :disabled="!selectedFiles.length"
           :loading="parsing"
           append-icon="mdi-arrow-right"
           @click="parseFiles"
@@ -258,6 +257,11 @@ function accountLabel(acctId) {
 }
 
 async function parseFiles() {
+  if (!selectedFiles.value || !selectedFiles.value.length) {
+    parseError.value = 'Please choose at least one file.'
+    return
+  }
+
   parsing.value = true
   parseError.value = null
   try {

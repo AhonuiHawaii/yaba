@@ -41,10 +41,11 @@ const emit = defineEmits(['change-view'])
 </script>
 
 <template>
-  <v-navigation-drawer permanent color="surface-variant" :rail="rail">
+  <v-navigation-drawer permanent color="surface-variant" :rail="rail" border="none">
     <v-list-item
       :title="rail ? '' : `${appName}`"
       :subtitle="rail ? '' : `Version ${appVersion}`"
+      :min-height="rail ? 48 : undefined"
     />
     <v-divider></v-divider>
 

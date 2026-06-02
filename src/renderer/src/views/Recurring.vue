@@ -10,8 +10,7 @@
       </div>
       <v-spacer />
       <v-btn
-        variant="outlined"
-        size="small"
+        color="primary"
         rounded="sm"
         prepend-icon="mdi-plus"
         class="mr-2"
@@ -20,9 +19,7 @@
         Add manually
       </v-btn>
       <v-btn
-        color="success"
-        variant="flat"
-        size="small"
+      color="primary"
         rounded="sm"
         prepend-icon="mdi-refresh"
         :loading="rescanning"
@@ -33,37 +30,34 @@
     </div>
 
     <!-- Tabs -->
-    <div class="px-5 pb-3">
-      <v-btn-toggle
-        v-model="activeTab"
-        mandatory
-        rounded="sm"
-        density="comfortable"
-        variant="flat"
-        color="primary"
-      >
-        <v-btn value="list" size="small" prepend-icon="mdi-format-list-bulleted">List</v-btn>
-        <v-btn value="calendar" size="small" prepend-icon="mdi-calendar-month-outline"
-          >Calendar</v-btn
-        >
-        <v-btn value="rules" size="small" prepend-icon="mdi-tune-variant">Rules</v-btn>
-      </v-btn-toggle>
-    </div>
+    <v-tabs v-model="activeTab" class="px-5 mb-4" color="primary">
+      <v-tab value="list" prepend-icon="mdi-format-list-bulleted">List</v-tab>
+      <v-tab value="calendar" prepend-icon="mdi-calendar-month-outline">Calendar</v-tab>
+      <v-tab value="rules" prepend-icon="mdi-tune-variant">Rules</v-tab>
+    </v-tabs>
 
     <!-- Tab content -->
-    <AllRecurring
-      v-if="activeTab === 'list'"
-      :subscriptions="subscriptions"
-      :loading="loading"
-      @cancel="handleCancel"
-    />
-    <Calendar v-else-if="activeTab === 'calendar'" :subscriptions="subscriptions" />
-    <SubscriptionRules
-      v-else-if="activeTab === 'rules'"
-      :rules="rules"
-      :subscriptions="subscriptions"
-      @updated="fetchAll"
-    />
+    <v-tabs-window v-model="activeTab">
+      <v-tabs-window-item value="list">
+        <AllRecurring
+          :subscriptions="subscriptions"
+          :loading="loading"
+          @cancel="handleCancel"
+        />
+      </v-tabs-window-item>
+
+      <v-tabs-window-item value="calendar">
+        <Calendar :subscriptions="subscriptions" />
+      </v-tabs-window-item>
+
+      <v-tabs-window-item value="rules">
+        <SubscriptionRules
+          :rules="rules"
+          :subscriptions="subscriptions"
+          @updated="fetchAll"
+        />
+      </v-tabs-window-item>
+    </v-tabs-window>
 
     <!-- Add manually dialog -->
     <v-dialog v-model="addDialog" max-width="440" :persistent="addLoading">
@@ -74,8 +68,7 @@
           <v-text-field
             v-model="addForm.name"
             label="Payee / service name"
-            variant="outlined"
-            density="compact"
+            variant="solo"
             rounded="sm"
             autofocus
             class="mb-4"
@@ -86,9 +79,9 @@
             v-model="addForm.operator"
             :items="operatorOptions"
             label="Match type"
-            variant="outlined"
-            density="compact"
+            variant="solo"
             rounded="sm"
+            class="mb-4"
            color="primary" />
         </v-card-text>
         <v-card-actions class="pa-5 pt-0">

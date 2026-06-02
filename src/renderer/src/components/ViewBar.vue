@@ -62,7 +62,7 @@ const toggleTheme = () => {
 </script>
 
 <template>
-  <v-toolbar density="compact" elevation="0" border="b" color="surface">
+  <v-toolbar density="compact" elevation="0" border="b" color="surface-variant">
     <v-app-bar-nav-icon @click="emit('toggle-drawer')" />
 
     <v-toolbar-title>
@@ -139,8 +139,8 @@ const toggleTheme = () => {
     <v-btn
       variant="flat"
       color="primary"
-      size="small"
-      prepend-icon="mdi-download-outline"
+
+      prepend-icon="mdi-upload"
       class="mr-2"
       @click="emit('navigate', 'Import')"
     >
