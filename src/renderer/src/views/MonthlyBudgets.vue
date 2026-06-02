@@ -112,7 +112,7 @@
     </v-row>
 
     <!-- Budget table -->
-    <v-card rounded="lg" elevation="0" border color="primary" variant="tonal">
+    <v-card rounded="lg" elevation="0" border>
       <v-card-item class="pa-5 pb-3">
         <v-card-title class="text-body-1 font-weight-bold">Budget</v-card-title>
       </v-card-item>

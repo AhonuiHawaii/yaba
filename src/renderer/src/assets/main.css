@@ -6,16 +6,23 @@
     color: rgb(var(--v-theme-on-primary-container)) !important;
 }
 
+/* Force all tables to be fully transparent and inherit the card's text color */
+.v-table,
+.v-table .v-table__wrapper,
+.v-table table,
+.v-table tbody,
+.v-table tr,
+.v-table th,
+.v-table td {
+    background: transparent !important;
+    color: inherit !important;
+}
+
 .v-card {
-    background-color: rgba(var(--v-theme-primary-container), 0.3) !important;
+    background-color: rgba(var(--v-theme-primary-container), 0.2) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
     color: rgb(var(--v-theme-on-primary-container)) !important;
     /* Optional: Adds a subtle border to make the glass edge pop */
     border: 1px solid rgba(var(--v-theme-primary), 0.2) !important;
-}
-
-.v-table {
-    background-color: transparent !important;
-    color: rgb(var(--v-theme-on-primary-container)) !important;
 }

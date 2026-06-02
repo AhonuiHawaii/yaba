@@ -153,7 +153,7 @@
             <p v-if="topCategories.length === 0" class="text-body-2 text-medium-emphasis">
               No spending this period.
             </p>
-            <v-table v-else hover density="compact" class="mt-n2">
+            <v-table theme="light" v-else hover density="compact" class="mt-n2">
               <tbody>
                 <tr v-for="cat in topCategories" :key="cat.id">
                   <td class="py-3">
