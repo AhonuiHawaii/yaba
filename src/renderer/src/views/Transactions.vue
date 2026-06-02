@@ -1,5 +1,41 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container class="pa-6" style="max-width: 1400px">
+
+    <!-- Header: period nav + Export/Import -->
+    <div class="d-flex align-center justify-space-between mb-4">
+      <div>
+        <div class="text-h6 font-weight-bold">Transactions</div>
+        <div class="text-body-2 text-medium-emphasis">{{ periodLabel }} · {{ uncategorizedCount }} need a category</div>
+      </div>
+
+      <div class="d-flex align-center gap-2">
+        <v-btn icon="mdi-chevron-left" variant="text" density="compact" @click="prevPeriod" />
+        <span class="text-body-1 font-weight-medium">{{ periodLabel }}</span>
+        <v-btn icon="mdi-chevron-right" variant="text" density="compact" :disabled="isNextPeriodFuture" @click="nextPeriod" />
+
+        <v-btn-group variant="outlined" density="comfortable" rounded="sm" class="ml-2">
+          <v-btn :variant="period === 'month' ? 'flat' : 'outlined'" @click="period = 'month'">Month</v-btn>
+          <v-btn :variant="period === 'quarter' ? 'flat' : 'outlined'" @click="period = 'quarter'">Quarter</v-btn>
+          <v-btn :variant="period === 'semi' ? 'flat' : 'outlined'" @click="period = 'semi'">Semi</v-btn>
+          <v-btn :variant="period === 'annual' ? 'flat' : 'outlined'" @click="period = 'annual'">Annual</v-btn>
+        </v-btn-group>
+
+        <v-btn variant="outlined" prepend-icon="mdi-export" @click="emit('navigate', 'Backup')">Export</v-btn>
+        <v-btn variant="flat" color="primary" prepend-icon="mdi-import" @click="emit('navigate', 'Import')">Import</v-btn>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <v-tabs v-model="activeTab" class="mb-4">
+      <v-tab value="transactions" prepend-icon="mdi-format-list-bulleted">Transactions</v-tab>
+      <v-tab value="rules" prepend-icon="mdi-auto-fix">Rules</v-tab>
+    </v-tabs>
+
+    <v-tabs-window v-model="activeTab">
+
+      <!-- ── Transactions Tab ──────────────────────────────────────────────── -->
+      <v-tabs-window-item value="transactions">
+
     <!-- Import Transactions Dialog -->
     <v-dialog v-model="importDialog" max-width="500">
       <v-card rounded="sm">
@@ -56,156 +92,83 @@
       </v-card>
     </v-dialog>
 
-    <!-- Month navigator + Import -->
-    <div class="d-flex justify-center align-center mb-6" style="position: relative">
-      <v-btn variant="flat" density="comfortable" rounded="sm" @click="prevMonth">
-        <v-icon start size="16">mdi-chevron-left</v-icon>
-        Last Month
-      </v-btn>
-      <span class="text-subtitle-1 font-weight-bold mx-6">This Month</span>
-      <v-btn
-        variant="flat"
-        density="comfortable"
-        rounded="sm"
-        :disabled="isNextMonthFuture"
-        @click="nextMonth"
-      >
-        Next Month
-        <v-icon end size="16">mdi-chevron-right</v-icon>
-      </v-btn>
+    <!-- Filter bar -->
+    <v-sheet rounded="lg" border class="d-flex align-center gap-3 px-4 py-3 mb-4">
+      <v-text-field
+        v-model="search"
+        prepend-inner-icon="mdi-magnify"
+        placeholder="Search payee or note"
+        variant="outlined"
+        density="compact"
+        hide-details
+        rounded="pill"
+        style="max-width: 260px"
+      />
 
-      <div style="position: absolute; right: 0" class="d-flex align-center gap-2">
-        <v-slide-x-transition>
-          <v-chip
-            v-if="lastImported"
-            color="success"
-            variant="tonal"
-            prepend-icon="mdi-check-circle-outline"
-            size="small"
-          >
-            {{ lastImported }}
-          </v-chip>
-        </v-slide-x-transition>
+      <div class="d-flex gap-2">
         <v-btn
-          variant="flat"
+          v-for="k in filterKinds"
+          :key="k.value"
+          :variant="filterKind === k.value ? 'tonal' : 'outlined'"
+          :color="filterKind === k.value ? 'primary' : undefined"
           size="small"
-          prepend-icon="mdi-file-import-outline"
-          @click="importDialog = true"
+          rounded="pill"
+          @click="filterKind = k.value"
         >
-          Import
+          <v-icon v-if="filterKind === k.value" start size="14">mdi-check</v-icon>
+          {{ k.label }}
         </v-btn>
       </div>
-    </div>
 
-    <!-- Toolbar -->
-    <v-card rounded="sm" elevation="2" class="mb-3">
-      <v-card-text class="pa-3">
-        <div class="d-flex gap-2">
-          <v-text-field
-            v-model="search"
-            prepend-inner-icon="mdi-magnify"
-            placeholder="Search"
-            variant="solo"
-            density="compact"
-            hide-details
-            clearable
-            style="flex: 2"
-          />
-          <v-select
-            v-model="filterAccount"
-            :items="accountOptions"
-            item-title="label"
-            item-value="value"
-            label="Account"
-            variant="solo"
-            density="compact"
-            hide-details
-            clearable
-            style="flex: 1"
-          />
-          <v-select
-            v-model="filterType"
-            :items="typeOptions"
-            item-title="label"
-            item-value="value"
-            label="Type"
-            variant="solo"
-            density="compact"
-            hide-details
-            clearable
-            style="flex: 1"
-          />
-          <v-autocomplete
-            v-model="filterCategory"
-            :items="allCategoryItems"
-            label="Category"
-            variant="solo"
-            density="compact"
-            hide-details
-            clearable
-            style="flex: 1"
-          />
-        </div>
-      </v-card-text>
-    </v-card>
+      <v-spacer />
 
-    <!-- Bulk Action Toolbar -->
+      <v-select
+        v-model="filterAccount"
+        :items="[{ label: 'All accounts', value: null }, ...accountOptions]"
+        item-title="label"
+        item-value="value"
+        label="Account"
+        variant="outlined"
+        density="compact"
+        hide-details
+        rounded="lg"
+        style="max-width: 200px"
+      />
+    </v-sheet>
+
+    <!-- Bulk Action Bar -->
     <v-slide-y-transition>
       <div v-if="selectedRows.length > 0" class="mb-3">
         <v-sheet rounded color="primary" class="pa-3 d-flex align-center gap-3">
           <v-btn-group variant="flat" color="white" size="small" divided>
-            <v-btn class="font-weight-bold" style="pointer-events: none">
-              {{ selectedRows.length }} selected
-            </v-btn>
-            <v-btn prepend-icon="mdi-tag-multiple-outline" @click="openBulkCategoryDialog">
-              Set Category
-            </v-btn>
-            <v-btn prepend-icon="mdi-account-edit-outline" @click="openBulkPayeeDialog">
-              Set Payee
-            </v-btn>
+            <v-btn class="font-weight-bold" style="pointer-events: none">{{ selectedRows.length }} selected</v-btn>
+            <v-btn prepend-icon="mdi-tag-multiple-outline" @click="openBulkCategoryDialog">Set Category</v-btn>
+            <v-btn prepend-icon="mdi-account-edit-outline" @click="openBulkPayeeDialog">Set Payee</v-btn>
           </v-btn-group>
           <v-spacer />
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            color="white"
-            density="compact"
-            @click="selectedRows = []"
-          />
+          <v-btn icon="mdi-close" variant="text" size="small" color="white" density="compact" @click="selectedRows = []" />
         </v-sheet>
       </div>
     </v-slide-y-transition>
 
     <!-- Error Banner -->
-    <v-alert
-      v-if="store.error"
-      type="error"
-      variant="flat"
-      closable
-      class="mb-3"
-      @click:close="store.clearError()"
-    >
+    <v-alert v-if="store.error" type="error" variant="flat" closable class="mb-3" @click:close="store.clearError()">
       {{ store.error }}
     </v-alert>
 
     <!-- Empty State -->
-    <v-card v-if="!store.loading && store.transactions.length === 0" rounded="sm" elevation="2">
+    <v-card v-if="!store.loading && store.transactions.length === 0" rounded="sm" elevation="0" border>
       <v-card-text class="pa-12 text-center">
         <v-icon size="60" class="mb-4 text-disabled">mdi-receipt-text-outline</v-icon>
         <div class="text-h6 font-weight-medium mb-2">No transactions found</div>
-        <div class="text-body-2 text-medium-emphasis">
-          Import an OFX file from the Accounts page to get started.
-        </div>
+        <div class="text-body-2 text-medium-emphasis">Import an OFX file to get started.</div>
       </v-card-text>
     </v-card>
 
     <!-- Data Table -->
-    <v-card v-else rounded="sm" elevation="2">
+    <v-card v-else rounded="sm" elevation="0" border>
       <v-data-table
         v-model="selectedRows"
-        v-model:expanded="expandedRows"
-        show-expand
         show-select
         return-object
         item-value="FITID"
@@ -217,176 +180,50 @@
         :items-per-page-options="[10, 25, 50, 100]"
         hover
       >
-        <!-- Date column -->
         <template #item.DTPOSTED="{ item }">
           <span class="text-body-2">{{ formatDate(item.DTPOSTED) }}</span>
         </template>
 
-        <!-- Payee column -->
         <template #item.NAME="{ item }">
-          <div class="d-flex align-center gap-1">
-            <div class="text-body-2 font-weight-medium flex-grow-1 text-truncate">
-              {{ item.NAME }}
-            </div>
-            <v-btn
-              icon="mdi-pencil-outline"
-              variant="text"
-              size="x-small"
-              density="compact"
-              @click="openEditPayee(item)"
-            />
-          </div>
+          <span class="text-body-2 font-weight-medium">{{ item.NAME }}</span>
         </template>
 
-        <!-- Amount column -->
+        <template #item.ACCTID="{ item }">
+          <span class="text-body-2 text-medium-emphasis">{{ accountName(item.ACCTID) }}</span>
+        </template>
+
+        <template #item.category="{ item }">
+          <v-chip
+            v-if="item.splitCategory1 || item.splitCategory2"
+            color="info" variant="tonal" size="x-small" rounded="pill"
+            @click="openSplitDialog(item)"
+          >Split</v-chip>
+          <v-chip
+            v-else-if="item.category"
+            variant="tonal" size="x-small" rounded="pill"
+            @click="openEditCategory(item)"
+          >{{ categoryName(item.category) }}</v-chip>
+          <v-btn
+            v-else
+            variant="outlined" size="x-small" rounded="pill" prepend-icon="mdi-plus"
+            @click="openEditCategory(item)"
+          >Categorize</v-btn>
+        </template>
+
         <template #item.TRNAMT="{ item }">
-          <span
-            class="font-weight-medium"
-            :class="item.TRNAMT >= 0 ? 'text-success' : 'text-error'"
-          >
+          <span class="font-weight-medium" :class="item.TRNAMT >= 0 ? 'text-success' : ''">
             {{ item.TRNAMT >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(item.TRNAMT)) }}
           </span>
         </template>
 
-        <!-- Type column -->
-        <template #item.transactionType="{ item }">
-          <v-chip
-            :color="typeColor(item.transactionType)"
-            :class="`text-on-${typeColor(item.transactionType)} font-weight-medium`"
-            variant="flat"
-            size="x-small"
-            rounded="sm"
-          >
-            {{ item.transactionType || item.TRNTYPE || '—' }}
-          </v-chip>
-        </template>
-
-        <!-- Category column (inline edit) -->
-        <template #item.category="{ item }">
-          <div class="d-flex align-center gap-1">
-            <v-chip
-              v-if="item.splitCategory1 || item.splitCategory2"
-              color="info"
-              variant="flat"
-              size="x-small"
-              rounded="sm"
-            >
-              Split
-            </v-chip>
-            <v-chip
-              v-else-if="item.category"
-              color="secondary"
-              variant="flat"
-              size="x-small"
-              rounded="sm"
-              class="text-on-secondary font-weight-medium"
-            >
-              {{ categoryName(item.category) }}
-            </v-chip>
-            <span v-else class="text-disabled text-caption">Uncategorized</span>
-
-            <v-btn
-              v-if="!item.splitCategory1 && !item.splitCategory2"
-              icon="mdi-pencil-outline"
-              variant="text"
-              size="x-small"
-              density="compact"
-              class="ml-1"
-              @click="openEditCategory(item)"
-            />
-          </div>
-        </template>
-
-        <!-- Account column -->
-        <template #item.ACCTID="{ item }">
-          <span class="text-caption text-medium-emphasis">{{ accountName(item.ACCTID) }}</span>
-        </template>
-
-        <!-- Actions column -->
-        <template #item.actions="{ item }">
-          <div class="d-flex align-center justify-end">
-            <v-btn
-              :icon="item.notes ? 'mdi-note-text' : 'mdi-note-outline'"
-              variant="text"
-              size="small"
-              :color="item.notes ? 'warning' : 'default'"
-              density="compact"
-              class="mr-1"
-              @click="openNotesDialog(item)"
-            />
-            <v-btn
-              icon="mdi-tag-plus-outline"
-              variant="text"
-              size="small"
-              color="secondary"
-              density="compact"
-              class="mr-1"
-              @click="openCreateRuleFromTransaction(item)"
-            />
-            <v-btn
-              icon="mdi-call-split"
-              variant="text"
-              size="small"
-              color="primary"
-              density="compact"
-              class="mr-1"
-              @click="openSplitDialog(item)"
-            />
-            <v-btn
-              icon="mdi-delete-outline"
-              variant="text"
-              size="small"
-              color="error"
-              density="compact"
-              @click="confirmDelete(item)"
-            />
-          </div>
-        </template>
-
-        <!-- Expanded Row -->
-        <template #expanded-row="{ columns, item }">
-          <tr>
-            <td :colspan="columns.length" class="px-4 py-2 bg-surface-light">
-              <div class="text-caption mb-3 text-center" style="font-family: monospace">
-                {{ item.MEMO || '—' }}
-              </div>
-
-              <template v-if="item.splitCategory1 || item.splitCategory2">
-                <div class="text-caption text-uppercase text-medium-emphasis mb-2 font-weight-bold">
-                  Split Details
-                </div>
-                <v-table density="compact" class="bg-transparent">
-                  <tbody>
-                    <tr v-if="item.splitCategory1 || item.splitAmount1">
-                      <td class="pl-0 text-body-2">
-                        <v-chip color="secondary" variant="flat" size="x-small" rounded="sm">
-                          {{ categoryName(item.splitCategory1) || 'Uncategorized' }}
-                        </v-chip>
-                      </td>
-                      <td class="text-body-2 font-weight-medium">
-                        {{ formatCurrency(Math.abs(item.splitAmount1 || 0)) }}
-                      </td>
-                    </tr>
-                    <tr v-if="item.splitCategory2 || item.splitAmount2">
-                      <td class="pl-0 text-body-2">
-                        <v-chip color="secondary" variant="flat" size="x-small" rounded="sm">
-                          {{ categoryName(item.splitCategory2) || 'Uncategorized' }}
-                        </v-chip>
-                      </td>
-                      <td class="text-body-2 font-weight-medium">
-                        {{ formatCurrency(Math.abs(item.splitAmount2 || 0)) }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </v-table>
-              </template>
-            </td>
-          </tr>
-        </template>
-
-        <!-- Loading skeleton -->
         <template #loading>
           <v-skeleton-loader type="table-row@8" />
+        </template>
+
+        <template #bottom="{ itemsLength }">
+          <div class="px-4 py-3 text-caption text-medium-emphasis text-center">
+            Showing {{ filteredTransactions.length }} of {{ itemsLength }} · select rows to bulk-categorize
+          </div>
         </template>
       </v-data-table>
     </v-card>
@@ -878,23 +715,43 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+      </v-tabs-window-item>
+
+      <!-- ── Rules Tab ─────────────────────────────────────────────────────── -->
+      <v-tabs-window-item value="rules">
+        <RulesView />
+      </v-tabs-window-item>
+
+    </v-tabs-window>
+
   </v-container>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+
+const emit = defineEmits(['navigate'])
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserAccountsStore } from '../stores/userAccounts'
 import { useUserCategoriesStore } from '../stores/userCategories'
-import { useUserRulesStore } from '../stores/userRules'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { usePeriodFilter } from '../stores/usePeriodFilter'
+import RulesView from './Rules.vue'
 
 const store = useUserTransactionsStore()
 const accountsStore = useUserAccountsStore()
 const categoriesStore = useUserCategoriesStore()
-const rulesStore = useUserRulesStore()
 const userSettings = useUserSettingsStore()
 const { formatCurrency, formatDate } = userSettings
+
+const activeTab = ref('transactions')
+
+const { period, periodLabel, periodMonths, isNextPeriodFuture, prevPeriod, nextPeriod } = usePeriodFilter('annual')
+
+const uncategorizedCount = computed(
+  () => store.transactions.filter((t) => !t.category && !t.splitCategory1).length
+)
 
 const categoryById = computed(() =>
   Object.fromEntries(categoriesStore.categories.map((c) => [c.id, c.name]))
@@ -1043,8 +900,6 @@ watch(selectedMonth, (month) => store.fetchTransactionsByMonth(month))
 // ── Filters ───────────────────────────────────────────────────────────────────
 const search = ref('')
 const filterAccount = ref(null)
-const filterType = ref(null)
-const filterCategory = ref(null)
 
 const accountById = computed(() =>
   Object.fromEntries(accountsStore.accounts.map((a) => [a.ACCTID, a]))
@@ -1052,7 +907,10 @@ const accountById = computed(() =>
 
 function accountName(acctid) {
   const a = accountById.value[acctid]
-  return a ? a.displayName || a.ACCTTYPE || acctid : acctid
+  if (!a) return acctid
+  const name = a.displayName || a.ACCTTYPE || ''
+  const last4 = String(acctid).slice(-4)
+  return name ? `${name} ••${last4}` : `••${last4}`
 }
 
 const accountOptions = computed(() =>
@@ -1086,36 +944,40 @@ const typeOptions = [
 const headers = [
   { title: 'Date', key: 'DTPOSTED', width: '120px', sortable: true },
   { title: 'Payee', key: 'NAME', sortable: false },
-  { title: 'Amount', key: 'TRNAMT', width: '130px', sortable: true, align: 'end' },
-  { title: 'Type', key: 'transactionType', width: '120px', sortable: true },
-  { title: 'Category', key: 'category', width: '180px', sortable: true },
-  { title: 'Account', key: 'ACCTID', width: '110px', sortable: true },
-  { title: '', key: 'actions', width: '100px', sortable: false, align: 'center' }
+  { title: 'Account', key: 'ACCTID', width: '160px', sortable: true },
+  { title: 'Category', key: 'category', width: '180px', sortable: false },
+  { title: 'Amount', key: 'TRNAMT', width: '130px', sortable: true, align: 'end' }
 ]
 
 // ── Filtered data ─────────────────────────────────────────────────────────────
+const filterKind = ref('all')
+const filterKinds = [
+  { label: 'All', value: 'all' },
+  { label: 'Uncategorized', value: 'uncategorized' },
+  { label: 'Income', value: 'income' },
+  { label: 'Expenses', value: 'expenses' }
+]
+
 const filteredTransactions = computed(() => {
   let rows = store.transactions
 
   const q = (search.value || '').trim().toLowerCase()
   if (q) {
-    rows = rows.filter((t) => {
-      const haystack = `${t.MEMO || ''} ${t.NAME || ''}`.toLowerCase()
-      return haystack.includes(q)
-    })
+    rows = rows.filter((t) => `${t.MEMO || ''} ${t.NAME || ''}`.toLowerCase().includes(q))
   }
 
   if (filterAccount.value) {
     rows = rows.filter((t) => t.ACCTID === filterAccount.value)
   }
-  if (filterType.value) {
-    rows = rows.filter(
-      (t) => (t.transactionType || t.TRNTYPE || '').toUpperCase() === filterType.value
-    )
+
+  if (filterKind.value === 'uncategorized') {
+    rows = rows.filter((t) => !t.category && !t.splitCategory1)
+  } else if (filterKind.value === 'income') {
+    rows = rows.filter((t) => Number(t.TRNAMT) >= 0)
+  } else if (filterKind.value === 'expenses') {
+    rows = rows.filter((t) => Number(t.TRNAMT) < 0)
   }
-  if (filterCategory.value) {
-    rows = rows.filter((t) => t.category === filterCategory.value)
-  }
+
   return rows
 })
 
@@ -1340,6 +1202,7 @@ async function saveRule() {
   })
   if (!rulesStore.error) ruleDialog.value = false
 }
+
 </script>
 
 <style scoped>

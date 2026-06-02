@@ -1,130 +1,72 @@
 <template>
-  <v-container fluid class="pa-4">
-    <!-- Page Header -->
-    <div class="d-flex justify-center mb-6">
-      <v-btn-group rounded="sm" density="comfortable">
-        <v-btn size="small" variant="flat" @click="applyAll = false">Current Month</v-btn>
-        <v-btn
-          size="small"
-          variant="flat"
-          prepend-icon="mdi-play-outline"
-          :loading="store.loading"
-          @click="applyRules"
-          >Apply</v-btn
-        >
-        <v-btn size="small" variant="flat" @click="applyAll = true">All Transactions</v-btn>
-      </v-btn-group>
-    </div>
+  <v-container class="pa-6" style="max-width: 1100px">
 
-    <div class="d-flex justify-end mb-3">
-      <v-btn variant="flat" rounded="sm" prepend-icon="mdi-plus" @click="openAddDialog"
-        >Add Rule</v-btn
-      >
-    </div>
+    <!-- Header card -->
+    <v-card rounded="lg" elevation="0" border class="d-flex align-center justify-space-between pa-5 mb-4">
+      <div>
+        <div class="text-subtitle-1 font-weight-bold">Auto-categorization rules</div>
+        <div class="text-body-2 text-medium-emphasis">Applied top-to-bottom as transactions are imported</div>
+      </div>
+      <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAddDialog">Add rule</v-btn>
+    </v-card>
 
     <!-- Apply result banner -->
     <v-slide-y-transition>
-      <v-alert
-        v-if="applyResult !== null"
-        :type="applyResult.applied > 0 ? 'success' : 'info'"
-        variant="flat"
-        closable
-        class="mb-4"
-        @click:close="applyResult = null"
-      >
+      <v-alert v-if="applyResult !== null" :type="applyResult.applied > 0 ? 'success' : 'info'" variant="flat" closable class="mb-4" @click:close="applyResult = null">
         {{ applyResult.applied }} transaction{{ applyResult.applied === 1 ? '' : 's' }} categorized.
       </v-alert>
     </v-slide-y-transition>
 
     <!-- Error Banner -->
-    <v-alert
-      v-if="store.error"
-      type="error"
-      variant="flat"
-      closable
-      class="mb-4"
-      @click:close="store.clearError()"
-    >
+    <v-alert v-if="store.error" type="error" variant="flat" closable class="mb-4" @click:close="store.clearError()">
       {{ store.error }}
     </v-alert>
 
     <!-- Empty State -->
-    <v-card v-if="!store.loading && store.rules.length === 0" rounded="sm" elevation="2">
+    <v-card v-if="!store.loading && store.rules.length === 0" rounded="lg" elevation="0" border>
       <v-card-text class="pa-12 text-center">
         <v-icon size="60" class="mb-4 text-disabled">mdi-tag-multiple-outline</v-icon>
         <div class="text-h6 font-weight-medium mb-2">No rules yet</div>
-        <div class="text-body-2 text-medium-emphasis">
-          Add a rule to automatically categorize transactions when importing.
-        </div>
+        <div class="text-body-2 text-medium-emphasis">Add a rule to automatically categorize transactions when importing.</div>
       </v-card-text>
     </v-card>
 
     <!-- Rules Table -->
-    <v-card v-else rounded="sm" elevation="2">
+    <v-card v-else rounded="lg" elevation="0" border class="mb-4">
       <v-data-table
         :headers="headers"
-        :items="store.rules"
+        :items="sortedRules"
         :loading="store.loading"
         density="comfortable"
-        :items-per-page="25"
-        :items-per-page-options="[10, 25, 50]"
+        :items-per-page="-1"
+        hide-default-footer
         hover
       >
-        <!-- Field -->
+        <template #item.index="{ index }">
+          <span class="text-body-2 text-medium-emphasis">{{ index + 1 }}</span>
+        </template>
+
         <template #item.field="{ item }">
-          <v-chip size="x-small" variant="flat" color="primary" rounded="sm">
-            {{ item.field }}
-          </v-chip>
+          <span class="text-body-2">{{ fieldLabel(item.field) }}</span>
         </template>
 
-        <!-- Operator -->
-        <template #item.operator="{ item }">
-          <span class="text-body-2 text-medium-emphasis font-italic">{{ item.operator }}</span>
+        <template #item.condition="{ item }">
+          <span class="text-body-2 text-medium-emphasis">{{ item.operator }}</span>
+          <v-chip size="x-small" variant="tonal" rounded="sm" class="ml-2 font-weight-bold text-uppercase">{{ item.value }}</v-chip>
         </template>
 
-        <!-- Value -->
-        <template #item.value="{ item }">
-          <span class="text-body-2 font-weight-medium">"{{ item.value }}"</span>
-        </template>
-
-        <!-- Category -->
         <template #item.category="{ item }">
-          <v-chip size="x-small" variant="flat" color="secondary" rounded="sm">
-            {{ item.category }}
-          </v-chip>
+          <v-chip size="x-small" variant="tonal" color="primary" rounded="pill">{{ item.category }}</v-chip>
         </template>
 
-        <!-- Type -->
-        <template #item.type="{ item }">
-          <v-chip v-if="item.type" size="x-small" variant="flat" color="info" rounded="sm">
-            {{ item.type }}
-          </v-chip>
-          <span v-else class="text-disabled text-caption">—</span>
+        <template #item.matches="{ item }">
+          <span class="text-body-2">{{ item.matchCount ?? '—' }}</span>
         </template>
 
-        <!-- Priority -->
-        <template #item.priority="{ item }">
-          <span class="text-body-2">{{ item.priority }}</span>
-        </template>
-
-        <!-- Actions -->
         <template #item.actions="{ item }">
           <div class="d-flex align-center justify-end gap-1">
-            <v-btn
-              icon="mdi-pencil-outline"
-              variant="text"
-              size="small"
-              density="compact"
-              @click="openEditDialog(item)"
-            />
-            <v-btn
-              icon="mdi-delete-outline"
-              variant="text"
-              size="small"
-              color="error"
-              density="compact"
-              @click="confirmDelete(item)"
-            />
+            <v-btn icon="mdi-pencil-outline" variant="text" size="small" density="compact" @click="openEditDialog(item)" />
+            <v-btn icon="mdi-delete-outline" variant="text" size="small" color="error" density="compact" @click="confirmDelete(item)" />
           </div>
         </template>
 
@@ -134,131 +76,50 @@
       </v-data-table>
     </v-card>
 
+    <!-- Info banner -->
+    <v-alert variant="tonal" color="primary" density="compact" rounded="lg" prepend-icon="mdi-information-outline">
+      Rules run in order — the first match wins, so put more specific rules near the top.
+    </v-alert>
+
     <!-- Add / Edit Rule Dialog -->
     <v-dialog v-model="ruleDialog" max-width="520" persistent>
-      <v-card rounded="sm">
+      <v-card rounded="lg">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center gap-3">
               <v-icon color="primary" size="20">mdi-tag-multiple-outline</v-icon>
-              <span class="text-h6 font-weight-bold">{{
-                editTarget ? 'Edit Rule' : 'Add Rule'
-              }}</span>
+              <span class="text-h6 font-weight-bold">{{ editTarget ? 'Edit Rule' : 'Add Rule' }}</span>
             </div>
             <v-btn icon="mdi-close" variant="text" density="compact" @click="closeRuleDialog" />
           </div>
         </v-card-title>
-
         <v-divider />
-
         <v-card-text class="pa-6">
           <v-row>
-            <!-- Field -->
             <v-col cols="6">
-              <v-select
-                v-model="form.field"
-                :items="fieldOptions"
-                item-title="label"
-                item-value="value"
-                label="Field"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-              />
+              <v-select v-model="form.field" :items="fieldOptions" item-title="label" item-value="value" label="Field" variant="solo" inset density="comfortable" rounded="sm" hide-details />
             </v-col>
-
-            <!-- Operator -->
             <v-col cols="6">
-              <v-select
-                v-model="form.operator"
-                :items="operatorOptions"
-                item-title="label"
-                item-value="value"
-                label="Operator"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-              />
+              <v-select v-model="form.operator" :items="operatorOptions" item-title="label" item-value="value" label="Operator" variant="solo" inset density="comfortable" rounded="sm" hide-details />
             </v-col>
-
-            <!-- Value -->
             <v-col cols="12" class="mt-3">
-              <v-text-field
-                v-model="form.value"
-                label="Match value"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                persistent-hint
-                :hint="operatorHint"
-                autofocus
-              />
+              <v-text-field v-model="form.value" label="Match value" variant="solo" inset density="comfortable" rounded="sm" persistent-hint :hint="operatorHint" autofocus />
             </v-col>
-
-            <!-- Category -->
             <v-col cols="8" class="mt-3">
-              <v-combobox
-                v-model="form.category"
-                :items="allCategoryNames"
-                label="Assign category"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-                clearable
-              />
+              <v-combobox v-model="form.category" :items="allCategoryNames" label="Assign category" variant="solo" inset density="comfortable" rounded="sm" hide-details clearable />
             </v-col>
-
-            <!-- Priority -->
             <v-col cols="4" class="mt-3">
-              <v-text-field
-                v-model.number="form.priority"
-                label="Priority"
-                type="number"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-                hint="Higher = runs first"
-              />
+              <v-text-field v-model.number="form.priority" label="Priority" type="number" variant="solo" inset density="comfortable" rounded="sm" hide-details />
             </v-col>
-
-            <!-- Type (optional) -->
             <v-col cols="12" class="mt-3">
-              <v-select
-                v-model="form.type"
-                :items="typeOptions"
-                item-title="label"
-                item-value="value"
-                label="Assign transaction type (optional)"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-                clearable
-              />
+              <v-select v-model="form.type" :items="typeOptions" item-title="label" item-value="value" label="Assign transaction type (optional)" variant="solo" inset density="comfortable" rounded="sm" hide-details clearable />
             </v-col>
           </v-row>
         </v-card-text>
-
         <v-card-actions class="pa-6 pt-0">
           <v-spacer />
           <v-btn variant="text" @click="closeRuleDialog">Cancel</v-btn>
-          <v-btn
-            variant="flat"
-            rounded="sm"
-            :loading="store.loading"
-            :disabled="!form.field || !form.operator || !form.value || !form.category"
-            @click="saveRule"
-          >
+          <v-btn variant="flat" rounded="sm" :loading="store.loading" :disabled="!form.field || !form.operator || !form.value || !form.category" @click="saveRule">
             {{ editTarget ? 'Save' : 'Add' }}
           </v-btn>
         </v-card-actions>
@@ -267,202 +128,19 @@
 
     <!-- Delete Confirmation -->
     <v-dialog v-model="deleteDialog" max-width="400">
-      <v-card rounded="sm">
+      <v-card rounded="lg">
         <v-card-title class="text-h6 pa-6 pb-4">Delete Rule</v-card-title>
         <v-card-text class="pa-6 pt-0 text-body-2 text-medium-emphasis">
-          Delete the rule matching
-          <strong
-            >{{ deleteTarget?.field }} {{ deleteTarget?.operator }} "{{
-              deleteTarget?.value
-            }}"</strong
-          >? This cannot be undone.
+          Delete the rule matching <strong>{{ deleteTarget?.field }} {{ deleteTarget?.operator }} "{{ deleteTarget?.value }}"</strong>? This cannot be undone.
         </v-card-text>
         <v-card-actions class="pa-6 pt-0 gap-2">
           <v-spacer />
           <v-btn variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" variant="flat" :loading="store.loading" @click="doDelete">
-            Delete
-          </v-btn>
+          <v-btn color="error" variant="flat" :loading="store.loading" @click="doDelete">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <!-- ── Custom Recurring ──────────────────────────────────────────────── -->
-    <div class="d-flex align-center justify-space-between flex-wrap gap-3 mt-8 mb-6">
-      <div>
-        <div class="text-h6 font-weight-bold">Custom Recurring</div>
-        <div class="text-body-2 text-medium-emphasis">
-          Manually tracked recurring payments not in your transaction history.
-        </div>
-      </div>
-      <v-btn variant="flat" rounded="sm" prepend-icon="mdi-plus" @click="crOpenAdd"
-        >Add Recurring</v-btn
-      >
-    </div>
-
-    <v-alert
-      v-if="crStore.error"
-      type="error"
-      variant="flat"
-      closable
-      class="mb-4"
-      @click:close="crStore.clearError()"
-    >
-      {{ crStore.error }}
-    </v-alert>
-
-    <v-card v-if="!crStore.loading && crStore.entries.length === 0" rounded elevation="2">
-      <v-card-text class="pa-12 text-center">
-        <v-icon size="60" class="mb-4 text-disabled">mdi-refresh</v-icon>
-        <div class="text-h6 font-weight-medium mb-2">No custom recurring entries</div>
-        <div class="text-body-2 text-medium-emphasis">
-          Add subscriptions, rent, or any fixed payment you want tracked on the calendar.
-        </div>
-      </v-card-text>
-    </v-card>
-
-    <v-card v-else rounded="sm" elevation="2">
-      <v-data-table
-        :headers="crHeaders"
-        :items="crStore.entries"
-        :loading="crStore.loading"
-        density="comfortable"
-        :items-per-page="25"
-        :items-per-page-options="[10, 25, 50]"
-        hover
-      >
-        <template #item.operator="{ item }">
-          <span class="text-body-2 text-medium-emphasis font-italic">{{ item.operator }}</span>
-        </template>
-
-        <template #item.name="{ item }">
-          <span class="text-body-2 font-weight-medium">"{{ item.name }}"</span>
-        </template>
-
-        <template #item.actions="{ item }">
-          <div class="d-flex align-center justify-end gap-1">
-            <v-btn
-              icon="mdi-pencil-outline"
-              variant="text"
-              size="small"
-              density="compact"
-              @click="crOpenEdit(item)"
-            />
-            <v-btn
-              icon="mdi-delete-outline"
-              variant="text"
-              size="small"
-              color="error"
-              density="compact"
-              @click="crConfirmDelete(item)"
-            />
-          </div>
-        </template>
-
-        <template #loading>
-          <v-skeleton-loader type="table-row@3" />
-        </template>
-      </v-data-table>
-    </v-card>
-
-    <!-- Add / Edit Custom Recurring Dialog -->
-    <v-dialog v-model="crDialog" max-width="480" persistent>
-      <v-card rounded="sm">
-        <v-card-title class="pa-6 pb-4">
-          <div class="d-flex align-center justify-space-between">
-            <div class="d-flex align-center gap-3">
-              <v-icon color="primary" size="20">mdi-refresh</v-icon>
-              <span class="text-h6 font-weight-bold">{{
-                crEditTarget ? 'Edit Recurring' : 'Add Recurring'
-              }}</span>
-            </div>
-            <v-btn icon="mdi-close" variant="text" density="compact" @click="crClose" />
-          </div>
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text class="pa-6">
-          <v-row>
-            <v-col cols="6">
-              <v-select
-                model-value="MEMO"
-                :items="['MEMO']"
-                label="Field"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-                disabled
-              />
-            </v-col>
-
-            <v-col cols="6">
-              <v-select
-                v-model="crForm.operator"
-                :items="crOperatorOptions"
-                item-title="label"
-                item-value="value"
-                label="Operator"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-              />
-            </v-col>
-
-            <v-col cols="12" class="mt-3">
-              <v-text-field
-                v-model="crForm.name"
-                label="Match value"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                persistent-hint
-                :hint="crOperatorHint"
-                autofocus
-              />
-            </v-col>
-          </v-row>
-        </v-card-text>
-
-        <v-card-actions class="pa-6 pt-0">
-          <v-spacer />
-          <v-btn variant="text" @click="crClose">Cancel</v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            rounded="sm"
-            :loading="crStore.loading"
-            :disabled="!crForm.name"
-            @click="crSave"
-          >
-            {{ crEditTarget ? 'Save' : 'Add' }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Delete Custom Recurring Confirmation -->
-    <v-dialog v-model="crDeleteDialog" max-width="400">
-      <v-card rounded="sm">
-        <v-card-title class="text-h6 pa-6 pb-4">Delete Entry</v-card-title>
-        <v-card-text class="pa-6 pt-0 text-body-2 text-medium-emphasis">
-          Delete <strong>{{ crDeleteTarget?.name }}</strong
-          >? This cannot be undone.
-        </v-card-text>
-        <v-card-actions class="pa-6 pt-0 gap-2">
-          <v-spacer />
-          <v-btn variant="text" @click="crDeleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" variant="flat" :loading="crStore.loading" @click="crDoDelete">
-            Delete
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </v-container>
 </template>
 
@@ -471,12 +149,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserRulesStore } from '../stores/userRules'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserTransactionsStore } from '../stores/userTransactions'
-import { useUserCustomRecurringStore } from '../stores/userCustomRecurring'
 
 const store = useUserRulesStore()
 const categoriesStore = useUserCategoriesStore()
 const transactionsStore = useUserTransactionsStore()
-const crStore = useUserCustomRecurringStore()
 
 function currentMonthValue() {
   const now = new Date()
@@ -484,38 +160,27 @@ function currentMonthValue() {
 }
 
 const currentMonth = currentMonthValue()
-const applyAll = ref(false)
 
 onMounted(() => {
   store.fetchRules()
-  crStore.fetchCustomRecurring()
 })
 
 const allCategoryNames = computed(() => categoriesStore.categories.map((c) => c.name))
 
-const operatorHint = computed(
-  () =>
-    ({
-      contains:
-        'Use wildcard (*) or quotations phrases — e.g. wal* matches "Walmart", "gas station" matches "gas station"',
-      equals: 'Must match the full field exactly',
-      startsWith: 'e.g. "wal" matches fields that begin with "wal"',
-      wildcard: 'Use * for any characters — e.g. WAL*MART*',
-      wholeWord: 'e.g. "gas" matches "gas station" but not "gasoline"',
-      gt: 'Numeric — e.g. 50 matches amounts greater than 50',
-      lt: 'Numeric — e.g. 50 matches amounts less than 50'
-    })[form.value.operator] ?? ''
+const sortedRules = computed(() =>
+  [...store.rules].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
 )
 
-// ── Table headers ─────────────────────────────────────────────────────────────
+const fieldLabels = { NAME: 'Payee', MEMO: 'Memo', TRNAMT: 'Amount', TRNTYPE: 'Tran. type' }
+function fieldLabel(f) { return fieldLabels[f] ?? f }
+
 const headers = [
-  { title: 'Field', key: 'field', width: '110px', sortable: true },
-  { title: 'Operator', key: 'operator', width: '120px', sortable: true },
-  { title: 'Value', key: 'value', sortable: false },
-  { title: 'Category', key: 'category', width: '150px', sortable: true },
-  { title: 'Type', key: 'type', width: '110px', sortable: false },
-  { title: 'Priority', key: 'priority', width: '90px', sortable: true, align: 'center' },
-  { title: '', key: 'actions', width: '80px', sortable: false, align: 'end' }
+  { title: '#', key: 'index', width: '60px', sortable: false },
+  { title: 'When', key: 'field', width: '130px', sortable: false },
+  { title: 'Condition', key: 'condition', sortable: false },
+  { title: 'Set category', key: 'category', width: '170px', sortable: false },
+  { title: 'Matches', key: 'matches', width: '110px', sortable: false, align: 'end' },
+  { title: '', key: 'actions', width: '90px', sortable: false, align: 'end' }
 ]
 
 const fieldOptions = [
@@ -543,18 +208,23 @@ const typeOptions = [
   { label: 'Savings', value: 'savings' }
 ]
 
-// ── Add / Edit dialog ─────────────────────────────────────────────────────────
+const operatorHint = computed(
+  () =>
+    ({
+      contains: 'Use wildcard (*) or quoted phrases — e.g. wal* matches "Walmart"',
+      equals: 'Must match the full field exactly',
+      startsWith: 'e.g. "wal" matches fields that begin with "wal"',
+      wildcard: 'Use * for any characters — e.g. WAL*MART*',
+      wholeWord: 'e.g. "gas" matches "gas station" but not "gasoline"',
+      gt: 'Numeric — e.g. 50 matches amounts greater than 50',
+      lt: 'Numeric — e.g. 50 matches amounts less than 50'
+    })[form.value.operator] ?? ''
+)
+
 const ruleDialog = ref(false)
 const editTarget = ref(null)
 
-const blankForm = () => ({
-  field: 'NAME',
-  operator: 'contains',
-  value: '',
-  category: '',
-  type: null,
-  priority: 0
-})
+const blankForm = () => ({ field: 'NAME', operator: 'contains', value: '', category: '', type: null, priority: 0 })
 const form = ref(blankForm())
 
 function openAddDialog() {
@@ -565,14 +235,7 @@ function openAddDialog() {
 
 function openEditDialog(item) {
   editTarget.value = item
-  form.value = {
-    field: item.field,
-    operator: item.operator,
-    value: item.value,
-    category: item.category,
-    type: item.type ?? null,
-    priority: item.priority ?? 0
-  }
+  form.value = { field: item.field, operator: item.operator, value: item.value, category: item.category, type: item.type ?? null, priority: item.priority ?? 0 }
   ruleDialog.value = true
 }
 
@@ -582,29 +245,15 @@ function closeRuleDialog() {
 }
 
 async function saveRule() {
+  const payload = { field: form.value.field, operator: form.value.operator, value: form.value.value, category: form.value.category, type: form.value.type || null, priority: form.value.priority ?? 0 }
   if (editTarget.value) {
-    await store.editRule(editTarget.value.id, {
-      field: form.value.field,
-      operator: form.value.operator,
-      value: form.value.value,
-      category: form.value.category,
-      type: form.value.type || null,
-      priority: form.value.priority ?? 0
-    })
+    await store.editRule(editTarget.value.id, payload)
   } else {
-    await store.createRule({
-      field: form.value.field,
-      operator: form.value.operator,
-      value: form.value.value,
-      category: form.value.category,
-      type: form.value.type || null,
-      priority: form.value.priority ?? 0
-    })
+    await store.createRule(payload)
   }
   if (!store.error) closeRuleDialog()
 }
 
-// ── Delete ────────────────────────────────────────────────────────────────────
 const deleteDialog = ref(false)
 const deleteTarget = ref(null)
 
@@ -620,88 +269,14 @@ async function doDelete() {
   deleteTarget.value = null
 }
 
-// ── Apply rules ───────────────────────────────────────────────────────────────
 const applyResult = ref(null)
 
-async function applyRules() {
+async function applyRules(applyAll = false) {
   applyResult.value = null
-  const result = applyAll.value ? await store.applyToAll() : await store.applyToMonth(currentMonth)
+  const result = applyAll ? await store.applyToAll() : await store.applyToMonth(currentMonth)
   if (result?.success) {
     applyResult.value = result.data
-    if (!applyAll.value) await transactionsStore.fetchTransactionsByMonth(currentMonth)
+    if (!applyAll) await transactionsStore.fetchTransactionsByMonth(currentMonth)
   }
-}
-
-// ── Custom Recurring ──────────────────────────────────────────────────────────
-
-const crHeaders = [
-  { title: 'Operator', key: 'operator', width: '120px', sortable: false },
-  { title: 'Match phrase', key: 'name', sortable: true },
-  { title: '', key: 'actions', width: '80px', sortable: false, align: 'end' }
-]
-
-const crOperatorOptions = [
-  { label: 'contains', value: 'contains' },
-  { label: 'equals', value: 'equals' },
-  { label: 'starts with', value: 'startsWith' },
-  { label: 'whole words', value: 'wholeWord' }
-]
-
-const crOperatorHint = computed(
-  () =>
-    ({
-      contains: 'Memo contains this phrase anywhere — e.g. "GOOGLE *SPOTIFY" matches the full memo',
-      equals: 'Must match the full memo exactly',
-      startsWith: 'Memo must begin with this value',
-      wholeWord: 'e.g. "gas" matches "gas station" but not "gasoline"'
-    })[crForm.value.operator] ?? ''
-)
-
-const crBlankForm = () => ({ name: '', operator: 'contains' })
-
-const crDialog = ref(false)
-const crEditTarget = ref(null)
-const crForm = ref(crBlankForm())
-
-function crOpenAdd() {
-  crEditTarget.value = null
-  crForm.value = crBlankForm()
-  crDialog.value = true
-}
-
-function crOpenEdit(item) {
-  crEditTarget.value = item
-  crForm.value = { name: item.name, operator: item.operator ?? 'contains' }
-  crDialog.value = true
-}
-
-function crClose() {
-  crDialog.value = false
-  crEditTarget.value = null
-}
-
-async function crSave() {
-  const payload = { name: crForm.value.name, operator: crForm.value.operator }
-  if (crEditTarget.value) {
-    await crStore.editEntry(crEditTarget.value.id, payload)
-  } else {
-    await crStore.createEntry(payload)
-  }
-  if (!crStore.error) crClose()
-}
-
-const crDeleteDialog = ref(false)
-const crDeleteTarget = ref(null)
-
-function crConfirmDelete(item) {
-  crDeleteTarget.value = item
-  crDeleteDialog.value = true
-}
-
-async function crDoDelete() {
-  if (!crDeleteTarget.value) return
-  await crStore.removeEntry(crDeleteTarget.value.id)
-  crDeleteDialog.value = false
-  crDeleteTarget.value = null
 }
 </script>
