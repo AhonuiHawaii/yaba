@@ -26,7 +26,7 @@ const navGroups = [
     label: 'TOOLS',
     items: [
       { title: 'Subscriptions', value: 'Recurring', icon: 'mdi-sync' },
-      { title: 'Bills', value: 'Recurring', icon: 'mdi-receipt-text-outline' },
+      { title: 'Bills', value: 'Bills', icon: 'mdi-receipt-text-outline' },
       { title: 'Debts Payoff', value: 'Debts', icon: 'mdi-trending-down' },
       { title: 'Backup & Restore', value: 'Backup', icon: 'mdi-cloud-sync-outline' },
       { title: 'Auto-Rules', value: 'Rules', icon: 'mdi-tag-multiple-outline' }

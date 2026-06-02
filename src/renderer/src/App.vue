@@ -20,6 +20,7 @@ import AppBar from './components/AppBar.vue'
 import AppFooter from './components/AppFooter.vue'
 import Privacy from './views/Privacy.vue'
 import Backup from './views/Backup.vue'
+import Bills from './views/Bills.vue'
 
 const views = {
   Dashboard,
@@ -37,7 +38,8 @@ const views = {
   Recurring,
   Backup,
   Privacy,
-  Import
+  Import,
+  Bills
 }
 
 const currentView = ref('Dashboard')
