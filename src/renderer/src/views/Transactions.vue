@@ -816,6 +816,7 @@ import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserAccountsStore } from '../stores/userAccounts'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { useUserRulesStore } from '../stores/userRules'
 import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import RulesView from './Rules.vue'
@@ -824,6 +825,7 @@ const store = useUserTransactionsStore()
 const accountsStore = useUserAccountsStore()
 const categoriesStore = useUserCategoriesStore()
 const userSettings = useUserSettingsStore()
+const rulesStore = useUserRulesStore()
 const { formatCurrency, formatDate } = userSettings
 
 const activeTab = ref('transactions')
