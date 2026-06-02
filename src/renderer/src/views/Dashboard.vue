@@ -1,6 +1,5 @@
 <template>
   <v-container fluid class="pa-6">
-
     <!-- Header -->
     <div class="d-flex flex-wrap align-start justify-space-between gap-4 mb-6">
       <div>
@@ -11,7 +10,13 @@
       </div>
       <div class="d-flex align-center gap-3">
         <div class="d-flex align-center">
-          <v-btn icon="mdi-chevron-left" variant="text" density="compact" size="small" @click="prevPeriod" />
+          <v-btn
+            icon="mdi-chevron-left"
+            variant="text"
+            density="compact"
+            size="small"
+            @click="prevPeriod"
+          />
           <span class="text-body-2 font-weight-medium mx-2 text-no-wrap">{{ periodLabel }}</span>
           <v-btn
             icon="mdi-chevron-right"
@@ -22,7 +27,14 @@
             @click="nextPeriod"
           />
         </div>
-        <v-btn-toggle v-model="period" mandatory density="compact" rounded="lg" variant="outlined" divided>
+        <v-btn-toggle
+          v-model="period"
+          mandatory
+          density="compact"
+          rounded="lg"
+          variant="outlined"
+          divided
+        >
           <v-btn value="month" size="small">Month</v-btn>
           <v-btn value="quarter" size="small">Quarter</v-btn>
           <v-btn value="semi" size="small">Semi</v-btn>
@@ -41,13 +53,19 @@
         <v-card rounded="lg" elevation="0" border>
           <v-card-text class="pa-5">
             <div class="d-flex justify-space-between align-center mb-3">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Income</span>
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Income</span
+              >
               <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
                 <v-icon size="18">mdi-arrow-down-thin</v-icon>
               </v-avatar>
             </div>
-            <div class="text-h5 font-weight-bold text-success mb-1">{{ formatCurrency(totalIncome) }}</div>
-            <div class="text-caption text-medium-emphasis">of {{ formatCurrency(incomeBudget) }} planned</div>
+            <div class="text-h5 font-weight-bold text-success mb-1">
+              {{ formatCurrency(totalIncome) }}
+            </div>
+            <div class="text-caption text-medium-emphasis">
+              of {{ formatCurrency(incomeBudget) }} planned
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -56,7 +74,9 @@
         <v-card rounded="lg" elevation="0" border>
           <v-card-text class="pa-5">
             <div class="d-flex justify-space-between align-center mb-3">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Spent</span>
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Spent</span
+              >
               <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
                 <v-icon size="18">mdi-arrow-up-thin</v-icon>
               </v-avatar>
@@ -71,7 +91,9 @@
         <v-card rounded="lg" elevation="0" border>
           <v-card-text class="pa-5">
             <div class="d-flex justify-space-between align-center mb-3">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Left to budget</span>
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Left to budget</span
+              >
               <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
                 <v-icon size="18">mdi-view-grid-outline</v-icon>
               </v-avatar>
@@ -86,7 +108,9 @@
         <v-card rounded="lg" elevation="0" border>
           <v-card-text class="pa-5">
             <div class="d-flex justify-space-between align-center mb-3">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Net Worth</span>
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Net Worth</span
+              >
               <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
                 <v-icon size="18">mdi-chart-line</v-icon>
               </v-avatar>
@@ -210,15 +234,18 @@
               </v-avatar>
               <div class="flex-grow-1">
                 <div class="text-body-2 font-weight-medium">{{ item.name }}</div>
-                <div class="text-caption text-medium-emphasis">Due {{ formatDueDate(item.days) }}</div>
+                <div class="text-caption text-medium-emphasis">
+                  Due {{ formatDueDate(item.days) }}
+                </div>
               </div>
-              <span class="text-body-2 font-weight-medium">{{ formatCurrency(item.typicalAmount) }}</span>
+              <span class="text-body-2 font-weight-medium">{{
+                formatCurrency(item.typicalAmount)
+              }}</span>
             </div>
           </template>
         </v-card>
       </v-col>
     </v-row>
-
   </v-container>
 </template>
 
@@ -290,17 +317,27 @@ const currentTransactions = computed(() => {
   const { start, end } = periodBounds.value
   return periodTransactions.value.filter((t) => {
     const s = String(t.DTPOSTED || '')
-    const tDate = new Date(parseInt(s.slice(0, 4)), parseInt(s.slice(4, 6)) - 1, parseInt(s.slice(6, 8)))
+    const tDate = new Date(
+      parseInt(s.slice(0, 4)),
+      parseInt(s.slice(4, 6)) - 1,
+      parseInt(s.slice(6, 8))
+    )
     return tDate >= start && tDate <= end
   })
 })
 
 // ── Totals ────────────────────────────────────────────────────────────────────
 const totalIncome = computed(() =>
-  currentTransactions.value.reduce((sum, t) => sum + (Number(t.TRNAMT) > 0 ? Number(t.TRNAMT) : 0), 0)
+  currentTransactions.value.reduce(
+    (sum, t) => sum + (Number(t.TRNAMT) > 0 ? Number(t.TRNAMT) : 0),
+    0
+  )
 )
 const totalSpending = computed(() =>
-  currentTransactions.value.reduce((sum, t) => sum + (Number(t.TRNAMT) < 0 ? Math.abs(Number(t.TRNAMT)) : 0), 0)
+  currentTransactions.value.reduce(
+    (sum, t) => sum + (Number(t.TRNAMT) < 0 ? Math.abs(Number(t.TRNAMT)) : 0),
+    0
+  )
 )
 
 // ── Stat card derived ─────────────────────────────────────────────────────────
@@ -542,9 +579,7 @@ async function loadDashboard() {
     const monthResults = await Promise.all(
       periodMonths.value.map((m) => ipc?.invoke('transactions:fetch', { DTPOSTED: m }))
     )
-    periodTransactions.value = monthResults
-      .filter((r) => r?.success)
-      .flatMap((r) => r.data ?? [])
+    periodTransactions.value = monthResults.filter((r) => r?.success).flatMap((r) => r.data ?? [])
 
     // Build last-6-months totals for the chart (always ends at previous completed month)
     const chartMonths = Array.from({ length: 6 }, (_, i) =>

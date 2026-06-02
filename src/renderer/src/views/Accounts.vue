@@ -67,8 +67,17 @@
                     />
                   </template>
                   <v-list density="compact" rounded="sm" min-width="140">
-                    <v-list-item prepend-icon="mdi-pencil-outline" title="Edit" @click="openEditName(account)" />
-                    <v-list-item prepend-icon="mdi-delete-outline" title="Remove" base-color="error" @click="confirmRemove(account)" />
+                    <v-list-item
+                      prepend-icon="mdi-pencil-outline"
+                      title="Edit"
+                      @click="openEditName(account)"
+                    />
+                    <v-list-item
+                      prepend-icon="mdi-delete-outline"
+                      title="Remove"
+                      base-color="error"
+                      @click="confirmRemove(account)"
+                    />
                   </v-list>
                 </v-menu>
               </div>
@@ -82,7 +91,9 @@
             <!-- Balance -->
             <div
               class="text-h5 font-weight-bold mb-3"
-              :class="accountBalance(account) !== null && accountBalance(account) < 0 ? 'text-error' : ''"
+              :class="
+                accountBalance(account) !== null && accountBalance(account) < 0 ? 'text-error' : ''
+              "
             >
               {{ accountBalance(account) !== null ? formatBalance(accountBalance(account)) : '—' }}
             </div>
@@ -111,7 +122,12 @@
       <v-col cols="12" sm="6" md="4">
         <div
           class="d-flex align-center justify-center rounded"
-          style="height: 100%; min-height: 176px; border: 2px dashed rgba(0,0,0,0.12); cursor: pointer"
+          style="
+            height: 100%;
+            min-height: 176px;
+            border: 2px dashed rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+          "
           @click="manualDialog = true"
         >
           <v-icon size="36" color="medium-emphasis">mdi-plus-circle-outline</v-icon>
@@ -128,7 +144,12 @@
               <v-icon color="primary" size="22">mdi-pencil-plus-outline</v-icon>
               <span class="text-h6 font-weight-bold">Add Manual Account</span>
             </div>
-            <v-btn icon="mdi-close" variant="text" density="compact" @click="manualDialog = false" />
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              density="compact"
+              @click="manualDialog = false"
+            />
           </div>
         </v-card-title>
         <v-divider />
@@ -263,7 +284,11 @@
                   color="primary"
                   hide-header
                   show-adjacent-months
-                  @update:model-value="(val) => { manualForm.paymentStartDate = pickerValToIso(val) }"
+                  @update:model-value="
+                    (val) => {
+                      manualForm.paymentStartDate = pickerValToIso(val)
+                    }
+                  "
                 />
               </v-menu>
               <v-text-field
@@ -336,7 +361,12 @@
               <v-icon color="primary" size="20">mdi-pencil-outline</v-icon>
               <span class="text-h6 font-weight-bold">Edit Account</span>
             </div>
-            <v-btn icon="mdi-close" variant="text" density="compact" @click="editNameDialog = false" />
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              density="compact"
+              @click="editNameDialog = false"
+            />
           </div>
         </v-card-title>
         <v-divider />
@@ -468,7 +498,11 @@
                     color="primary"
                     hide-header
                     show-adjacent-months
-                    @update:model-value="(val) => { editPaymentStartDate = pickerValToIso(val) }"
+                    @update:model-value="
+                      (val) => {
+                        editPaymentStartDate = pickerValToIso(val)
+                      }
+                    "
                   />
                 </v-menu>
                 <v-text-field
@@ -541,8 +575,10 @@
       <v-card rounded="sm">
         <v-card-title class="text-h6 pa-6 pb-4">Remove Account</v-card-title>
         <v-card-text class="pa-6 pt-0 text-body-2 text-medium-emphasis">
-          Remove <strong>{{ pendingRemove?.displayName || pendingRemove?.ORG || 'this account' }}</strong> ending in
-          <strong>{{ pendingRemove?.ACCTID }}</strong>? This only removes the account from this app — no bank data is affected.
+          Remove
+          <strong>{{ pendingRemove?.displayName || pendingRemove?.ORG || 'this account' }}</strong>
+          ending in <strong>{{ pendingRemove?.ACCTID }}</strong
+          >? This only removes the account from this app — no bank data is affected.
         </v-card-text>
         <v-card-actions class="pa-6 pt-0 gap-2">
           <v-spacer />

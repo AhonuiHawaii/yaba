@@ -1,454 +1,466 @@
 <template>
-  <v-container fluid class="pa-4">
-    <div class="d-flex justify-center align-center mb-6">
-      <v-btn variant="flat" density="comfortable" rounded="sm" @click="prevMonth">
-        <v-icon start size="16">mdi-chevron-left</v-icon>
-        Last Month
-      </v-btn>
-      <span class="text-subtitle-1 font-weight-bold mx-6">This Month</span>
-      <v-btn
-        variant="flat"
-        density="comfortable"
-        rounded="sm"
-        :disabled="isNextMonthFuture"
-        @click="nextMonth"
-      >
-        Next Month
-        <v-icon end size="16">mdi-chevron-right</v-icon>
-      </v-btn>
-    </div>
-
-    <div class="d-flex justify-end mb-4">
-      <v-btn variant="flat" rounded="sm" prepend-icon="mdi-download-outline" @click="exportIncome">
-        Export Income
-      </v-btn>
-    </div>
-
-    <v-alert
-      v-if="budgetsStore.error || categoriesStore.error || loadError"
-      type="error"
-      variant="flat"
-      class="mb-4"
-    >
-      {{ budgetsStore.error || categoriesStore.error || loadError }}
-    </v-alert>
-
-    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start">
+  <v-container fluid class="pa-6">
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <div class="d-flex flex-wrap align-start justify-space-between gap-4 mb-6">
       <div>
-        <section v-for="section in incomeSections" :key="section.value">
-          <v-card rounded="sm" elevation="2" class="mb-6">
-            <v-card-item class="pa-4 pb-0">
-              <template #prepend>
-                <v-icon :color="section.color" size="20" :opacity="0.7">{{ section.icon }}</v-icon>
-              </template>
-              <v-card-title class="text-h6 font-weight-bold pl-2">{{ section.label }}</v-card-title>
-              <template #append>
-                <v-btn
-                  variant="text"
-                  size="small"
-                  prepend-icon="mdi-plus"
-                  density="compact"
-                  @click="startAddingCategory(section.type)"
-                >
-                  Add Category
-                </v-btn>
-              </template>
-            </v-card-item>
-
-            <v-table density="comfortable" class="mt-2">
-              <thead>
-                <tr>
-                  <th class="text-start text-caption text-medium-emphasis pl-5">Category</th>
-                  <th class="text-center text-caption text-medium-emphasis" style="width: 120px">
-                    Actual
-                  </th>
-                  <th class="text-center text-caption text-medium-emphasis" style="width: 150px">
-                    Budget
-                  </th>
-                  <th class="text-center text-caption text-medium-emphasis" style="width: 120px">
-                    {{ section.type === 'income' ? 'Variance' : 'Remaining' }}
-                  </th>
-                  <th style="width: 40px"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="section.rows.length === 0">
-                  <td colspan="5" class="text-center py-8 text-medium-emphasis">
-                    No {{ section.label.toLowerCase() }} categories yet.
-                  </td>
-                </tr>
-                <tr v-for="row in section.rows" :key="row.id">
-                  <td class="pl-2 text-body-2 font-weight-medium">
-                    <div class="d-flex align-center gap-3">
-                      <v-btn
-                        :icon="
-                          locked[row.id] ? 'mdi-lock-outline' : 'mdi-lock-open-variant-outline'
-                        "
-                        variant="text"
-                        size="x-small"
-                        density="compact"
-                        :color="locked[row.id] ? 'error' : undefined"
-                        :opacity="locked[row.id] ? 0.7 : 0.3"
-                        @click="toggleLock(row.id)"
-                      />
-                      <v-text-field
-                        v-if="!locked[row.id]"
-                        :model-value="editingNames[row.id] ?? row.name"
-                        variant="solo"
-                        flat
-                        density="compact"
-                        hide-details
-                        @update:model-value="(v) => (editingNames[row.id] = v)"
-                        @keyup.enter="saveCategoryName(row.id, row.name)"
-                        @blur="saveCategoryName(row.id, row.name)"
-                      />
-                      <span v-else class="pl-3">{{ row.name }}</span>
-                    </div>
-                  </td>
-                  <td class="text-center text-body-2 font-weight-bold">
-                    {{ formatCurrency(row.actual) }}
-                  </td>
-                  <td>
-                    <v-text-field
-                      :model-value="row.planned"
-                      type="number"
-                      :prefix="userSettings.currencySymbol"
-                      variant="solo"
-                      flat
-                      density="compact"
-                      hide-details
-                      @update:model-value="(value) => updateBudget(row.id, value)"
-                    />
-                  </td>
-                  <td
-                    class="text-center text-body-2 font-weight-bold"
-                    :class="row.remaining >= 0 ? 'text-success' : 'text-error'"
-                  >
-                    {{ formatCurrency(row.remaining) }}
-                  </td>
-                  <td class="text-center pr-2">
-                    <v-btn
-                      icon="mdi-delete-outline"
-                      variant="text"
-                      size="small"
-                      color="error"
-                      density="compact"
-                      :opacity="0.4"
-                      @click="categoriesStore.deleteCategory(row.id)"
-                    />
-                  </td>
-                </tr>
-                <tr v-if="addingType === section.type">
-                  <td colspan="5" class="pl-4 py-1">
-                    <v-text-field
-                      v-model="newCategoryName"
-                      placeholder="Category name"
-                      variant="solo"
-                      flat
-                      density="compact"
-                      hide-details
-                      autofocus
-                      style="max-width: 280px"
-                      @keyup.enter="saveNewCategory(section.type)"
-                      @keyup.esc="cancelNewCategory"
-                      @blur="saveNewCategory(section.type)"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-card>
-        </section>
+        <div class="text-h5 font-weight-bold">Income</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          What you earn · {{ periodLabel }}
+        </div>
       </div>
+      <div class="d-flex align-center gap-3">
+        <!-- Prev / label / Next -->
+        <div class="d-flex align-center">
+          <v-btn
+            icon="mdi-chevron-left"
+            variant="text"
+            density="compact"
+            size="small"
+            @click="prevPeriod"
+          />
+          <span class="text-body-2 font-weight-medium mx-2 text-no-wrap">{{ periodLabel }}</span>
+          <v-btn
+            icon="mdi-chevron-right"
+            variant="text"
+            density="compact"
+            size="small"
+            :disabled="isNextPeriodFuture"
+            @click="nextPeriod"
+          />
+        </div>
+        <!-- Period toggle -->
+        <v-btn-toggle
+          v-model="period"
+          mandatory
+          density="compact"
+          rounded="lg"
+          variant="outlined"
+          divided
+        >
+          <v-btn value="month" size="small">Month</v-btn>
+          <v-btn value="quarter" size="small">Quarter</v-btn>
+          <v-btn value="semi" size="small">Semi</v-btn>
+          <v-btn value="annual" size="small">Annual</v-btn>
+        </v-btn-toggle>
+      </div>
+    </div>
 
-      <!-- Summary panel -->
-      <v-card rounded="sm" elevation="2" style="position: sticky; top: 24px">
-        <v-card-text class="pa-5">
-          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-4">
-            Summary
-          </div>
+    <!-- ── Stat cards ─────────────────────────────────────────────────────── -->
+    <v-row class="mb-4">
+      <!-- Total Income -->
+      <v-col cols="12" sm="6" lg="3">
+        <v-card rounded="lg" elevation="0" border>
+          <v-card-text class="pa-5">
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
+              Total Income
+            </div>
+            <div class="text-h4 font-weight-bold text-success mb-1">
+              {{ formatCurrency(totalIncome) }}
+            </div>
+            <div class="text-caption text-medium-emphasis">{{ periodLabel }}</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
-          <!-- Ring chart with center text -->
-          <div style="position: relative; width: 180px; height: 180px; margin: 0 auto 16px">
-            <Doughnut :data="summaryChartData" :options="summaryChartOptions" />
+      <!-- Avg / Month -->
+      <v-col cols="12" sm="6" lg="3">
+        <v-card rounded="lg" elevation="0" border>
+          <v-card-text class="pa-5">
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
+              Avg / Month
+            </div>
+            <div class="text-h4 font-weight-bold mb-1">{{ formatCurrency(avgPerMonth) }}</div>
+            <div class="text-caption text-medium-emphasis">across the period</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <!-- Largest Source -->
+      <v-col cols="12" sm="6" lg="3">
+        <v-card rounded="lg" elevation="0" border>
+          <v-card-text class="pa-5">
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
+              Largest Source
+            </div>
+            <div class="text-h4 font-weight-bold mb-1">
+              {{ largestSourcePct }}
+            </div>
+            <div class="text-caption text-medium-emphasis text-truncate">
+              {{ largestSource?.name ?? 'No data' }}
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <!-- Savings Rate -->
+      <v-col cols="12" sm="6" lg="3">
+        <v-card rounded="lg" elevation="0" border>
+          <v-card-text class="pa-5">
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
+              Savings Rate
+            </div>
+            <div class="text-h4 font-weight-bold text-success mb-1">{{ savingsRatePct }}</div>
+            <div class="text-caption text-medium-emphasis">income kept</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- ── Income trend + By source ───────────────────────────────────────── -->
+    <v-row class="mb-4" align="stretch">
+      <!-- Income trend chart -->
+      <v-col cols="12" lg="7">
+        <v-card rounded="lg" elevation="0" border class="h-100">
+          <v-card-item class="pa-5 pb-0">
+            <v-card-title class="text-body-1 font-weight-bold">Income trend</v-card-title>
+            <template #append>
+              <v-chip size="x-small" variant="tonal">{{ trendChipLabel }}</v-chip>
+            </template>
+          </v-card-item>
+          <div style="height: 240px; padding: 8px 16px 16px">
+            <Bar
+              v-if="trendMonths.length"
+              :data="incomeTrendData"
+              :options="incomeTrendOptions"
+            />
             <div
-              style="
-                position: absolute;
-                inset: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                pointer-events: none;
-              "
+              v-else
+              class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2"
             >
-              <v-icon v-if="incomeVariance < 0" color="warning" size="20" class="mb-1"
-                >mdi-alert</v-icon
-              >
-              <span class="text-caption text-medium-emphasis">Earned</span>
-              <span
-                class="text-h6 font-weight-black"
-                :class="incomeVariance < 0 ? 'text-error' : ''"
-                >{{ formatCurrency(actualIncome) }}</span
-              >
-              <span class="text-caption text-medium-emphasis"
-                >of {{ formatCurrency(plannedIncome) }}</span
-              >
+              No trend data available
             </div>
           </div>
+        </v-card>
+      </v-col>
 
-          <!-- Line items -->
-          <v-divider />
-          <div class="d-flex justify-space-between align-center py-3">
-            <span class="text-body-2">Planned Income</span>
-            <span class="text-body-2 font-weight-bold">{{ formatCurrency(plannedIncome) }}</span>
-          </div>
+      <!-- By source -->
+      <v-col cols="12" lg="5">
+        <v-card rounded="lg" elevation="0" border class="h-100">
+          <v-card-item class="pa-5 pb-3">
+            <v-card-title class="text-body-1 font-weight-bold">By source</v-card-title>
+          </v-card-item>
+          <v-card-text class="px-5 pb-5 pt-0">
+            <div v-if="incomeBySource.length === 0" class="text-body-2 text-medium-emphasis">
+              No income this period.
+            </div>
+            <div v-for="src in incomeBySource" :key="src.name" class="mb-3">
+              <div class="d-flex align-center justify-space-between mb-1">
+                <div class="d-flex align-center gap-2">
+                  <v-icon size="15" class="text-medium-emphasis">{{ sourceIcon(src.name) }}</v-icon>
+                  <span class="text-body-2">{{ src.name }}</span>
+                </div>
+                <div class="d-flex align-center gap-3">
+                  <span class="text-body-2 font-weight-medium">{{
+                    formatCurrency(src.amount)
+                  }}</span>
+                  <span
+                    class="text-caption text-medium-emphasis"
+                    style="min-width: 30px; text-align: right"
+                  >
+                    {{ formatPercent(src.amount, totalIncome) }}
+                  </span>
+                </div>
+              </div>
+              <v-progress-linear
+                :model-value="totalIncome > 0 ? (src.amount / totalIncome) * 100 : 0"
+                color="success"
+                height="4"
+                rounded
+                bg-color="rgba(0,0,0,0.06)"
+              />
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
-          <v-divider />
-          <div class="d-flex justify-space-between align-center py-3">
-            <span class="text-body-2">Actual Earnings</span>
-            <span class="text-body-2 font-weight-bold">{{ formatCurrency(actualIncome) }}</span>
-          </div>
+    <!-- ── Recent income table ─────────────────────────────────────────────── -->
+    <v-card rounded="lg" elevation="0" border>
+      <v-card-item class="pa-5 pb-2">
+        <v-card-title class="text-body-1 font-weight-bold">Recent income</v-card-title>
+      </v-card-item>
 
-          <v-divider />
-          <div class="d-flex justify-space-between align-center py-3">
-            <span class="text-body-2">Variance</span>
-            <span
-              class="text-body-2 font-weight-black"
-              :class="incomeVariance >= 0 ? 'text-success' : 'text-error'"
-              >{{ formatCurrency(incomeVariance) }}</span
+      <v-table density="comfortable">
+        <thead>
+          <tr>
+            <th class="text-caption font-weight-bold text-uppercase">Date</th>
+            <th class="text-caption font-weight-bold text-uppercase">Source</th>
+            <th class="text-caption font-weight-bold text-uppercase">Type</th>
+            <th
+              class="text-caption font-weight-bold text-uppercase text-right"
+              style="color: var(--v-theme-success)"
             >
-          </div>
-        </v-card-text>
-      </v-card>
-    </div>
+              Amount
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="recentIncome.length === 0">
+            <td colspan="4" class="text-center text-medium-emphasis text-body-2 py-4">
+              No income transactions this period
+            </td>
+          </tr>
+          <tr v-for="t in displayedIncome" :key="t.FITID">
+            <td class="text-body-2 text-medium-emphasis py-3" style="min-width: 80px">
+              {{ t.dateLabel }}
+            </td>
+            <td class="text-body-2 font-weight-medium py-3">{{ t.name }}</td>
+            <td class="py-3">
+              <v-chip v-if="t.category" size="x-small" variant="tonal" color="primary">
+                {{ t.category }}
+              </v-chip>
+              <span v-else class="text-caption text-medium-emphasis">Other</span>
+            </td>
+            <td class="text-body-2 font-weight-medium text-right py-3 text-success">
+              +{{ formatCurrency(t.amount) }}
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
+
+      <div v-if="recentIncome.length > 8" class="pa-3 pt-0">
+        <v-btn variant="text" size="small" block @click="showAllIncome = !showAllIncome">
+          {{ showAllIncome ? 'Show less' : `See all ${recentIncome.length} transactions` }}
+        </v-btn>
+      </div>
+    </v-card>
   </v-container>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
-import { Doughnut } from 'vue-chartjs'
-
-ChartJS.register(ArcElement, Tooltip)
-import { useUserBudgetsStore } from '../stores/userBudgets'
+import { Bar } from 'vue-chartjs'
+import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js'
 import { useUserCategoriesStore } from '../stores/userCategories'
+import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { usePeriodFilter } from '../stores/usePeriodFilter'
 
-const budgetsStore = useUserBudgetsStore()
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip)
+
 const categoriesStore = useUserCategoriesStore()
-const userSettings = useUserSettingsStore()
-const { formatCurrency } = userSettings
+const transactionsStore = useUserTransactionsStore()
+const { formatCurrency } = useUserSettingsStore()
 
 const ipc = window.electron?.ipcRenderer
-const transactions = ref([])
-const loadError = ref(null)
 
-function currentMonthValue() {
-  const now = new Date()
-  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
-}
+// ── Period filter ─────────────────────────────────────────────────────────────
+const {
+  period,
+  periodStart,
+  periodLength,
+  periodMonths,
+  periodLabel,
+  isNextPeriodFuture,
+  prevPeriod,
+  nextPeriod,
+  currentMonthValue,
+  offsetMonth
+} = usePeriodFilter('month')
 
-function offsetMonth(yyyymm, delta) {
-  const year = Number(yyyymm.slice(0, 4))
-  const month = Number(yyyymm.slice(4)) - 1
-  const d = new Date(year, month + delta, 1)
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-const selectedMonth = ref(currentMonthValue())
-const isNextMonthFuture = computed(() => offsetMonth(selectedMonth.value, 1) > currentMonthValue())
-function prevMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, -1)
-}
-function nextMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, 1)
-}
-
-const categoryTypeOptions = [
-  { label: 'Earnings', value: 'income', icon: 'mdi-trending-up', color: 'success' },
-  { label: 'Savings Goals', value: 'savings', icon: 'mdi-piggy-bank', color: 'info' }
-]
-
-const incomeTypes = new Set(categoryTypeOptions.map((t) => t.value))
-
-const actualsByCategory = computed(() => {
-  const actuals = new Map()
-  for (const transaction of transactions.value) {
-    const amount = Number(transaction.TRNAMT) || 0
-    addActual(actuals, transaction.category, amount)
-    addActual(actuals, transaction.splitCategory1, Number(transaction.splitAmount1) || 0)
-    addActual(actuals, transaction.splitCategory2, Number(transaction.splitAmount2) || 0)
-  }
-  return actuals
+// ── Period bounds ─────────────────────────────────────────────────────────────
+const periodBounds = computed(() => {
+  const lastMonth = periodMonths.value[periodMonths.value.length - 1]
+  const sy = parseInt(periodStart.value.slice(0, 4))
+  const sm = parseInt(periodStart.value.slice(4, 6)) - 1
+  const ey = parseInt(lastMonth.slice(0, 4))
+  const em = parseInt(lastMonth.slice(4, 6)) - 1
+  return { start: new Date(sy, sm, 1), end: new Date(ey, em + 1, 0, 23, 59, 59, 999) }
 })
 
-const incomeRows = computed(() => {
-  return categoriesStore.categories
-    .filter((c) => incomeTypes.has(c.type))
-    .map((category) => {
-      const planned = budgetsStore.getBudget(category.id)?.amount || 0
-      const actual = actualsByCategory.value.get(category.id) || 0
-      const remaining = category.type === 'income' ? actual - planned : planned - actual
-      return { ...category, actual, planned, remaining }
-    })
-})
+// ── Transactions ──────────────────────────────────────────────────────────────
+const periodTransactions = ref([])
 
-const incomeSections = computed(() =>
-  categoryTypeOptions.map((type) => {
-    const rows = incomeRows.value
-      .filter((row) => row.type === type.value)
-      .sort((a, b) => a.name.localeCompare(b.name))
-    const planned = rows.reduce((sum, row) => sum + row.planned, 0)
-    const actual = rows.reduce((sum, row) => sum + row.actual, 0)
-    return { ...type, type: type.value, rows, planned, actual, remaining: actual - planned }
+const currentTransactions = computed(() => {
+  const { start, end } = periodBounds.value
+  return periodTransactions.value.filter((t) => {
+    const s = String(t.DTPOSTED || '')
+    const tDate = new Date(
+      parseInt(s.slice(0, 4)),
+      parseInt(s.slice(4, 6)) - 1,
+      parseInt(s.slice(6, 8))
+    )
+    return tDate >= start && tDate <= end
   })
+})
+
+// ── Income transactions (positive TRNAMT) ─────────────────────────────────────
+const incomeTransactions = computed(() =>
+  currentTransactions.value.filter((t) => Number(t.TRNAMT) > 0)
 )
 
-const plannedIncome = computed(() =>
-  incomeRows.value.filter((r) => r.type === 'income').reduce((s, r) => s + r.planned, 0)
+// ── Stat cards ────────────────────────────────────────────────────────────────
+const totalIncome = computed(() =>
+  incomeTransactions.value.reduce((s, t) => s + Number(t.TRNAMT), 0)
 )
-const actualIncome = computed(() =>
-  incomeRows.value.filter((r) => r.type === 'income').reduce((s, r) => s + r.actual, 0)
-)
-const incomeVariance = computed(() => actualIncome.value - plannedIncome.value)
 
-const summaryChartOptions = {
+const avgPerMonth = computed(() =>
+  periodLength.value > 0 ? totalIncome.value / periodLength.value : 0
+)
+
+// By source: group income by category name, fall back to transaction name
+const incomeBySource = computed(() => {
+  const map = new Map()
+  for (const t of incomeTransactions.value) {
+    const key = t.category || t.NAME || t.MEMO || 'Other'
+    map.set(key, (map.get(key) || 0) + Number(t.TRNAMT))
+  }
+  return Array.from(map.entries())
+    .map(([name, amount]) => ({ name, amount }))
+    .sort((a, b) => b.amount - a.amount)
+})
+
+const largestSource = computed(() => incomeBySource.value[0] ?? null)
+
+const largestSourcePct = computed(() => {
+  if (!largestSource.value || !totalIncome.value) return '—'
+  return `${Math.round((largestSource.value.amount / totalIncome.value) * 100)}%`
+})
+
+// Savings rate = (income - spending) / income
+const totalSpending = computed(() =>
+  currentTransactions.value.reduce(
+    (s, t) => s + (Number(t.TRNAMT) < 0 ? Math.abs(Number(t.TRNAMT)) : 0),
+    0
+  )
+)
+
+const savingsRatePct = computed(() => {
+  if (!totalIncome.value) return '0%'
+  const rate = Math.max(0, (totalIncome.value - totalSpending.value) / totalIncome.value)
+  return `${Math.round(rate * 100)}%`
+})
+
+// ── Source icon helper ────────────────────────────────────────────────────────
+const sourceIconMap = {
+  salary: 'mdi-briefcase-outline',
+  paycheck: 'mdi-briefcase-outline',
+  freelance: 'mdi-laptop',
+  'side gig': 'mdi-lightning-bolt-outline',
+  interest: 'mdi-chart-line',
+  dividend: 'mdi-chart-line',
+  investment: 'mdi-chart-line',
+  reimbursement: 'mdi-cash-refund',
+  rental: 'mdi-home-outline',
+  bonus: 'mdi-star-outline',
+  other: 'mdi-dots-horizontal'
+}
+
+function sourceIcon(name) {
+  if (!name) return 'mdi-cash'
+  const key = name.toLowerCase()
+  for (const [k, v] of Object.entries(sourceIconMap)) {
+    if (key.includes(k)) return v
+  }
+  return 'mdi-cash'
+}
+
+// ── Recent income table ───────────────────────────────────────────────────────
+const showAllIncome = ref(false)
+
+const recentIncome = computed(() =>
+  [...incomeTransactions.value]
+    .sort((a, b) => String(b.DTPOSTED || '').localeCompare(String(a.DTPOSTED || '')))
+    .map((t) => {
+      const s = String(t.DTPOSTED || '')
+      const d =
+        s.length >= 8
+          ? new Date(parseInt(s.slice(0, 4)), parseInt(s.slice(4, 6)) - 1, parseInt(s.slice(6, 8)))
+          : null
+      return {
+        FITID: t.FITID,
+        name: t.NAME || t.MEMO || 'Unknown',
+        category: t.category || null,
+        amount: Number(t.TRNAMT),
+        dateLabel: d
+          ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          : '—'
+      }
+    })
+)
+
+const displayedIncome = computed(() =>
+  showAllIncome.value ? recentIncome.value : recentIncome.value.slice(0, 8)
+)
+
+// ── Income trend chart ────────────────────────────────────────────────────────
+const trendMonths = computed(() => transactionsStore.monthlyTotals.slice(-12))
+
+const trendChipLabel = computed(() => {
+  const n = trendMonths.value.length
+  return n === 1 ? '1 month' : `${n} months`
+})
+
+const incomeTrendData = computed(() => ({
+  labels: trendMonths.value.map((m) => {
+    const y = parseInt(m.month.slice(0, 4))
+    const mo = parseInt(m.month.slice(4, 6)) - 1
+    return new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'short' })
+  }),
+  datasets: [
+    {
+      label: 'Income',
+      data: trendMonths.value.map((m) => m.income || 0),
+      backgroundColor: '#4caf50',
+      borderRadius: 4,
+      barPercentage: 0.6
+    }
+  ]
+}))
+
+const incomeTrendOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  cutout: '78%',
-  plugins: { legend: { display: false }, tooltip: { enabled: false } },
-  animation: { duration: 300 }
-}
-
-const summaryChartData = computed(() => {
-  const planned = plannedIncome.value
-  const actual = actualIncome.value
-  const dim = 'rgba(255,255,255,0.1)'
-  if (planned <= 0 && actual <= 0)
-    return { datasets: [{ data: [1], backgroundColor: [dim], borderWidth: 0 }] }
-  if (planned <= 0)
-    return { datasets: [{ data: [actual], backgroundColor: ['#4caf50'], borderWidth: 0 }] }
-  const remaining = Math.max(0, planned - actual)
-  const over = Math.max(0, actual - planned)
-  if (over > 0)
-    return {
-      datasets: [{ data: [planned, over], backgroundColor: ['#4caf50', '#81c784'], borderWidth: 0 }]
-    }
-  return {
-    datasets: [
-      {
-        data: [actual || 0.001, remaining || 0.001],
-        backgroundColor: ['#4caf50', dim],
-        borderWidth: 0
+  animation: { duration: 300 },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx) => ` ${formatCurrency(ctx.parsed.y)}`
       }
-    ]
-  }
-})
-
-function addActual(actuals, categoryName, rawAmount) {
-  if (!categoryName || !rawAmount) return
-  actuals.set(categoryName, (actuals.get(categoryName) || 0) + Math.abs(rawAmount))
-}
-
-async function loadMonth() {
-  loadError.value = null
-  try {
-    if (!ipc) throw new Error('Electron IPC is not available.')
-    const result = await ipc.invoke('transactions:fetch', { DTPOSTED: selectedMonth.value })
-    if (!result.success) throw new Error(result.error)
-    transactions.value = result.data
-  } catch (err) {
-    loadError.value = err?.message ?? String(err)
-  }
-}
-
-const locked = ref({})
-const editingNames = ref({})
-
-function toggleLock(id) {
-  if (locked.value[id]) {
-    const rest = { ...locked.value }
-    delete rest[id]
-    locked.value = rest
-  } else {
-    locked.value = { ...locked.value, [id]: true }
-    const rest = { ...editingNames.value }
-    delete rest[id]
-    editingNames.value = rest
-  }
-}
-
-async function saveCategoryName(id, currentName) {
-  const name = (editingNames.value[id] ?? currentName).trim()
-  if (!name || name === currentName) return
-  await categoriesStore.updateCategory(id, { name })
-}
-
-const addingType = ref(null)
-const newCategoryName = ref('')
-
-function startAddingCategory(type) {
-  addingType.value = type
-  newCategoryName.value = ''
-}
-
-async function saveNewCategory(type) {
-  const name = newCategoryName.value.trim()
-  addingType.value = null
-  newCategoryName.value = ''
-  if (!name) return
-  await categoriesStore.addCategory({ type, name })
-}
-
-function cancelNewCategory() {
-  addingType.value = null
-  newCategoryName.value = ''
-}
-
-async function updateBudget(categoryId, value) {
-  await budgetsStore.upsertBudget(categoryId, Number(value) || 0)
-}
-
-function exportIncome() {
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    month: selectedMonth.value,
-    sections: incomeSections.value.map((section) => ({
-      type: section.type,
-      label: section.label,
-      planned: section.planned,
-      actual: section.actual,
-      remaining: section.remaining,
-      rows: section.rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        type: row.type,
-        planned: row.planned,
-        actual: row.actual,
-        remaining: row.remaining
-      }))
-    })),
-    totals: {
-      plannedIncome: plannedIncome.value,
-      actualIncome: actualIncome.value,
-      incomeVariance: incomeVariance.value
+    }
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      border: { display: false },
+      ticks: { color: 'rgba(100,100,100,0.6)', font: { size: 11 } }
+    },
+    y: {
+      grid: { color: 'rgba(0,0,0,0.07)' },
+      border: { display: false },
+      ticks: {
+        color: 'rgba(100,100,100,0.6)',
+        font: { size: 11 },
+        callback: (v) => (v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}`)
+      }
     }
   }
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `income-${selectedMonth.value}.json`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
 }
 
-onMounted(async () => {
-  await Promise.all([categoriesStore.fetchCategories(), budgetsStore.fetchBudgets()])
-  await loadMonth()
-})
+// ── Formatters ────────────────────────────────────────────────────────────────
+function formatPercent(val, total) {
+  if (!total) return '0%'
+  return `${Math.round((val / total) * 100)}%`
+}
 
-watch(selectedMonth, () => loadMonth())
+// ── Data loading ──────────────────────────────────────────────────────────────
+async function loadIncome() {
+  try {
+    await Promise.all([
+      categoriesStore.fetchCategories(),
+      transactionsStore.fetchMonthlyTotals()
+    ])
+
+    const monthResults = await Promise.all(
+      periodMonths.value.map((m) => ipc?.invoke('transactions:fetch', { DTPOSTED: m }))
+    )
+    periodTransactions.value = monthResults.filter((r) => r?.success).flatMap((r) => r.data ?? [])
+  } catch (err) {
+    console.error('Income load error', err)
+  }
+}
+
+onMounted(loadIncome)
+watch(periodStart, loadIncome)
 </script>

@@ -11,18 +11,16 @@ const navGroups = [
       { title: 'Transactions', value: 'Transactions', icon: 'mdi-swap-vertical' },
       { title: 'Spending', value: 'Spending', icon: 'mdi-credit-card-outline' },
       { title: 'Earnings', value: 'Income', icon: 'mdi-cash-plus' },
-      { title: 'Budgets', value: 'Budgets', icon: 'mdi-scale-balance' },
-
-
-    ],
+      { title: 'Budgets', value: 'Budgets', icon: 'mdi-scale-balance' }
+    ]
   },
   {
     label: 'ACCOUNTS',
     items: [
       { title: 'Accounts', value: 'Accounts', icon: 'mdi-bank-outline' },
       { title: 'Import Accounts', value: 'Import', icon: 'mdi-download-outline' },
-      { title: 'Net Worth', value: 'NetWorth', icon: 'mdi-chart-line' },
-    ],
+      { title: 'Net Worth', value: 'NetWorth', icon: 'mdi-chart-line' }
+    ]
   },
   {
     label: 'TOOLS',
@@ -31,9 +29,9 @@ const navGroups = [
       { title: 'Bills', value: 'Recurring', icon: 'mdi-receipt-text-outline' },
       { title: 'Debts Payoff', value: 'Debts', icon: 'mdi-trending-down' },
       { title: 'Backup & Restore', value: 'Backup', icon: 'mdi-cloud-sync-outline' },
-      { title: 'Auto-Rules', value: 'Rules', icon: 'mdi-tag-multiple-outline' },
-    ],
-  },
+      { title: 'Auto-Rules', value: 'Rules', icon: 'mdi-tag-multiple-outline' }
+    ]
+  }
 ]
 
 defineProps({

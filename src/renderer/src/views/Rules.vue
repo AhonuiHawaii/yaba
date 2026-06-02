@@ -1,24 +1,51 @@
 <template>
   <v-container class="pa-6" style="max-width: 1100px">
-
     <!-- Header card -->
-    <v-card rounded="lg" elevation="0" border class="d-flex align-center justify-space-between pa-5 mb-4">
+    <v-card
+      rounded="lg"
+      elevation="0"
+      border
+      class="d-flex align-center justify-space-between pa-5 mb-4"
+    >
       <div>
         <div class="text-subtitle-1 font-weight-bold">Auto-categorization rules</div>
-        <div class="text-body-2 text-medium-emphasis">Applied top-to-bottom as transactions are imported</div>
+        <div class="text-body-2 text-medium-emphasis">
+          Applied top-to-bottom as transactions are imported
+        </div>
       </div>
-      <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAddDialog">Add rule</v-btn>
+      <v-btn
+        variant="flat"
+        color="primary"
+        rounded="lg"
+        prepend-icon="mdi-plus"
+        @click="openAddDialog"
+        >Add rule</v-btn
+      >
     </v-card>
 
     <!-- Apply result banner -->
     <v-slide-y-transition>
-      <v-alert v-if="applyResult !== null" :type="applyResult.applied > 0 ? 'success' : 'info'" variant="flat" closable class="mb-4" @click:close="applyResult = null">
+      <v-alert
+        v-if="applyResult !== null"
+        :type="applyResult.applied > 0 ? 'success' : 'info'"
+        variant="flat"
+        closable
+        class="mb-4"
+        @click:close="applyResult = null"
+      >
         {{ applyResult.applied }} transaction{{ applyResult.applied === 1 ? '' : 's' }} categorized.
       </v-alert>
     </v-slide-y-transition>
 
     <!-- Error Banner -->
-    <v-alert v-if="store.error" type="error" variant="flat" closable class="mb-4" @click:close="store.clearError()">
+    <v-alert
+      v-if="store.error"
+      type="error"
+      variant="flat"
+      closable
+      class="mb-4"
+      @click:close="store.clearError()"
+    >
       {{ store.error }}
     </v-alert>
 
@@ -27,7 +54,9 @@
       <v-card-text class="pa-12 text-center">
         <v-icon size="60" class="mb-4 text-disabled">mdi-tag-multiple-outline</v-icon>
         <div class="text-h6 font-weight-medium mb-2">No rules yet</div>
-        <div class="text-body-2 text-medium-emphasis">Add a rule to automatically categorize transactions when importing.</div>
+        <div class="text-body-2 text-medium-emphasis">
+          Add a rule to automatically categorize transactions when importing.
+        </div>
       </v-card-text>
     </v-card>
 
@@ -52,11 +81,19 @@
 
         <template #item.condition="{ item }">
           <span class="text-body-2 text-medium-emphasis">{{ item.operator }}</span>
-          <v-chip size="x-small" variant="tonal" rounded="sm" class="ml-2 font-weight-bold text-uppercase">{{ item.value }}</v-chip>
+          <v-chip
+            size="x-small"
+            variant="tonal"
+            rounded="sm"
+            class="ml-2 font-weight-bold text-uppercase"
+            >{{ item.value }}</v-chip
+          >
         </template>
 
         <template #item.category="{ item }">
-          <v-chip size="x-small" variant="tonal" color="primary" rounded="pill">{{ item.category }}</v-chip>
+          <v-chip size="x-small" variant="tonal" color="primary" rounded="pill">{{
+            item.category
+          }}</v-chip>
         </template>
 
         <template #item.matches="{ item }">
@@ -65,8 +102,21 @@
 
         <template #item.actions="{ item }">
           <div class="d-flex align-center justify-end gap-1">
-            <v-btn icon="mdi-pencil-outline" variant="text" size="small" density="compact" @click="openEditDialog(item)" />
-            <v-btn icon="mdi-delete-outline" variant="text" size="small" color="error" density="compact" @click="confirmDelete(item)" />
+            <v-btn
+              icon="mdi-pencil-outline"
+              variant="text"
+              size="small"
+              density="compact"
+              @click="openEditDialog(item)"
+            />
+            <v-btn
+              icon="mdi-delete-outline"
+              variant="text"
+              size="small"
+              color="error"
+              density="compact"
+              @click="confirmDelete(item)"
+            />
           </div>
         </template>
 
@@ -77,7 +127,13 @@
     </v-card>
 
     <!-- Info banner -->
-    <v-alert variant="tonal" color="primary" density="compact" rounded="lg" prepend-icon="mdi-information-outline">
+    <v-alert
+      variant="tonal"
+      color="primary"
+      density="compact"
+      rounded="lg"
+      prepend-icon="mdi-information-outline"
+    >
       Rules run in order — the first match wins, so put more specific rules near the top.
     </v-alert>
 
@@ -88,7 +144,9 @@
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center gap-3">
               <v-icon color="primary" size="20">mdi-tag-multiple-outline</v-icon>
-              <span class="text-h6 font-weight-bold">{{ editTarget ? 'Edit Rule' : 'Add Rule' }}</span>
+              <span class="text-h6 font-weight-bold">{{
+                editTarget ? 'Edit Rule' : 'Add Rule'
+              }}</span>
             </div>
             <v-btn icon="mdi-close" variant="text" density="compact" @click="closeRuleDialog" />
           </div>
@@ -97,29 +155,98 @@
         <v-card-text class="pa-6">
           <v-row>
             <v-col cols="6">
-              <v-select v-model="form.field" :items="fieldOptions" item-title="label" item-value="value" label="Field" variant="solo" inset density="comfortable" rounded="sm" hide-details />
+              <v-select
+                v-model="form.field"
+                :items="fieldOptions"
+                item-title="label"
+                item-value="value"
+                label="Field"
+                variant="solo"
+                inset
+                density="comfortable"
+                rounded="sm"
+                hide-details
+              />
             </v-col>
             <v-col cols="6">
-              <v-select v-model="form.operator" :items="operatorOptions" item-title="label" item-value="value" label="Operator" variant="solo" inset density="comfortable" rounded="sm" hide-details />
+              <v-select
+                v-model="form.operator"
+                :items="operatorOptions"
+                item-title="label"
+                item-value="value"
+                label="Operator"
+                variant="solo"
+                inset
+                density="comfortable"
+                rounded="sm"
+                hide-details
+              />
             </v-col>
             <v-col cols="12" class="mt-3">
-              <v-text-field v-model="form.value" label="Match value" variant="solo" inset density="comfortable" rounded="sm" persistent-hint :hint="operatorHint" autofocus />
+              <v-text-field
+                v-model="form.value"
+                label="Match value"
+                variant="solo"
+                inset
+                density="comfortable"
+                rounded="sm"
+                persistent-hint
+                :hint="operatorHint"
+                autofocus
+              />
             </v-col>
             <v-col cols="8" class="mt-3">
-              <v-combobox v-model="form.category" :items="allCategoryNames" label="Assign category" variant="solo" inset density="comfortable" rounded="sm" hide-details clearable />
+              <v-combobox
+                v-model="form.category"
+                :items="allCategoryNames"
+                label="Assign category"
+                variant="solo"
+                inset
+                density="comfortable"
+                rounded="sm"
+                hide-details
+                clearable
+              />
             </v-col>
             <v-col cols="4" class="mt-3">
-              <v-text-field v-model.number="form.priority" label="Priority" type="number" variant="solo" inset density="comfortable" rounded="sm" hide-details />
+              <v-text-field
+                v-model.number="form.priority"
+                label="Priority"
+                type="number"
+                variant="solo"
+                inset
+                density="comfortable"
+                rounded="sm"
+                hide-details
+              />
             </v-col>
             <v-col cols="12" class="mt-3">
-              <v-select v-model="form.type" :items="typeOptions" item-title="label" item-value="value" label="Assign transaction type (optional)" variant="solo" inset density="comfortable" rounded="sm" hide-details clearable />
+              <v-select
+                v-model="form.type"
+                :items="typeOptions"
+                item-title="label"
+                item-value="value"
+                label="Assign transaction type (optional)"
+                variant="solo"
+                inset
+                density="comfortable"
+                rounded="sm"
+                hide-details
+                clearable
+              />
             </v-col>
           </v-row>
         </v-card-text>
         <v-card-actions class="pa-6 pt-0">
           <v-spacer />
           <v-btn variant="text" @click="closeRuleDialog">Cancel</v-btn>
-          <v-btn variant="flat" rounded="sm" :loading="store.loading" :disabled="!form.field || !form.operator || !form.value || !form.category" @click="saveRule">
+          <v-btn
+            variant="flat"
+            rounded="sm"
+            :loading="store.loading"
+            :disabled="!form.field || !form.operator || !form.value || !form.category"
+            @click="saveRule"
+          >
             {{ editTarget ? 'Save' : 'Add' }}
           </v-btn>
         </v-card-actions>
@@ -131,16 +258,22 @@
       <v-card rounded="lg">
         <v-card-title class="text-h6 pa-6 pb-4">Delete Rule</v-card-title>
         <v-card-text class="pa-6 pt-0 text-body-2 text-medium-emphasis">
-          Delete the rule matching <strong>{{ deleteTarget?.field }} {{ deleteTarget?.operator }} "{{ deleteTarget?.value }}"</strong>? This cannot be undone.
+          Delete the rule matching
+          <strong
+            >{{ deleteTarget?.field }} {{ deleteTarget?.operator }} "{{
+              deleteTarget?.value
+            }}"</strong
+          >? This cannot be undone.
         </v-card-text>
         <v-card-actions class="pa-6 pt-0 gap-2">
           <v-spacer />
           <v-btn variant="text" @click="deleteDialog = false">Cancel</v-btn>
-          <v-btn color="error" variant="flat" :loading="store.loading" @click="doDelete">Delete</v-btn>
+          <v-btn color="error" variant="flat" :loading="store.loading" @click="doDelete"
+            >Delete</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
-
   </v-container>
 </template>
 
@@ -172,7 +305,9 @@ const sortedRules = computed(() =>
 )
 
 const fieldLabels = { NAME: 'Payee', MEMO: 'Memo', TRNAMT: 'Amount', TRNTYPE: 'Tran. type' }
-function fieldLabel(f) { return fieldLabels[f] ?? f }
+function fieldLabel(f) {
+  return fieldLabels[f] ?? f
+}
 
 const headers = [
   { title: '#', key: 'index', width: '60px', sortable: false },
@@ -224,7 +359,14 @@ const operatorHint = computed(
 const ruleDialog = ref(false)
 const editTarget = ref(null)
 
-const blankForm = () => ({ field: 'NAME', operator: 'contains', value: '', category: '', type: null, priority: 0 })
+const blankForm = () => ({
+  field: 'NAME',
+  operator: 'contains',
+  value: '',
+  category: '',
+  type: null,
+  priority: 0
+})
 const form = ref(blankForm())
 
 function openAddDialog() {
@@ -235,7 +377,14 @@ function openAddDialog() {
 
 function openEditDialog(item) {
   editTarget.value = item
-  form.value = { field: item.field, operator: item.operator, value: item.value, category: item.category, type: item.type ?? null, priority: item.priority ?? 0 }
+  form.value = {
+    field: item.field,
+    operator: item.operator,
+    value: item.value,
+    category: item.category,
+    type: item.type ?? null,
+    priority: item.priority ?? 0
+  }
   ruleDialog.value = true
 }
 
@@ -245,7 +394,14 @@ function closeRuleDialog() {
 }
 
 async function saveRule() {
-  const payload = { field: form.value.field, operator: form.value.operator, value: form.value.value, category: form.value.category, type: form.value.type || null, priority: form.value.priority ?? 0 }
+  const payload = {
+    field: form.value.field,
+    operator: form.value.operator,
+    value: form.value.value,
+    category: form.value.category,
+    type: form.value.type || null,
+    priority: form.value.priority ?? 0
+  }
   if (editTarget.value) {
     await store.editRule(editTarget.value.id, payload)
   } else {

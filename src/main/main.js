@@ -402,21 +402,21 @@ export const importBatch = async (items) => {
         realAcctid = resolveAcctid(targetAcctId)
         if (!realAcctid) throw new Error(`Account not found: ${targetAcctId}`)
       } else {
-        const accountData =
-          (await extractAccountData(ofxText)) ||
-          ({
-            ACCTID: transactions[0].ACCTID,
-            ACCTTYPE: transactions[0].ACCTTYPE,
-            ORG: transactions[0].ORG,
-            INTU_BID: transactions[0].INTU_BID
-          })
+        const accountData = (await extractAccountData(ofxText)) || {
+          ACCTID: transactions[0].ACCTID,
+          ACCTTYPE: transactions[0].ACCTTYPE,
+          ORG: transactions[0].ORG,
+          INTU_BID: transactions[0].INTU_BID
+        }
         if (accountData.ACCTID) {
           upsertAccount(accountData)
           realAcctid = accountData.ACCTID
         }
       }
 
-      const remapped = realAcctid ? transactions.map((t) => ({ ...t, ACCTID: realAcctid })) : transactions
+      const remapped = realAcctid
+        ? transactions.map((t) => ({ ...t, ACCTID: realAcctid }))
+        : transactions
       const result = createTransactions(remapped)
 
       const customEntries = getCustomRecurring()
