@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, onErrorCaptured } from 'vue'
 import Drawer from './components/Drawer.vue'
+import ViewBar from './components/ViewBar.vue'
 import Dashboard from './views/Dashboard.vue'
 import Settings from './views/Settings.vue'
 import Accounts from './views/Accounts.vue'
@@ -36,6 +37,7 @@ const views = {
 }
 
 const currentView = ref('Dashboard')
+const isRail = ref(false)
 const currentComponent = computed(() => views[currentView.value] ?? views.Dashboard)
 
 // 2.3: Warn on unknown view names instead of silently ignoring
@@ -58,8 +60,9 @@ onErrorCaptured((err) => {
 <template>
   <v-app>
     <AppBar />
-    <Drawer :current-view="currentView" @change-view="changeView" />
+    <Drawer :current-view="currentView" :rail="isRail" @change-view="changeView" />
     <v-main>
+      <ViewBar :title="currentView" @toggle-drawer="isRail = !isRail" />
       <v-alert v-if="appError" type="error" class="ma-4" closable @click:close="appError = null">
         {{ appError }}
       </v-alert>
