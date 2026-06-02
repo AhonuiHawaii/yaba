@@ -4,7 +4,9 @@
     <div class="d-flex align-start justify-space-between px-4 pt-4 pb-3 gap-4 flex-wrap">
       <div>
         <div class="text-h5 font-weight-bold">Bills</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">Recurring payments detected from imports</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          Recurring payments detected from imports
+        </div>
       </div>
       <v-btn
         color="primary"
@@ -12,7 +14,8 @@
         prepend-icon="mdi-plus"
         rounded="sm"
         @click="openAddDialog"
-      >Add bill</v-btn>
+        >Add bill</v-btn
+      >
     </div>
 
     <!-- ── Tab toggle ────────────────────────────────────────────────────────── -->
@@ -27,7 +30,6 @@
     <!-- LIST VIEW                                                              -->
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <template v-if="activeTab === 'list'">
-
       <!-- ── Stat cards ──────────────────────────────────────────────────────── -->
       <div class="px-4 pb-4">
         <v-row dense>
@@ -47,7 +49,9 @@
                 <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
                   Paid
                 </div>
-                <div class="text-h4 font-weight-bold text-success">{{ formatCurrency(totalPaid) }}</div>
+                <div class="text-h4 font-weight-bold text-success">
+                  {{ formatCurrency(totalPaid) }}
+                </div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -76,7 +80,12 @@
               v-if="!billItems.length"
               class="d-flex flex-column align-center text-medium-emphasis pa-12"
             >
-              <v-icon size="60" class="mb-4" style="opacity: 0.3" icon="mdi-calendar-month-outline" />
+              <v-icon
+                size="60"
+                class="mb-4"
+                style="opacity: 0.3"
+                icon="mdi-calendar-month-outline"
+              />
               <div class="text-body-1">No bills detected yet.</div>
               <div class="text-caption mt-1">Import transactions and categorize them as bills.</div>
             </div>
@@ -84,12 +93,28 @@
             <v-table v-else density="comfortable">
               <thead>
                 <tr>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">Bill</th>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">Category</th>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">Frequency</th>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">Next due</th>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th text-right">Amount</th>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th text-right">Status</th>
+                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">
+                    Bill
+                  </th>
+                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">
+                    Category
+                  </th>
+                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">
+                    Frequency
+                  </th>
+                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">
+                    Next due
+                  </th>
+                  <th
+                    class="text-body-2 text-medium-emphasis font-weight-regular bills-th text-right"
+                  >
+                    Amount
+                  </th>
+                  <th
+                    class="text-body-2 text-medium-emphasis font-weight-regular bills-th text-right"
+                  >
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -102,7 +127,8 @@
                       variant="tonal"
                       color="primary"
                       rounded="pill"
-                    >{{ bill.category }}</v-chip>
+                      >{{ bill.category }}</v-chip
+                    >
                     <span v-else class="text-caption text-medium-emphasis">—</span>
                   </td>
                   <td class="text-body-2 text-medium-emphasis">Monthly</td>
@@ -116,8 +142,11 @@
                       variant="tonal"
                       rounded="pill"
                       prepend-icon="mdi-check"
-                    >Paid</v-chip>
-                    <v-chip v-else size="x-small" variant="outlined" rounded="pill">Upcoming</v-chip>
+                      >Paid</v-chip
+                    >
+                    <v-chip v-else size="x-small" variant="outlined" rounded="pill"
+                      >Upcoming</v-chip
+                    >
                   </td>
                 </tr>
               </tbody>
@@ -132,7 +161,6 @@
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <v-container v-else fluid class="pa-4">
       <v-sheet rounded="sm" elevation="2" class="pa-4">
-
         <!-- Navigation -->
         <div class="d-flex align-center gap-3 mb-6">
           <v-btn icon="mdi-chevron-left" variant="text" density="comfortable" @click="prevMonth" />
@@ -156,7 +184,9 @@
             v-for="d in ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']"
             :key="d"
             class="text-caption text-center text-uppercase font-weight-bold text-medium-emphasis py-2"
-          >{{ d }}</div>
+          >
+            {{ d }}
+          </div>
         </div>
 
         <!-- Calendar cells -->
@@ -171,7 +201,12 @@
               class="cal-day-num text-caption font-weight-bold mb-1"
               :class="day.isToday ? 'text-primary' : 'text-medium-emphasis'"
             >
-              <v-avatar v-if="day.isToday" color="primary" size="20" class="text-caption font-weight-bold">
+              <v-avatar
+                v-if="day.isToday"
+                color="primary"
+                size="20"
+                class="text-caption font-weight-bold"
+              >
                 {{ day.date.getDate() }}
               </v-avatar>
               <span v-else>{{ day.date.getDate() }}</span>
@@ -187,7 +222,9 @@
                 class="cal-chip mb-1 cursor-pointer"
                 @click.stop="openCalEvent(evt)"
               >
-                <span class="cal-chip-label">{{ evt.name }} · {{ formatCurrency(evt.typicalAmount) }}</span>
+                <span class="cal-chip-label"
+                  >{{ evt.name }} · {{ formatCurrency(evt.typicalAmount) }}</span
+                >
               </v-chip>
             </template>
           </div>
@@ -202,23 +239,39 @@
                   <v-icon color="primary" size="20">mdi-calendar-month</v-icon>
                   <span class="text-h6 font-weight-bold">{{ selectedCalEvent.name }}</span>
                 </div>
-                <v-btn icon="mdi-close" variant="text" density="compact" @click="calDialogOpen = false" />
+                <v-btn
+                  icon="mdi-close"
+                  variant="text"
+                  density="compact"
+                  @click="calDialogOpen = false"
+                />
               </div>
             </v-card-title>
             <v-divider />
             <v-card-text class="pa-6">
               <div class="d-flex align-center justify-space-between mb-3">
-                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">Typical Amount</div>
-                <div class="text-h6 font-weight-bold text-primary">{{ formatCurrency(selectedCalEvent.typicalAmount) }}</div>
+                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                  Typical Amount
+                </div>
+                <div class="text-h6 font-weight-bold text-primary">
+                  {{ formatCurrency(selectedCalEvent.typicalAmount) }}
+                </div>
               </div>
               <v-divider class="mb-3" />
               <div class="d-flex align-center justify-space-between mb-2">
                 <span class="text-body-2 font-weight-medium">Next due</span>
-                <span class="text-body-2 text-medium-emphasis">{{ selectedCalEvent.nextDueLabel }}</span>
+                <span class="text-body-2 text-medium-emphasis">{{
+                  selectedCalEvent.nextDueLabel
+                }}</span>
               </div>
-              <div v-if="selectedCalEvent.category" class="d-flex align-center justify-space-between">
+              <div
+                v-if="selectedCalEvent.category"
+                class="d-flex align-center justify-space-between"
+              >
                 <span class="text-body-2 font-weight-medium">Category</span>
-                <span class="text-body-2 text-medium-emphasis">{{ selectedCalEvent.category }}</span>
+                <span class="text-body-2 text-medium-emphasis">{{
+                  selectedCalEvent.category
+                }}</span>
               </div>
             </v-card-text>
             <v-card-actions class="pa-6 pt-0">
@@ -236,7 +289,12 @@
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
             <span class="text-h6 font-weight-bold">Add Bill Category</span>
-            <v-btn icon="mdi-close" variant="text" density="compact" @click="addDialogOpen = false" />
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              density="compact"
+              @click="addDialogOpen = false"
+            />
           </div>
         </v-card-title>
         <v-divider />
@@ -263,7 +321,8 @@
             :disabled="!newBill.name"
             :loading="saving"
             @click="saveBill"
-          >Add</v-btn>
+            >Add</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -309,8 +368,8 @@ function daysUntil(dayOfMonth) {
 
 // ── Bill groups (recurring txns whose category is a bills category) ───────────
 
-const billCategoryNames = computed(() =>
-  new Set(categoriesStore.getCategoriesByType('bills').map((c) => c.name))
+const billCategoryNames = computed(
+  () => new Set(categoriesStore.getCategoriesByType('bills').map((c) => c.name))
 )
 
 const billGroups = computed(() => {
@@ -350,9 +409,10 @@ const billGroups = computed(() => {
       if (typicalDay) {
         const days = daysUntil(typicalDay)
         if (days !== null) {
-          const labelDate = days >= 0
-            ? new Date(now.getFullYear(), now.getMonth(), typicalDay)
-            : new Date(now.getFullYear(), now.getMonth() + 1, typicalDay)
+          const labelDate =
+            days >= 0
+              ? new Date(now.getFullYear(), now.getMonth(), typicalDay)
+              : new Date(now.getFullYear(), now.getMonth() + 1, typicalDay)
           nextDueLabel = labelDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         }
       }
@@ -377,8 +437,12 @@ const billItems = computed(() => billGroups.value)
 // ── Stat totals ───────────────────────────────────────────────────────────────
 
 const totalDue = computed(() => billItems.value.reduce((s, b) => s + (b.typicalAmount || 0), 0))
-const totalPaid = computed(() => billItems.value.filter((b) => b.isPaid).reduce((s, b) => s + (b.typicalAmount || 0), 0))
-const totalUpcoming = computed(() => billItems.value.filter((b) => !b.isPaid).reduce((s, b) => s + (b.typicalAmount || 0), 0))
+const totalPaid = computed(() =>
+  billItems.value.filter((b) => b.isPaid).reduce((s, b) => s + (b.typicalAmount || 0), 0)
+)
+const totalUpcoming = computed(() =>
+  billItems.value.filter((b) => !b.isPaid).reduce((s, b) => s + (b.typicalAmount || 0), 0)
+)
 
 // ── Calendar navigation ───────────────────────────────────────────────────────
 
@@ -399,12 +463,21 @@ const selectedMonth = ref(currentMonthValue())
 const viewYear = computed(() => Number(selectedMonth.value.slice(0, 4)))
 const viewMonth = computed(() => Number(selectedMonth.value.slice(4, 6)) - 1)
 const monthTitle = computed(() =>
-  new Date(viewYear.value, viewMonth.value, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  new Date(viewYear.value, viewMonth.value, 1).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric'
+  })
 )
 
-function prevMonth() { selectedMonth.value = offsetMonth(selectedMonth.value, -1) }
-function nextMonth() { selectedMonth.value = offsetMonth(selectedMonth.value, 1) }
-function goToday() { selectedMonth.value = currentMonthValue() }
+function prevMonth() {
+  selectedMonth.value = offsetMonth(selectedMonth.value, -1)
+}
+function nextMonth() {
+  selectedMonth.value = offsetMonth(selectedMonth.value, 1)
+}
+function goToday() {
+  selectedMonth.value = currentMonthValue()
+}
 
 // ── Calendar grid ─────────────────────────────────────────────────────────────
 
@@ -452,7 +525,10 @@ const calEventsByDay = computed(() => {
     if (!day || day < 1 || day > daysInMonth) continue
     const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     const isPast = isCurrentMonth ? day < today.getDate() : new Date(y, m, day) < today
-    const nextDueLabel = new Date(y, m, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const nextDueLabel = new Date(y, m, day).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    })
     if (!map.has(key)) map.set(key, [])
     map.get(key).push({ ...bill, isPast, nextDueLabel })
   }

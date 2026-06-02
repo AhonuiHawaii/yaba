@@ -4,15 +4,38 @@
     <div class="d-flex flex-wrap align-start justify-space-between gap-4 mb-6">
       <div>
         <div class="text-h5 font-weight-bold">Net worth</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">Assets minus debts · {{ periodLabel }}</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          Assets minus debts · {{ periodLabel }}
+        </div>
       </div>
       <div class="d-flex align-center gap-3">
         <div class="d-flex align-center">
-          <v-btn icon="mdi-chevron-left" variant="text" density="compact" size="small" @click="prevPeriod" />
+          <v-btn
+            icon="mdi-chevron-left"
+            variant="text"
+            density="compact"
+            size="small"
+            @click="prevPeriod"
+          />
           <span class="text-body-2 font-weight-medium mx-3 text-no-wrap">{{ periodLabel }}</span>
-          <v-btn icon="mdi-chevron-right" variant="text" density="compact" size="small" :disabled="isNextPeriodFuture" @click="nextPeriod" />
+          <v-btn
+            icon="mdi-chevron-right"
+            variant="text"
+            density="compact"
+            size="small"
+            :disabled="isNextPeriodFuture"
+            @click="nextPeriod"
+          />
         </div>
-        <v-btn-toggle v-model="period" mandatory density="compact" rounded="lg" variant="outlined" color="primary" divided>
+        <v-btn-toggle
+          v-model="period"
+          mandatory
+          density="compact"
+          rounded="lg"
+          variant="outlined"
+          color="primary"
+          divided
+        >
           <v-btn value="month" size="small">Month</v-btn>
           <v-btn value="quarter" size="small">Quarter</v-btn>
           <v-btn value="semi" size="small">Semi</v-btn>
@@ -30,25 +53,39 @@
       <v-col cols="12" sm="4">
         <v-card rounded="lg" elevation="0" border class="pa-1">
           <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">Assets</div>
-            <div class="text-h4 font-weight-bold text-success">{{ formatCurrency(displayAssets) }}</div>
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
+              Assets
+            </div>
+            <div class="text-h4 font-weight-bold text-success">
+              {{ formatCurrency(displayAssets) }}
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
       <v-col cols="12" sm="4">
         <v-card rounded="lg" elevation="0" border class="pa-1">
           <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">Debts</div>
-            <div class="text-h4 font-weight-bold text-error">{{ formatCurrency(displayLiabilities) }}</div>
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
+              Debts
+            </div>
+            <div class="text-h4 font-weight-bold text-error">
+              {{ formatCurrency(displayLiabilities) }}
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
       <v-col cols="12" sm="4">
         <v-card rounded="lg" elevation="0" border class="pa-1">
           <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">Net Worth</div>
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
+              Net Worth
+            </div>
             <div class="text-h4 font-weight-bold">{{ formatCurrency(displayNetWorth) }}</div>
-            <div v-if="netWorthHistory.length >= 2" class="d-flex align-center gap-1 mt-1 text-caption font-weight-medium" :class="periodChange >= 0 ? 'text-success' : 'text-error'">
+            <div
+              v-if="netWorthHistory.length >= 2"
+              class="d-flex align-center gap-1 mt-1 text-caption font-weight-medium"
+              :class="periodChange >= 0 ? 'text-success' : 'text-error'"
+            >
               <span>{{ periodChange >= 0 ? '▲' : '▼' }}</span>
               <span>{{ formatCurrency(Math.abs(periodChange)) }} this period</span>
             </div>
@@ -63,7 +100,9 @@
         <v-card-item class="pa-5 pb-0">
           <v-card-title class="text-body-1 font-weight-bold">Trend</v-card-title>
           <template #append>
-            <v-chip size="x-small" variant="tonal" class="font-weight-medium">{{ trendChipLabel }}</v-chip>
+            <v-chip size="x-small" variant="tonal" class="font-weight-medium">{{
+              trendChipLabel
+            }}</v-chip>
           </template>
         </v-card-item>
         <div style="height: 240px; padding: 8px 16px 16px">
@@ -72,7 +111,10 @@
             :data="filteredChartData"
             :options="chartOptions"
           />
-          <div v-else class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2">
+          <div
+            v-else
+            class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2"
+          >
             No history yet
           </div>
         </div>
@@ -98,10 +140,7 @@ import {
   Legend,
   Filler
 } from 'chart.js'
-import {
-  useUserAccountsStore,
-  resolveIsAsset
-} from '../stores/userAccounts'
+import { useUserAccountsStore, resolveIsAsset } from '../stores/userAccounts'
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
 
@@ -149,7 +188,9 @@ const activePeriodRecord = computed(() => {
 })
 
 const displayAssets = computed(() => activePeriodRecord.value?.assets ?? totalAssets.value)
-const displayLiabilities = computed(() => activePeriodRecord.value?.liabilities ?? totalLiabilities.value)
+const displayLiabilities = computed(
+  () => activePeriodRecord.value?.liabilities ?? totalLiabilities.value
+)
 const displayNetWorth = computed(() => activePeriodRecord.value?.netWorth ?? netWorth.value)
 
 // Net Worth change over the active period
@@ -282,7 +323,10 @@ const chartOptions = {
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
-    legend: { position: 'top', labels: { usePointStyle: true, padding: 16, boxWidth: 6, boxHeight: 6 } },
+    legend: {
+      position: 'top',
+      labels: { usePointStyle: true, padding: 16, boxWidth: 6, boxHeight: 6 }
+    },
     tooltip: {
       callbacks: {
         label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`

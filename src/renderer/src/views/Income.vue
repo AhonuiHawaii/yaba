@@ -4,9 +4,7 @@
     <div class="d-flex flex-wrap align-start justify-space-between gap-4 mb-6">
       <div>
         <div class="text-h5 font-weight-bold">Income</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
-          What you earn · {{ periodLabel }}
-        </div>
+        <div class="text-body-2 text-medium-emphasis mt-1">What you earn · {{ periodLabel }}</div>
       </div>
       <div class="d-flex align-center gap-3">
         <!-- Prev / label / Next -->
@@ -118,11 +116,7 @@
             </template>
           </v-card-item>
           <div style="height: 240px; padding: 8px 16px 16px">
-            <Bar
-              v-if="trendMonths.length"
-              :data="incomeTrendData"
-              :options="incomeTrendOptions"
-            />
+            <Bar v-if="trendMonths.length" :data="incomeTrendData" :options="incomeTrendOptions" />
             <div
               v-else
               class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2"
@@ -365,9 +359,7 @@ const recentIncome = computed(() =>
         name: t.NAME || t.MEMO || 'Unknown',
         category: t.category || null,
         amount: Number(t.TRNAMT),
-        dateLabel: d
-          ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          : '—'
+        dateLabel: d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
       }
     })
 )
@@ -440,10 +432,7 @@ function formatPercent(val, total) {
 // ── Data loading ──────────────────────────────────────────────────────────────
 async function loadIncome() {
   try {
-    await Promise.all([
-      categoriesStore.fetchCategories(),
-      transactionsStore.fetchMonthlyTotals()
-    ])
+    await Promise.all([categoriesStore.fetchCategories(), transactionsStore.fetchMonthlyTotals()])
 
     const monthResults = await Promise.all(
       periodMonths.value.map((m) => ipc?.invoke('transactions:fetch', { DTPOSTED: m }))
