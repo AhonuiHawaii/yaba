@@ -20,22 +20,22 @@
           @click="nextPeriod"
         />
 
-        <v-btn-group variant="outlined" density="comfortable" rounded="sm" class="ml-2">
-          <v-btn :variant="period === 'month' ? 'flat' : 'outlined'" @click="period = 'month'"
+        <v-btn-group variant="outlined" color="primary" density="comfortable" rounded="sm" class="ml-2">
+          <v-btn :variant="period === 'month' ? 'flat' : 'outlined'" :color="period === 'month' ? 'primary' : undefined" @click="period = 'month'"
             >Month</v-btn
           >
-          <v-btn :variant="period === 'quarter' ? 'flat' : 'outlined'" @click="period = 'quarter'"
+          <v-btn :variant="period === 'quarter' ? 'flat' : 'outlined'" :color="period === 'quarter' ? 'primary' : undefined" @click="period = 'quarter'"
             >Quarter</v-btn
           >
-          <v-btn :variant="period === 'semi' ? 'flat' : 'outlined'" @click="period = 'semi'"
+          <v-btn :variant="period === 'semi' ? 'flat' : 'outlined'" :color="period === 'semi' ? 'primary' : undefined" @click="period = 'semi'"
             >Semi</v-btn
           >
-          <v-btn :variant="period === 'annual' ? 'flat' : 'outlined'" @click="period = 'annual'"
+          <v-btn :variant="period === 'annual' ? 'flat' : 'outlined'" :color="period === 'annual' ? 'primary' : undefined" @click="period = 'annual'"
             >Annual</v-btn
           >
         </v-btn-group>
 
-        <v-btn variant="outlined" prepend-icon="mdi-export" @click="emit('navigate', 'Backup')"
+        <v-btn variant="outlined" color="primary" prepend-icon="mdi-export" @click="emit('navigate', 'Backup')"
           >Export</v-btn
         >
         <v-btn
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Tabs -->
-    <v-tabs v-model="activeTab" class="mb-4">
+    <v-tabs v-model="activeTab" class="mb-4" color="primary">
       <v-tab value="transactions" prepend-icon="mdi-format-list-bulleted">Transactions</v-tab>
       <v-tab value="rules" prepend-icon="mdi-auto-fix">Rules</v-tab>
     </v-tabs>
@@ -88,7 +88,7 @@
                 label="Choose OFX / QFX file"
                 prepend-icon=""
                 prepend-inner-icon="mdi-folder-open-outline"
-                variant="solo-filled"
+                variant="solo"
                 density="comfortable"
                 rounded="sm"
                 hide-details="auto"
@@ -101,6 +101,7 @@
               <v-spacer />
               <v-btn variant="text" @click="importDialog = false">Cancel</v-btn>
               <v-btn
+                color="primary"
                 variant="flat"
                 :loading="store.loading"
                 :disabled="!selectedFile"
@@ -119,19 +120,19 @@
             v-model="search"
             prepend-inner-icon="mdi-magnify"
             placeholder="Search payee or note"
-            variant="outlined"
+            variant="solo"
             density="compact"
             hide-details
             rounded="pill"
             style="max-width: 260px"
            color="primary" />
 
-          <div class="d-flex gap-2">
+          <div class="d-flex" style="gap: 8px;">
             <v-btn
               v-for="k in filterKinds"
               :key="k.value"
-              :variant="filterKind === k.value ? 'tonal' : 'outlined'"
-              :color="filterKind === k.value ? 'primary' : undefined"
+              :variant="'flat'"
+              :color="filterKind === k.value ? 'primary' : 'surface-variant'"
               size="small"
               rounded="pill"
               @click="filterKind = k.value"
@@ -149,7 +150,7 @@
             item-title="label"
             item-value="value"
             label="Account"
-            variant="outlined"
+            variant="solo"
             density="compact"
             hide-details
             rounded="lg"
@@ -161,7 +162,7 @@
         <v-slide-y-transition>
           <div v-if="selectedRows.length > 0" class="mb-3">
             <v-sheet rounded color="primary" class="pa-3 d-flex align-center gap-3">
-              <v-btn-group variant="flat" color="white" size="small" divided>
+              <v-btn-group variant="flat" color="surface" size="small" divided>
                 <v-btn class="font-weight-bold" style="pointer-events: none"
                   >{{ selectedRows.length }} selected</v-btn
                 >
@@ -177,7 +178,6 @@
                 icon="mdi-close"
                 variant="text"
                 size="small"
-                color="white"
                 density="compact"
                 @click="selectedRows = []"
               />
@@ -258,6 +258,7 @@
               >
               <v-btn
                 v-else
+                color="primary"
                 variant="outlined"
                 size="x-small"
                 rounded="pill"
@@ -483,6 +484,7 @@
               <v-spacer />
               <v-btn variant="text" @click="splitDialog = false">Cancel</v-btn>
               <v-btn
+                color="primary"
                 variant="flat"
                 :loading="store.loading"
                 :disabled="!isSplitValid"
@@ -758,6 +760,7 @@
               <v-spacer />
               <v-btn variant="text" @click="ruleDialog = false">Cancel</v-btn>
               <v-btn
+                color="primary"
                 variant="flat"
                 rounded="sm"
                 :loading="rulesStore.loading"
