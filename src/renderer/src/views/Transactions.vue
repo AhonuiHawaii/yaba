@@ -3,13 +3,13 @@
     <!-- Header -->
     <div class="d-flex align-center justify-space-between mb-4">
       <div>
-        <div class="text-h6 font-weight-bold">{{ viewTitle }}</div>
-        <div v-if="activeTab === 'transactions'" class="text-body-2 text-medium-emphasis">
+        <div class="text-h6 font-weight-bold">Transactions</div>
+        <div class="text-body-2 text-medium-emphasis">
           {{ periodLabel }} · {{ uncategorizedCount }} need a category
         </div>
       </div>
 
-      <div v-if="activeTab === 'transactions'" class="d-flex align-center ga-2">
+      <div class="d-flex align-center ga-2">
         <v-btn icon="mdi-chevron-left" variant="text" density="compact" @click="prevPeriod" />
         <span class="text-body-1 font-weight-medium">{{ periodLabel }}</span>
         <v-btn
@@ -836,6 +836,7 @@ const rulesStore = useUserRulesStore()
 const { formatCurrency, formatDate } = userSettings
 
 const activeTab = ref('transactions')
+
 
 const _pf = usePeriodFilter()
 const { period, periodLabel, periodMonths, isNextPeriodFuture } = storeToRefs(_pf)

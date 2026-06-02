@@ -1,36 +1,19 @@
 <template>
   <v-container class="pa-6" style="max-width: 1100px">
-    <!-- Header card -->
-    <v-card
-      rounded="lg"
-      elevation="0"
-      border
-      class="d-flex align-center justify-space-between pa-5 mb-4"
-    >
+    <div class="d-flex align-center justify-space-between mb-4">
       <div>
-        <div class="text-subtitle-1 font-weight-bold">Payee Rules</div>
-        <div class="text-body-2 text-medium-emphasis">
-          Group spending &amp; set auto-rules
-        </div>
+        <div class="text-h6 font-weight-bold">Payee Rules</div>
+        <div class="text-body-2 text-medium-emphasis">Group spending &amp; set auto-rules</div>
       </div>
-      <v-btn
-        variant="flat"
-        color="primary"
-        rounded="lg"
-        prepend-icon="mdi-plus"
-        @click="openAdd"
-        >New category</v-btn
-      >
-    </v-card>
+      <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAdd">New category</v-btn>
+    </div>
 
     <!-- Empty State -->
     <v-card v-if="store.groups.length === 0" rounded="lg" elevation="0" border>
       <v-card-text class="pa-12 text-center">
         <v-icon size="60" class="mb-4 text-disabled">mdi-tag-multiple-outline</v-icon>
         <div class="text-h6 font-weight-medium mb-2">No payee rules yet</div>
-        <div class="text-body-2 text-medium-emphasis">
-          Add a category with keywords to auto-categorize transactions on import.
-        </div>
+        <div class="text-body-2 text-medium-emphasis">Add a category with keywords to auto-categorize transactions on import.</div>
       </v-card-text>
     </v-card>
 

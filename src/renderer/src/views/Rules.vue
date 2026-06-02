@@ -1,27 +1,12 @@
 <template>
   <v-container class="pa-6" style="max-width: 1100px">
-    <!-- Header card -->
-    <v-card
-      rounded="lg"
-      elevation="0"
-      border
-      class="d-flex align-center justify-space-between pa-5 mb-4"
-    >
+    <div class="d-flex align-center justify-space-between mb-4">
       <div>
-        <div class="text-subtitle-1 font-weight-bold">Auto-categorization rules</div>
-        <div class="text-body-2 text-medium-emphasis">
-          Applied top-to-bottom as transactions are imported
-        </div>
+        <div class="text-h6 font-weight-bold">Category Rules</div>
+        <div class="text-body-2 text-medium-emphasis">Applied top-to-bottom as transactions are imported</div>
       </div>
-      <v-btn
-        variant="flat"
-        color="primary"
-        rounded="lg"
-        prepend-icon="mdi-plus"
-        @click="openAddDialog"
-        >Add rule</v-btn
-      >
-    </v-card>
+      <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAddDialog">Add rule</v-btn>
+    </div>
 
     <!-- Apply result banner -->
     <v-slide-y-transition>
