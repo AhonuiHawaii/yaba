@@ -86,6 +86,31 @@ export const useUserRulesStore = defineStore('userRules', () => {
     }
   }
 
+  async function moveRule(id, direction) {
+    const sorted = [...rules.value].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+    const idx = sorted.findIndex((r) => r.id === id)
+    const swapIdx = idx + direction
+    if (idx === -1 || swapIdx < 0 || swapIdx >= sorted.length) return
+
+    // Assign clean sequential priorities so ties never block a swap
+    const withPriorities = sorted.map((r, i) => ({ ...r, priority: sorted.length - i }))
+    const tmp = withPriorities[idx].priority
+    withPriorities[idx].priority = withPriorities[swapIdx].priority
+    withPriorities[swapIdx].priority = tmp
+
+    loadingCount.value++
+    error.value = null
+    try {
+      await ipc.invoke('rules:update', withPriorities[idx].id, { priority: withPriorities[idx].priority })
+      await ipc.invoke('rules:update', withPriorities[swapIdx].id, { priority: withPriorities[swapIdx].priority })
+      await fetchRules()
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      loadingCount.value--
+    }
+  }
+
   async function applyToAll() {
     loadingCount.value++
     error.value = null
@@ -109,6 +134,7 @@ export const useUserRulesStore = defineStore('userRules', () => {
     createRule,
     editRule,
     removeRule,
+    moveRule,
     applyToMonth,
     applyToAll
   }

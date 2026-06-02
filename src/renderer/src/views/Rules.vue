@@ -56,6 +56,27 @@
         hide-default-footer
         hover
       >
+        <template #item.move="{ item, index }">
+          <div class="d-flex align-center ga-0">
+            <v-btn
+              icon="mdi-chevron-up"
+              variant="text"
+              size="small"
+              density="compact"
+              :disabled="index === 0"
+              @click="store.moveRule(item.id, -1)"
+            />
+            <v-btn
+              icon="mdi-chevron-down"
+              variant="text"
+              size="small"
+              density="compact"
+              :disabled="index === sortedRules.length - 1"
+              @click="store.moveRule(item.id, 1)"
+            />
+          </div>
+        </template>
+
         <template #item.index="{ index }">
           <span class="text-body-2 text-medium-emphasis">{{ index + 1 }}</span>
         </template>
@@ -295,6 +316,7 @@ function fieldLabel(f) {
 }
 
 const headers = [
+  { title: '', key: 'move', width: '72px', sortable: false },
   { title: '#', key: 'index', width: '60px', sortable: false },
   { title: 'When', key: 'field', width: '130px', sortable: false },
   { title: 'Condition', key: 'condition', sortable: false },
