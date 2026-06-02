@@ -112,26 +112,29 @@
     </v-row>
 
     <!-- Budget table -->
-    <v-card rounded="lg" elevation="0" border>
+    <v-card rounded="lg" elevation="0" border color="primary" variant="tonal">
+      <v-card-item class="pa-5 pb-3">
+        <v-card-title class="text-body-1 font-weight-bold">Budget</v-card-title>
+      </v-card-item>
       <v-table density="comfortable">
         <thead>
           <tr>
-            <th class="text-start text-caption text-medium-emphasis" style="padding-left: 20px">
+            <th class="text-start text-caption text-medium-emphasis pl-5">
               Category
             </th>
-            <th class="text-start text-caption text-medium-emphasis" style="width: 170px">
+            <th class="text-start text-caption text-medium-emphasis" width="170">
               Budgeted
             </th>
-            <th class="text-start text-caption text-medium-emphasis" style="width: 130px">
+            <th class="text-start text-caption text-medium-emphasis" width="130">
               Actual
             </th>
-            <th class="text-start text-caption text-medium-emphasis" style="width: 120px">
+            <th class="text-start text-caption text-medium-emphasis" width="120">
               Remaining
             </th>
-            <th class="text-start text-caption text-medium-emphasis" style="width: 220px">
+            <th class="text-start text-caption text-medium-emphasis" width="220">
               Progress
             </th>
-            <th style="width: 44px"></th>
+            <th width="44"></th>
           </tr>
         </thead>
         <tbody>
@@ -140,12 +143,10 @@
             <tr>
               <td
                 colspan="6"
-                class="py-2"
-                style="padding-left: 20px; border-bottom: none; background: transparent"
+                class="py-2 pl-5 border-b-0"
               >
                 <span
                   class="text-caption font-weight-bold text-uppercase text-primary"
-                  style="letter-spacing: 0.1em"
                 >
                   {{ section.label }}
                 </span>
@@ -161,18 +162,17 @@
 
             <!-- Category rows -->
             <tr v-for="row in section.rows" :key="row.id">
-              <td class="text-body-2 font-weight-medium" style="padding-left: 20px">
+              <td class="text-body-2 font-weight-medium pl-5">
                 {{ row.name }}
               </td>
               <td>
                 <v-text-field
-                  :model-value="row.periodBudget  color="primary"> 0 ? row.periodBudget : ''"
+                  :model-value="row.periodBudget > 0 ? row.periodBudget : ''"
                   type="number"
                   :prefix="userSettings.currencySymbol"
-                  variant="outlined"
+                  variant="solo"
                   density="compact"
                   hide-details
-                  style="max-width: 130px"
                   @update:model-value="(v) => updateBudget(row.id, v)"
                 />
               </td>
@@ -183,13 +183,13 @@
               >
                 {{ (row.remaining >= 0 ? '+' : '') + formatCurrency(row.remaining) }}
               </td>
-              <td style="padding-right: 20px">
+              <td class="pr-5">
                 <v-progress-linear
                   :model-value="row.progress"
                   :color="row.over ? 'error' : 'primary'"
                   height="6"
                   rounded
-                  bg-color="rgba(0,0,0,0.07)"
+                  bg-color="surface-variant"
                 />
               </td>
               <td class="pr-2">
@@ -207,19 +207,18 @@
 
             <!-- Inline add row -->
             <tr v-if="addingType === section.type">
-              <td colspan="6" class="py-1" style="padding-left: 16px">
+              <td colspan="6" class="py-1 pl-4">
                 <v-text-field
                   v-model="newCategoryName"
                   placeholder="Category name"
-                  variant="outlined"
+                  variant="solo"
                   density="compact"
                   hide-details
                   autofocus
-                  style="max-width: 280px"
                   @keyup.enter="saveNewCategory(section.type)"
                   @keyup.esc="cancelNewCategory"
                   @blur="saveNewCategory(section.type)"
-                 color="primary" />
+                />
               </td>
             </tr>
 
@@ -243,19 +242,19 @@
             item-title="label"
             item-value="type"
             label="Section"
-            variant="outlined"
+            variant="solo"
             density="compact"
             hide-details
-           color="primary" />
+          />
           <v-text-field
             v-model="newCategoryName"
             label="Name"
-            variant="outlined"
+            variant="solo"
             density="compact"
             hide-details
             autofocus
             @keyup.enter="saveNewCategoryFromDialog"
-           color="primary" />
+          />
         </v-card-text>
         <v-card-actions class="px-5 pb-5 pt-0">
           <v-spacer />

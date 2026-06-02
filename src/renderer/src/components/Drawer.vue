@@ -10,7 +10,7 @@ const navGroups = [
       { title: 'Monthly Budgets', value: 'MonthlyBudgets', icon: 'mdi-calendar-month-outline' },
       { title: 'Transactions', value: 'Transactions', icon: 'mdi-swap-vertical' },
       { title: 'Spending', value: 'Spending', icon: 'mdi-credit-card-outline' },
-      { title: 'Earnings', value: 'Income', icon: 'mdi-cash-plus' },
+      { title: 'Income', value: 'Income', icon: 'mdi-cash-plus' },
       { title: 'Budgets', value: 'Budgets', icon: 'mdi-scale-balance' }
     ]
   },

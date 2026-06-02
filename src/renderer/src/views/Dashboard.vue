@@ -153,19 +153,25 @@
             <p v-if="topCategories.length === 0" class="text-body-2 text-medium-emphasis">
               No spending this period.
             </p>
-            <div v-for="cat in topCategories" :key="cat.id" class="mb-4">
-              <div class="d-flex justify-space-between mb-1">
-                <span class="text-body-2">{{ cat.name }}</span>
-                <span class="text-body-2 font-weight-medium">{{ formatCurrency(cat.amount) }}</span>
-              </div>
-              <v-progress-linear
-                :model-value="cat.progress"
-                :color="cat.over ? 'error' : 'primary'"
-                height="5"
-                rounded
-                bg-color="surface-variant"
-              />
-            </div>
+            <v-table v-else hover density="compact" class="mt-n2">
+              <tbody>
+                <tr v-for="cat in topCategories" :key="cat.id">
+                  <td class="py-3">
+                    <div class="d-flex justify-space-between mb-2">
+                      <span class="text-body-2">{{ cat.name }}</span>
+                      <span class="text-body-2 font-weight-medium">{{ formatCurrency(cat.amount) }}</span>
+                    </div>
+                    <v-progress-linear
+                      :model-value="cat.progress"
+                      :color="cat.over ? 'error' : 'primary'"
+                      height="5"
+                      rounded
+                      bg-color="surface-variant"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
           </v-card-text>
         </v-card>
       </v-col>
@@ -192,30 +198,33 @@
           <div v-if="needsReview.length === 0" class="px-5 pb-5 text-body-2 text-medium-emphasis">
             All transactions are categorized.
           </div>
-          <template v-for="tx in needsReview" :key="tx.FITID">
-            <v-divider />
-            <div class="d-flex align-center justify-space-between px-5 py-3">
-              <div>
-                <div class="text-body-2 font-weight-medium">
-                  {{ tx.NAME || tx.MEMO || tx.FITID }}
-                </div>
-                <div class="text-caption text-medium-emphasis">
-                  {{ formatTransactionDate(tx.DTPOSTED) }}
-                </div>
-              </div>
-              <div class="d-flex align-center gap-3">
-                <v-chip size="x-small" variant="outlined">
-                  {{ tx.category ? tx.category : 'Uncategorized' }}
-                </v-chip>
-                <span
-                  class="text-body-2 font-weight-medium"
-                  :class="Number(tx.TRNAMT) >= 0 ? 'text-success' : ''"
-                >
-                  {{ formatCurrency(Number(tx.TRNAMT)) }}
-                </span>
-              </div>
-            </div>
-          </template>
+          <v-table v-else hover density="compact">
+            <tbody>
+              <tr v-for="tx in needsReview" :key="tx.FITID">
+                <td class="py-2">
+                  <div class="text-body-2 font-weight-medium">
+                    {{ tx.NAME || tx.MEMO || tx.FITID }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ formatTransactionDate(tx.DTPOSTED) }}
+                  </div>
+                </td>
+                <td class="text-right py-2">
+                  <v-chip size="x-small" variant="outlined">
+                    {{ tx.category ? tx.category : 'Uncategorized' }}
+                  </v-chip>
+                </td>
+                <td class="text-right py-2">
+                  <span
+                    class="text-body-2 font-weight-medium"
+                    :class="Number(tx.TRNAMT) >= 0 ? 'text-success' : ''"
+                  >
+                    {{ formatCurrency(Number(tx.TRNAMT)) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
         </v-card>
       </v-col>
 
@@ -227,23 +236,28 @@
           <div v-if="soonItems.length === 0" class="px-5 pb-5 text-body-2 text-medium-emphasis">
             No upcoming bills in the next 7 days.
           </div>
-          <template v-for="item in soonItems" :key="item.name">
-            <v-divider />
-            <div class="d-flex align-center gap-3 px-5 py-3">
-              <v-avatar color="primary" variant="tonal" size="36" rounded="lg">
-                <v-icon size="18">mdi-receipt-text-outline</v-icon>
-              </v-avatar>
-              <div class="flex-grow-1">
-                <div class="text-body-2 font-weight-medium">{{ item.name }}</div>
-                <div class="text-caption text-medium-emphasis">
-                  Due {{ formatDueDate(item.days) }}
-                </div>
-              </div>
-              <span class="text-body-2 font-weight-medium">{{
-                formatCurrency(item.typicalAmount)
-              }}</span>
-            </div>
-          </template>
+          <v-table v-else hover density="compact">
+            <tbody>
+              <tr v-for="item in soonItems" :key="item.name">
+                <td class="py-2" style="width: 52px;">
+                  <v-avatar color="primary" variant="tonal" size="36" rounded="lg">
+                    <v-icon size="18">mdi-receipt-text-outline</v-icon>
+                  </v-avatar>
+                </td>
+                <td class="py-2">
+                  <div class="text-body-2 font-weight-medium">{{ item.name }}</div>
+                  <div class="text-caption text-medium-emphasis">
+                    Due {{ formatDueDate(item.days) }}
+                  </div>
+                </td>
+                <td class="text-right py-2">
+                  <span class="text-body-2 font-weight-medium">{{
+                    formatCurrency(item.typicalAmount)
+                  }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
         </v-card>
       </v-col>
     </v-row>

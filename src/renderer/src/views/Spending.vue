@@ -179,12 +179,11 @@
         <v-card-title class="text-body-1 font-weight-bold">Top merchants</v-card-title>
       </v-card-item>
 
-      <v-table density="comfortable">
+      <v-table density="comfortable" class="bg-transparent">
         <thead>
           <tr>
             <th
-              class="text-caption font-weight-bold text-uppercase"
-              style="color: var(--v-theme-primary)"
+              class="text-caption font-weight-bold text-uppercase text-primary"
             >
               Merchant
             </th>
@@ -384,7 +383,7 @@ const hexToRgba = (hex, alpha) => {
 }
 
 const spendingTrendData = computed(() => {
-  const primaryColor = theme.current.value.colors.primary || '#5c6bc0'
+  const primaryColor = theme.current.value.colors.primary
 
   return {
     labels: trendMonths.value.map((m) => {
@@ -405,7 +404,7 @@ const spendingTrendData = computed(() => {
 })
 
 const spendingTrendOptions = computed(() => {
-  const outlineColor = theme.current.value.colors.outline || '#9e9e9e'
+  const outlineColor = theme.current.value.colors.outline
   const tickColor = hexToRgba(outlineColor, 0.6)
   const gridColor = hexToRgba(outlineColor, 0.15)
 

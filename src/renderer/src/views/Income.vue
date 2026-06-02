@@ -182,8 +182,7 @@
             <th class="text-caption font-weight-bold text-uppercase">Source</th>
             <th class="text-caption font-weight-bold text-uppercase">Type</th>
             <th
-              class="text-caption font-weight-bold text-uppercase text-right"
-              style="color: var(--v-theme-success)"
+              class="text-caption font-weight-bold text-uppercase text-right text-success"
             >
               Amount
             </th>
@@ -202,7 +201,7 @@
             <td class="text-body-2 font-weight-medium py-3">{{ t.name }}</td>
             <td class="py-3">
               <v-chip v-if="t.category" size="x-small" variant="tonal" color="primary">
-                {{ t.category }}
+                {{ categoriesStore.categoryById[t.category]?.name || 'Unknown' }}
               </v-chip>
               <span v-else class="text-caption text-medium-emphasis">Other</span>
             </td>
@@ -389,7 +388,7 @@ const hexToRgba = (hex, alpha) => {
 }
 
 const incomeTrendData = computed(() => {
-  const successColor = theme.current.value.colors.success || '#4caf50'
+  const successColor = theme.current.value.colors.success
 
   return {
     labels: trendMonths.value.map((m) => {
@@ -410,7 +409,7 @@ const incomeTrendData = computed(() => {
 })
 
 const incomeTrendOptions = computed(() => {
-  const outlineColor = theme.current.value.colors.outline || '#9e9e9e'
+  const outlineColor = theme.current.value.colors.outline
   const tickColor = hexToRgba(outlineColor, 0.6)
   const gridColor = hexToRgba(outlineColor, 0.15)
 
