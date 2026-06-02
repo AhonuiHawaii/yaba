@@ -1,265 +1,288 @@
 <template>
   <v-container fluid class="pa-4">
-    <v-sheet rounded="sm" elevation="2" class="pa-4">
-      <div v-if="recurringLoading" class="d-flex justify-center pa-12">
-        <v-progress-circular indeterminate color="primary" />
-      </div>
+    <div v-if="loading" class="d-flex justify-center pa-12">
+      <v-progress-circular indeterminate color="primary" />
+    </div>
 
-      <div
-        v-else-if="!recurringGroups.length"
-        class="d-flex flex-column align-center text-medium-emphasis pa-12"
-      >
-        <v-icon size="60" class="mb-4" style="opacity: 0.3" icon="mdi-calendar-sync" />
-        <div class="text-body-1">No recurring transactions detected yet.</div>
-        <div class="text-caption mt-1">Import more months of history to improve detection.</div>
-        <v-btn
-          class="mt-4"
-          size="small"
-          variant="flat"
-          prepend-icon="mdi-refresh"
+    <template v-else>
+      <!-- Summary cards -->
+      <div class="summary-grid mb-4">
+        <v-card
+          v-for="card in summaryCards"
+          :key="card.title"
           rounded="sm"
-          :loading="recurringLoading"
-          @click="rescan"
-          >Rescan</v-btn
+          elevation="1"
+          class="pa-4"
+        >
+          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-1">
+            {{ card.title }}
+          </div>
+          <div class="text-h5 font-weight-bold" :class="card.valueClass">{{ card.value }}</div>
+          <div class="text-caption text-medium-emphasis">{{ card.subtitle }}</div>
+        </v-card>
+      </div>
+
+      <!-- Filter chips -->
+      <div class="d-flex gap-2 mb-4">
+        <v-chip
+          v-for="f in filterOptions"
+          :key="f.key"
+          :variant="activeFilter === f.key ? 'flat' : 'outlined'"
+          :color="activeFilter === f.key ? 'primary' : undefined"
+          :prepend-icon="activeFilter === f.key ? 'mdi-check' : undefined"
+          size="small"
+          rounded="sm"
+          class="cursor-pointer"
+          @click="activeFilter = f.key"
+          >{{ f.label }}</v-chip
         >
       </div>
 
-      <template v-else>
-        <div class="d-flex align-center mb-4">
-          <span class="text-body-2 text-medium-emphasis">
-            {{ recurringGroups.length }} recurring merchants detected
-          </span>
-          <v-spacer />
-          <v-btn
-            size="small"
-            variant="flat"
-            prepend-icon="mdi-refresh"
-            rounded="sm"
-            :loading="recurringLoading"
-            @click="rescan"
-            >Rescan</v-btn
-          >
-        </div>
-
-        <!-- Column headers -->
+      <!-- Table -->
+      <v-sheet rounded="sm" elevation="1">
         <div
-          class="recurring-table-header text-caption text-uppercase font-weight-bold text-medium-emphasis px-4 mb-1"
+          class="sub-row sub-row--header text-caption text-uppercase font-weight-bold text-medium-emphasis"
         >
-          <span>Name / Frequency</span>
-          <span>Account</span>
-          <span>Due</span>
+          <span>Service</span>
+          <span>Category</span>
+          <span>Billing</span>
+          <span>Next charge</span>
           <span class="text-right">Amount</span>
+          <span>Status</span>
+          <span></span>
+        </div>
+        <v-divider />
+
+        <div
+          v-if="!filtered.length"
+          class="d-flex flex-column align-center text-medium-emphasis pa-12"
+        >
+          <v-icon size="48" class="mb-3" style="opacity: 0.3" icon="mdi-calendar-sync" />
+          <div class="text-body-2">No subscriptions found.</div>
         </div>
 
-        <v-list class="pa-0">
-          <v-list-item
-            v-for="group in recurringGroups"
-            :key="group.name"
-            rounded="sm"
-            class="mb-1 recurring-row px-4"
-          >
-            <!-- Avatar -->
-            <template #prepend>
-              <v-avatar color="primary" variant="tonal" size="36" rounded="sm" class="mr-3">
-                <span class="text-caption font-weight-bold">{{ group.initials }}</span>
+        <template v-for="(sub, i) in filtered" :key="sub.name">
+          <div class="sub-row">
+            <!-- Service -->
+            <div class="d-flex align-center gap-3">
+              <v-avatar
+                color="primary"
+                variant="tonal"
+                size="36"
+                rounded="sm"
+                class="flex-shrink-0"
+              >
+                <span class="text-caption font-weight-bold">{{ sub.initials }}</span>
               </v-avatar>
-            </template>
-
-            <!-- Name + frequency -->
-            <template #title>
-              <span class="text-body-2 font-weight-medium">{{ group.name }}</span>
-            </template>
-            <template #subtitle>
-              <span class="text-caption font-weight-medium text-success">{{
-                group.frequency
-              }}</span>
-            </template>
-
-            <template #append>
-              <div class="recurring-row-append">
-                <!-- Account -->
-                <div class="recurring-col-account">
-                  <span class="text-caption text-medium-emphasis">{{
-                    group.lastFour ? `••••${group.lastFour}` : '—'
-                  }}</span>
-                </div>
-
-                <!-- Due -->
-                <div class="recurring-col-due">
-                  <span
-                    v-if="group.dueLabel"
-                    class="text-caption font-weight-medium"
-                    :class="group.dueUrgent ? 'text-warning' : 'text-medium-emphasis'"
+              <div class="min-width-0">
+                <div class="text-body-2 font-weight-medium text-truncate">{{ sub.name }}</div>
+                <div class="text-caption text-medium-emphasis">
+                  <span v-if="sub.priceUp" class="text-warning"
+                    >▲ up from {{ formatCurrency(sub.previousAmount) }}</span
                   >
-                    {{ group.dueLabel }}
-                  </span>
-                  <span v-else class="text-caption text-medium-emphasis">—</span>
-                </div>
-
-                <!-- Amount -->
-                <div class="recurring-col-amount text-right">
-                  <span class="text-body-2 font-weight-bold">
-                    {{ formatCurrency(group.typicalAmount) }}
-                  </span>
+                  <span v-else-if="sub.unused">no charge in {{ sub.daysSinceCharge }} days</span>
+                  <span v-else-if="sub.billing === 'Yearly'">detected yearly</span>
+                  <span v-else-if="sub.fromRule">added manually</span>
+                  <span v-else
+                    >detected from {{ sub.monthCount }} import{{
+                      sub.monthCount !== 1 ? 's' : ''
+                    }}</span
+                  >
                 </div>
               </div>
-            </template>
-          </v-list-item>
-        </v-list>
-      </template>
-    </v-sheet>
+            </div>
+
+            <!-- Category -->
+            <div>
+              <v-chip v-if="sub.category" size="x-small" variant="tonal" color="teal" rounded="sm">
+                {{ sub.category }}
+              </v-chip>
+              <span v-else class="text-caption text-medium-emphasis">—</span>
+            </div>
+
+            <!-- Billing -->
+            <div>
+              <span class="text-body-2 text-medium-emphasis">{{ sub.billing }}</span>
+            </div>
+
+            <!-- Next charge -->
+            <div>
+              <span class="text-body-2 text-medium-emphasis">{{ sub.nextChargeLabel }}</span>
+            </div>
+
+            <!-- Amount -->
+            <div class="text-right">
+              <span class="text-body-2 font-weight-bold">
+                {{
+                  sub.billing === 'Yearly'
+                    ? `${formatCurrency(sub.currentAmount)}/yr`
+                    : formatCurrency(sub.currentAmount)
+                }}
+              </span>
+            </div>
+
+            <!-- Status -->
+            <div>
+              <v-chip
+                v-if="sub.status === 'priceUp'"
+                size="x-small"
+                color="orange"
+                variant="flat"
+                rounded="sm"
+              >
+                Price up
+              </v-chip>
+              <v-chip
+                v-else-if="sub.status === 'unused'"
+                size="x-small"
+                color="amber-darken-2"
+                variant="flat"
+                rounded="sm"
+              >
+                Unused?
+              </v-chip>
+              <v-chip v-else size="x-small" color="success" variant="flat" rounded="sm">
+                Active
+              </v-chip>
+            </div>
+
+            <!-- Action -->
+            <div>
+              <v-btn
+                v-if="sub.status === 'unused'"
+                size="x-small"
+                variant="outlined"
+                rounded="sm"
+                color="amber-darken-2"
+                @click="emit('cancel', sub)"
+                >Review</v-btn
+              >
+              <v-btn
+                v-else
+                size="x-small"
+                variant="outlined"
+                rounded="sm"
+                @click="emit('cancel', sub)"
+                >Cancel</v-btn
+              >
+            </div>
+          </div>
+          <v-divider v-if="i < filtered.length - 1" />
+        </template>
+      </v-sheet>
+    </template>
   </v-container>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useUserAccountsStore } from '../stores/userAccounts'
+import { ref, computed } from 'vue'
 import { useUserSettingsStore } from '../stores/userSettings'
 
-const accountsStore = useUserAccountsStore()
+const props = defineProps({
+  subscriptions: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false }
+})
+const emit = defineEmits(['cancel'])
+
 const { formatCurrency } = useUserSettingsStore()
+const activeFilter = ref('all')
 
-const recurringTransactions = ref([])
-const recurringLoading = ref(false)
+const filterOptions = computed(() => [
+  { key: 'all', label: `All ${props.subscriptions.length}` },
+  { key: 'active', label: 'Active' },
+  { key: 'unused', label: 'Unused' },
+  { key: 'renewing', label: 'Renewing soon' }
+])
 
-async function fetchRecurring() {
-  recurringLoading.value = true
-  const result = await window.electron.ipcRenderer.invoke('transactions:fetch', { recurring: 1 })
-  if (result.success) recurringTransactions.value = result.data
-  recurringLoading.value = false
-}
-
-async function rescan() {
-  recurringLoading.value = true
-  await window.electron.ipcRenderer.invoke('transactions:rescanRecurring')
-  await fetchRecurring()
-}
-
-function median(arr) {
-  if (!arr.length) return 0
-  const sorted = [...arr].sort((a, b) => a - b)
-  return sorted[Math.floor(sorted.length / 2)]
-}
-
-function daysUntil(dayOfMonth) {
-  if (!dayOfMonth) return null
-  const now = new Date()
-  const thisMonth = new Date(now.getFullYear(), now.getMonth(), dayOfMonth)
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, dayOfMonth)
-  const target = thisMonth >= now ? thisMonth : nextMonth
-  return Math.round((target - now) / 86400000)
-}
-
-function dueLabelFromDays(days) {
-  if (days === null) return null
-  if (days === 0) return 'due today'
-  if (days === 1) return 'tomorrow'
-  if (days < 0) return `${Math.abs(days)}d overdue`
-  return `in ${days} days`
-}
-
-const recurringGroups = computed(() => {
-  const map = new Map()
-
-  for (const tx of recurringTransactions.value) {
-    const key = tx.NAME || 'Unknown'
-    if (!map.has(key))
-      map.set(key, {
-        name: key,
-        amounts: [],
-        days: [],
-        months: new Set(),
-        categories: [],
-        acctid: tx.ACCTID || null
-      })
-    const g = map.get(key)
-    const amt = Math.abs(Number(tx.TRNAMT))
-    if (amt > 0) g.amounts.push(amt)
-    if (tx.DTPOSTED?.length >= 8) g.days.push(parseInt(tx.DTPOSTED.slice(6, 8), 10))
-    if (tx.DTPOSTED?.length >= 6) g.months.add(tx.DTPOSTED.slice(0, 6))
-    if (tx.category) g.categories.push(tx.category)
+const filtered = computed(() => {
+  const now = Date.now()
+  switch (activeFilter.value) {
+    case 'active':
+      return props.subscriptions.filter((s) => s.status === 'active')
+    case 'unused':
+      return props.subscriptions.filter((s) => s.status === 'unused')
+    case 'renewing':
+      return props.subscriptions.filter(
+        (s) => s.nextCharge && (s.nextCharge.getTime() - now) / 86400000 <= 7
+      )
+    default:
+      return props.subscriptions
   }
-
-  return [...map.values()]
-    .map((g) => {
-      const typicalAmount = median(g.amounts)
-      const typicalDay = g.days.length ? median(g.days) : null
-      const category = g.categories.length
-        ? g.categories.sort(
-            (a, b) =>
-              g.categories.filter((c) => c === b).length -
-              g.categories.filter((c) => c === a).length
-          )[0]
-        : null
-      const initials = g.name
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase() ?? '')
-        .join('')
-
-      const acct = accountsStore.accounts.find((a) => a.ACCTID === g.acctid)
-      const account = acct?.displayName || acct?.ORG || null
-      const lastFour = g.acctid ? g.acctid.slice(-4) : null
-
-      const days = daysUntil(typicalDay)
-      const dueLabel = dueLabelFromDays(days)
-      const dueUrgent = days !== null && days <= 7
-
-      return {
-        name: g.name,
-        typicalAmount,
-        typicalDay,
-        monthCount: g.months.size,
-        frequency: 'Monthly',
-        category,
-        initials,
-        account,
-        lastFour,
-        dueLabel,
-        dueUrgent
-      }
-    })
-    .sort((a, b) => (a.typicalDay ?? 99) - (b.typicalDay ?? 99))
 })
 
-onMounted(async () => {
-  await Promise.all([accountsStore.fetchAccounts(), fetchRecurring()])
+const activeCount = computed(() => props.subscriptions.filter((s) => s.status === 'active').length)
+
+const monthlyTotal = computed(() =>
+  props.subscriptions
+    .filter((s) => s.billing !== 'Yearly')
+    .reduce((sum, s) => sum + (s.currentAmount || 0), 0)
+)
+
+const yearlyTotal = computed(() => {
+  const fromMonthly = monthlyTotal.value * 12
+  const fromYearly = props.subscriptions
+    .filter((s) => s.billing === 'Yearly')
+    .reduce((sum, s) => sum + (s.currentAmount || 0), 0)
+  return fromMonthly + fromYearly
 })
+
+const renewingSoonCount = computed(() => {
+  const now = Date.now()
+  return props.subscriptions.filter(
+    (s) => s.nextCharge && (s.nextCharge.getTime() - now) / 86400000 <= 7
+  ).length
+})
+
+const priceHikeCount = computed(() => props.subscriptions.filter((s) => s.priceUp).length)
+
+const summaryCards = computed(() => [
+  {
+    title: 'Monthly Total',
+    value: formatCurrency(monthlyTotal.value),
+    subtitle: `${activeCount.value} active sub${activeCount.value !== 1 ? 's' : ''}`,
+    valueClass: ''
+  },
+  {
+    title: 'Yearly',
+    value: formatCurrency(yearlyTotal.value),
+    subtitle: 'if nothing changes',
+    valueClass: ''
+  },
+  {
+    title: 'Renewing Soon',
+    value: String(renewingSoonCount.value),
+    subtitle: 'next 7 days',
+    valueClass: ''
+  },
+  {
+    title: 'Price Hikes',
+    value: String(priceHikeCount.value),
+    subtitle: 'went up recently',
+    valueClass: priceHikeCount.value > 0 ? 'text-error' : ''
+  }
+])
 </script>
 
 <style scoped>
-.recurring-table-header {
+.summary-grid {
   display: grid;
-  grid-template-columns: 1fr 120px 120px 100px;
-  align-items: center;
-  gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
-.recurring-row :deep(.v-list-item__append) {
-  width: calc(120px + 120px + 100px + 48px);
-}
-
-.recurring-row-append {
+.sub-row {
   display: grid;
-  grid-template-columns: 120px 120px 100px 36px;
+  grid-template-columns: 1fr 128px 80px 110px 96px 106px 86px;
   align-items: center;
-  gap: 8px;
-  width: 100%;
+  column-gap: 12px;
+  padding: 12px 16px;
 }
 
-.recurring-col-account {
-  display: flex;
-  align-items: center;
+.sub-row--header {
+  padding: 8px 16px;
 }
 
-.recurring-col-due {
-  display: flex;
-  align-items: center;
-}
-
-.recurring-col-amount {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+.min-width-0 {
+  min-width: 0;
 }
 </style>

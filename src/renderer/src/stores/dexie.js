@@ -12,7 +12,8 @@ db.version(1).stores({
   budgets: 'id, categoryId, amount, createdAt',
   goals: 'id, name, targetDate, status, createdAt',
   debtDetails: 'id, updatedAt',
-  budgetRollovers: 'id, categoryId, month, createdAt'
+  budgetRollovers: 'id, categoryId, month, createdAt',
+  budgetGroups: 'id, type, categoryId, createdAt'
 })
 
 db.on('populate', () => {
