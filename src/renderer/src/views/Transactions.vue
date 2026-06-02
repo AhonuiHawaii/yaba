@@ -317,11 +317,11 @@
                 variant="solo"
                 inset
                 density="comfortable"
+                color="primary"
                 hide-details
                 autofocus
                 clearable
-                @keyup.enter="saveCategory"
-               color="primary" />
+                @keyup.enter="saveCategory" />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -364,11 +364,11 @@
                 variant="solo"
                 inset
                 density="comfortable"
+                color="primary"
                 hide-details
                 autofocus
                 clearable
-                @keyup.enter="savePayee"
-               color="primary" />
+                @keyup.enter="savePayee" />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -633,11 +633,11 @@
                 variant="solo"
                 inset
                 density="comfortable"
+                color="primary"
                 hide-details
                 autofocus
                 clearable
-                @keyup.enter="saveBulkPayee"
-               color="primary" />
+                @keyup.enter="saveBulkPayee" />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">

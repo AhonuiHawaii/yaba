@@ -101,11 +101,11 @@ const toggleTheme = () => {
           <div
             v-for="accent in accentColors"
             :key="accent.value"
+            v-ripple
             class="accent-swatch-circle"
             :style="{ backgroundColor: accent.color }"
-            @click="selectTheme(accent.value)"
-            v-ripple
             :title="accent.title"
+            @click="selectTheme(accent.value)"
           >
             <v-icon
               v-if="selectedBaseTheme === accent.value"
@@ -122,11 +122,11 @@ const toggleTheme = () => {
         <div class="px-4">
           <v-switch
             :model-value="theme.global.name.value.includes('Dark')"
-            @update:model-value="toggleTheme"
             color="primary"
             inset
             hide-details
             density="compact"
+            @update:model-value="toggleTheme"
           >
             <template #label>
               <span class="text-body-2 text-medium-emphasis ml-2">Dark mode</span>

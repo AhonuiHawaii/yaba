@@ -17,10 +17,10 @@
         label="Method"
         variant="solo"
         density="compact"
+        color="secondary"
         hide-details
         style="max-width: 180px"
-        @update:model-value="debtsStore.setStrategy"
-       color="secondary" />
+        @update:model-value="debtsStore.setStrategy" />
     </div>
 
     <!-- Summary Cards -->

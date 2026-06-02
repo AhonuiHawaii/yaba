@@ -37,7 +37,7 @@
         <div class="stat-value">{{ formattedDbSize }}</div>
         <div class="stat-subtext">
           <div>{{ totalTransactions.toLocaleString() }} transactions</div>
-          <div class="db-path-short" v-if="dbPath" :title="formattedDbPath">
+          <div v-if="dbPath" class="db-path-short" :title="formattedDbPath">
             {{ shortenedPath }}
           </div>
         </div>

@@ -115,7 +115,7 @@
       <v-table density="comfortable">
         <thead>
           <tr>
-            <th class="text-start text-caption text-medium-emphasis pl-5">
+            <th class="text-start text-caption text-medium-emphasis pl-5" width="200">
               Category
             </th>
             <th class="text-start text-caption text-medium-emphasis" width="170">
@@ -130,7 +130,7 @@
             <th class="text-start text-caption text-medium-emphasis" width="220">
               Progress
             </th>
-            <th width="44"></th>
+            <th width="88"></th>
           </tr>
         </thead>
         <tbody>
@@ -158,7 +158,7 @@
 
             <!-- Category rows -->
             <tr v-for="row in section.rows" :key="row.id">
-              <td class="text-body-2 font-weight-medium pl-5">
+              <td class="text-body-2 font-weight-medium pl-5 text-truncate" style="max-width: 200px">
                 {{ row.name }}
               </td>
               <td>
@@ -190,6 +190,14 @@
                 />
               </td>
               <td class="pr-2">
+                <v-btn
+                  icon="mdi-pencil-outline"
+                  variant="text"
+                  size="small"
+                  density="compact"
+                  :opacity="0.4"
+                  @click="openEditCategory(row)"
+                />
                 <v-btn
                   icon="mdi-delete-outline"
                   variant="text"
@@ -257,6 +265,29 @@
           <v-spacer />
           <v-btn variant="text" @click="addCategoryDialog = false">Cancel</v-btn>
           <v-btn color="primary" variant="flat" @click="saveNewCategoryFromDialog">Add</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Edit category dialog -->
+    <v-dialog v-model="editCategoryDialog" max-width="360">
+      <v-card rounded="lg">
+        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">Edit category</v-card-title>
+        <v-card-text class="pa-5 pt-0">
+          <v-text-field
+            v-model="editCategoryName"
+            label="Name"
+            variant="solo"
+            density="compact"
+            hide-details
+            autofocus
+            @keyup.enter="saveEditCategory"
+          />
+        </v-card-text>
+        <v-card-actions class="px-5 pb-5 pt-0">
+          <v-spacer />
+          <v-btn variant="text" @click="editCategoryDialog = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" :disabled="!editCategoryName.trim()" @click="saveEditCategory">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -431,6 +462,24 @@ async function copyLastPeriod() {
   } finally {
     copying.value = false
   }
+}
+
+// ── Edit category ─────────────────────────────────────────────────────────────
+const editCategoryDialog = ref(false)
+const editCategoryId = ref(null)
+const editCategoryName = ref('')
+
+function openEditCategory(row) {
+  editCategoryId.value = row.id
+  editCategoryName.value = row.name
+  editCategoryDialog.value = true
+}
+
+async function saveEditCategory() {
+  const name = editCategoryName.value.trim()
+  if (!name) return
+  editCategoryDialog.value = false
+  await categoriesStore.updateCategory(editCategoryId.value, { name })
 }
 
 // ── Add category ──────────────────────────────────────────────────────────────

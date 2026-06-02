@@ -27,15 +27,15 @@
               <div
                 v-for="(accent, index) in accentColors"
                 :key="accent.value"
+                v-ripple
                 class="accent-swatch-circle"
-                :class="{ 
+                :class="{
                   'active': selectedBaseTheme === accent.value,
-                  'mr-4': index !== accentColors.length - 1 
+                  'mr-4': index !== accentColors.length - 1
                 }"
                 :style="{ backgroundColor: accent.color }"
-                v-ripple
-                @click="selectTheme(accent.value)"
                 :title="accent.title"
+                @click="selectTheme(accent.value)"
               >
                 <v-icon
                   v-if="selectedBaseTheme === accent.value"
@@ -75,9 +75,9 @@
                     item-value="code"
                     variant="solo-filled"
                     density="compact"
+                    color="primary"
                     hide-details
-                    @update:model-value="updateCurrency"
-                   color="primary"></v-autocomplete>
+                    @update:model-value="updateCurrency"></v-autocomplete>
                 </div>
               </v-col>
 
