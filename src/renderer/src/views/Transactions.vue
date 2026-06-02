@@ -814,6 +814,7 @@ import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserAccountsStore } from '../stores/userAccounts'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import RulesView from './Rules.vue'
 
@@ -825,8 +826,9 @@ const { formatCurrency, formatDate } = userSettings
 
 const activeTab = ref('transactions')
 
-const { period, periodLabel, periodMonths, isNextPeriodFuture, prevPeriod, nextPeriod } =
-  usePeriodFilter('annual')
+const _pf = usePeriodFilter()
+const { period, periodLabel, periodMonths, isNextPeriodFuture } = storeToRefs(_pf)
+const { prevPeriod, nextPeriod } = _pf
 
 const uncategorizedCount = computed(
   () => store.transactions.filter((t) => !t.category && !t.splitCategory1).length

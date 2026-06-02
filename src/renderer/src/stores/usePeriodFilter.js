@@ -1,8 +1,7 @@
+import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 
-export function usePeriodFilter(initialPeriod = 'month') {
-  const period = ref(initialPeriod)
-
+export const usePeriodFilter = defineStore('periodFilter', () => {
   function currentMonthValue() {
     const now = new Date()
     return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -32,7 +31,19 @@ export function usePeriodFilter(initialPeriod = 'month') {
     }
   }
 
-  const periodStart = ref(snapToPeriodStart(currentMonthValue(), initialPeriod))
+  const STORAGE_KEY = 'yaba:periodFilter'
+  const saved = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY))
+    } catch {
+      return null
+    }
+  })()
+
+  const period = ref(saved?.period ?? 'month')
+  const periodStart = ref(
+    saved?.periodStart ?? snapToPeriodStart(currentMonthValue(), saved?.period ?? 'month')
+  )
 
   const periodLength = computed(
     () => ({ month: 1, quarter: 3, semi: 6, annual: 12 })[period.value] ?? 1
@@ -85,6 +96,10 @@ export function usePeriodFilter(initialPeriod = 'month') {
     periodStart.value = snapToPeriodStart(periodStart.value, newPeriod)
   })
 
+  watch([period, periodStart], ([p, ps]) =>
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ period: p, periodStart: ps }))
+  )
+
   return {
     period,
     periodStart,
@@ -97,4 +112,4 @@ export function usePeriodFilter(initialPeriod = 'month') {
     currentMonthValue,
     offsetMonth
   }
-}
+})

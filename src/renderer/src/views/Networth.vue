@@ -83,6 +83,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import { Line } from 'vue-chartjs'
 import {
@@ -122,17 +123,10 @@ const { formatCurrency } = useUserSettingsStore()
 
 const reportError = ref(null)
 
-const {
-  period,
-  periodStart,
-  periodLength,
-  periodMonths,
-  periodLabel,
-  isNextPeriodFuture,
-  prevPeriod,
-  nextPeriod,
-  offsetMonth
-} = usePeriodFilter()
+const _pf = usePeriodFilter()
+const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
+  storeToRefs(_pf)
+const { prevPeriod, nextPeriod, offsetMonth } = _pf
 
 const netWorthHistory = computed(() => transactionsStore.netWorthHistory)
 const latest = computed(() => netWorthHistory.value[netWorthHistory.value.length - 1] || null)

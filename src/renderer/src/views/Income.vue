@@ -234,6 +234,7 @@ import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip } fro
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip)
@@ -245,18 +246,10 @@ const { formatCurrency } = useUserSettingsStore()
 const ipc = window.electron?.ipcRenderer
 
 // ── Period filter ─────────────────────────────────────────────────────────────
-const {
-  period,
-  periodStart,
-  periodLength,
-  periodMonths,
-  periodLabel,
-  isNextPeriodFuture,
-  prevPeriod,
-  nextPeriod,
-  currentMonthValue,
-  offsetMonth
-} = usePeriodFilter('month')
+const _pf = usePeriodFilter()
+const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
+  storeToRefs(_pf)
+const { prevPeriod, nextPeriod, currentMonthValue, offsetMonth } = _pf
 
 // ── Period bounds ─────────────────────────────────────────────────────────────
 const periodBounds = computed(() => {

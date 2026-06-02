@@ -272,6 +272,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import { useUserBudgetsStore } from '../stores/userBudgets'
 import { useUserCategoriesStore } from '../stores/userCategories'
@@ -284,17 +285,10 @@ const { formatCurrency } = userSettings
 const ipc = window.electron?.ipcRenderer
 
 // ── Period filter ─────────────────────────────────────────────────────────────
-const {
-  period,
-  periodStart,
-  periodLength,
-  periodMonths,
-  periodLabel,
-  isNextPeriodFuture,
-  prevPeriod,
-  nextPeriod,
-  offsetMonth
-} = usePeriodFilter('month')
+const _pf = usePeriodFilter()
+const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
+  storeToRefs(_pf)
+const { prevPeriod, nextPeriod, offsetMonth } = _pf
 
 // ── Transaction loading ───────────────────────────────────────────────────────
 const transactions = ref([])

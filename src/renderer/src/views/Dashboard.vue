@@ -272,6 +272,7 @@ import { useUserBudgetsStore } from '../stores/userBudgets'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip)
@@ -290,18 +291,10 @@ const periodTransactions = ref([])
 const recurringTransactions = ref([])
 
 // ── Period navigation ─────────────────────────────────────────────────────────
-const {
-  period,
-  periodStart,
-  periodLength,
-  periodMonths,
-  periodLabel,
-  isNextPeriodFuture,
-  prevPeriod,
-  nextPeriod,
-  currentMonthValue,
-  offsetMonth
-} = usePeriodFilter('month')
+const _pf = usePeriodFilter()
+const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
+  storeToRefs(_pf)
+const { prevPeriod, nextPeriod, currentMonthValue, offsetMonth } = _pf
 
 // ── Period bounds ─────────────────────────────────────────────────────────────
 const periodBounds = computed(() => {
