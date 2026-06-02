@@ -1,269 +1,89 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-6">
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
+    <div class="d-flex flex-wrap align-start justify-space-between gap-4 mb-6">
+      <div>
+        <div class="text-h5 font-weight-bold">Net worth</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">Assets minus debts · {{ periodLabel }}</div>
+      </div>
+      <div class="d-flex align-center gap-3">
+        <div class="d-flex align-center">
+          <v-btn icon="mdi-chevron-left" variant="text" density="compact" size="small" @click="prevPeriod" />
+          <span class="text-body-2 font-weight-medium mx-3 text-no-wrap">{{ periodLabel }}</span>
+          <v-btn icon="mdi-chevron-right" variant="text" density="compact" size="small" :disabled="isNextPeriodFuture" @click="nextPeriod" />
+        </div>
+        <v-btn-toggle v-model="period" mandatory density="compact" rounded="lg" variant="outlined" color="primary" divided>
+          <v-btn value="month" size="small">Month</v-btn>
+          <v-btn value="quarter" size="small">Quarter</v-btn>
+          <v-btn value="semi" size="small">Semi</v-btn>
+          <v-btn value="annual" size="small">Annual</v-btn>
+        </v-btn-toggle>
+      </div>
+    </div>
+
     <v-alert v-if="reportError" type="error" variant="flat" class="mb-4">
       {{ reportError }}
     </v-alert>
 
-    <v-row class="mb-6">
-      <!-- Net Worth Trend Chart -->
-      <v-col cols="12" lg="8">
-        <v-card rounded="sm" elevation="2" class="h-100">
-          <v-card-text class="pa-6 pb-4">
-            <div class="text-caption text-medium-emphasis font-weight-medium mb-1">
-              Total net worth
-            </div>
-            <div class="text-h4 font-weight-black mb-1">{{ formatCurrency(netWorth) }}</div>
-            <div v-if="netWorthHistory.length >= 2" class="d-flex align-center ga-1 mb-4">
-              <v-icon :color="sixMonthChange >= 0 ? 'success' : 'error'" size="16">
-                {{ sixMonthChange >= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
-              </v-icon>
-              <span
-                class="text-body-2"
-                :class="sixMonthChange >= 0 ? 'text-success' : 'text-error'"
-              >
-                {{ sixMonthChange >= 0 ? 'Up ' : 'Down '
-                }}{{ formatCurrency(Math.abs(sixMonthChange)) }} over the last 6 months
-              </span>
-            </div>
-            <div v-else class="mb-4" />
-
-            <div style="height: 220px">
-              <Line
-                v-if="filteredChartData.labels.length > 0"
-                :data="filteredChartData"
-                :options="chartOptions"
-              />
-              <div
-                v-else
-                class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2"
-              >
-                No history yet
-              </div>
-            </div>
-
-            <div class="d-flex justify-center ga-1 mt-4">
-              <v-btn
-                v-for="range in timeRanges"
-                :key="range"
-                :variant="selectedRange === range ? 'flat' : 'text'"
-                size="small"
-                rounded="xl"
-                density="compact"
-                class="px-3"
-                @click="selectedRange = range"
-              >
-                {{ range }}
-              </v-btn>
-            </div>
+    <!-- ── Stat cards ──────────────────────────────────────────────────────── -->
+    <v-row class="mb-4">
+      <v-col cols="12" sm="4">
+        <v-card rounded="lg" elevation="0" border class="pa-1">
+          <v-card-text class="pa-5">
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">Assets</div>
+            <div class="text-h4 font-weight-bold text-success">{{ formatCurrency(displayAssets) }}</div>
           </v-card-text>
         </v-card>
       </v-col>
-
-      <!-- Summary card -->
-      <v-col cols="12" lg="4">
-        <v-card rounded="sm" elevation="2" class="h-100">
-          <v-card-text class="pa-6">
-            <p class="text-body-2 text-medium-emphasis mb-5" style="line-height: 1.6">
-              This is how your net worth is calculated. Make sure all of your accounts are connected
-              for an accurate summary.
-            </p>
-
-            <!-- Assets -->
-            <div class="d-flex align-center py-3">
-              <v-avatar size="32" color="success" variant="tonal" class="mr-3 flex-shrink-0">
-                <v-icon size="16">mdi-plus</v-icon>
-              </v-avatar>
-              <div class="flex-grow-1">
-                <div class="text-body-2 font-weight-semibold">Assets</div>
-                <div class="text-caption text-medium-emphasis">
-                  {{ assetRows.length }} account{{ assetRows.length !== 1 ? 's' : '' }}
-                </div>
-              </div>
-              <span class="text-body-2 font-weight-bold text-success text-no-wrap">
-                {{ formatCurrency(totalAssets) }}
-              </span>
-            </div>
-            <v-divider />
-
-            <!-- Debts -->
-            <div class="d-flex align-center py-3">
-              <v-avatar size="32" color="warning" variant="tonal" class="mr-3 flex-shrink-0">
-                <v-icon size="16">mdi-minus</v-icon>
-              </v-avatar>
-              <div class="flex-grow-1">
-                <div class="text-body-2 font-weight-semibold">Debts</div>
-                <div class="text-caption text-medium-emphasis">
-                  {{ liabilityRows.length }} account{{ liabilityRows.length !== 1 ? 's' : '' }}
-                </div>
-              </div>
-              <span class="text-body-2 font-weight-bold text-no-wrap">
-                {{ formatCurrency(totalLiabilities) }}
-              </span>
-            </div>
-            <v-divider />
-
-            <!-- Net Worth -->
-            <div class="d-flex align-center py-3">
-              <v-avatar size="32" variant="outlined" class="mr-3 flex-shrink-0">
-                <v-icon size="16">mdi-equal</v-icon>
-              </v-avatar>
-              <div class="flex-grow-1">
-                <div class="text-body-2 font-weight-semibold">Net Worth</div>
-                <div class="text-caption text-medium-emphasis">Assets - Debts</div>
-              </div>
-              <span
-                class="text-body-2 font-weight-bold text-no-wrap"
-                :class="netWorth >= 0 ? 'text-success' : 'text-error'"
-              >
-                {{ formatCurrency(netWorth) }}
-              </span>
+      <v-col cols="12" sm="4">
+        <v-card rounded="lg" elevation="0" border class="pa-1">
+          <v-card-text class="pa-5">
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">Debts</div>
+            <div class="text-h4 font-weight-bold text-error">{{ formatCurrency(displayLiabilities) }}</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="4">
+        <v-card rounded="lg" elevation="0" border class="pa-1">
+          <v-card-text class="pa-5">
+            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">Net Worth</div>
+            <div class="text-h4 font-weight-bold">{{ formatCurrency(displayNetWorth) }}</div>
+            <div v-if="netWorthHistory.length >= 2" class="d-flex align-center gap-1 mt-1 text-caption font-weight-medium" :class="periodChange >= 0 ? 'text-success' : 'text-error'">
+              <span>{{ periodChange >= 0 ? '▲' : '▼' }}</span>
+              <span>{{ formatCurrency(Math.abs(periodChange)) }} this period</span>
             </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Assets by category -->
-    <v-card rounded="sm" elevation="2">
-      <v-card-item class="pa-4 pb-0">
-        <template #prepend>
-          <v-icon color="success" size="20" :opacity="0.7">mdi-bank-outline</v-icon>
-        </template>
-        <v-card-title class="text-h6 font-weight-bold pl-2">Assets</v-card-title>
-      </v-card-item>
-
-      <v-expansion-panels v-model="openPanels" multiple flat class="mt-2">
-        <v-expansion-panel
-          v-for="category in assetCategories"
-          :key="category.name"
-          :value="category.name"
-        >
-          <v-expansion-panel-title>
-            <div class="d-flex align-center w-100 ga-4">
-              <span class="text-body-2 font-weight-medium flex-grow-1">{{ category.name }}</span>
-              <span class="text-body-2 text-medium-emphasis text-right" style="min-width: 110px"
-                >{{ category.percentage }}% of assets</span
-              >
-              <span class="text-body-2 font-weight-bold text-right" style="min-width: 90px">{{
-                formatCurrency(category.total)
-              }}</span>
-            </div>
-          </v-expansion-panel-title>
-
-          <v-expansion-panel-text>
-            <v-card variant="flat" rounded="sm" class="mx-2 mb-2">
-              <div
-                class="d-flex align-center justify-space-between px-4 py-2 text-caption text-medium-emphasis"
-              >
-                <span
-                  >{{ category.accounts.length }} Account{{
-                    category.accounts.length !== 1 ? 's' : ''
-                  }}</span
-                >
-                <span>Balance</span>
-              </div>
-              <template v-for="account in category.accounts" :key="account.ACCTID">
-                <v-divider />
-                <div class="d-flex align-center px-4 py-3 ga-3">
-                  <v-avatar size="36" :color="accountTypeColor(account.ACCTTYPE)" variant="tonal">
-                    <v-icon :icon="accountTypeIcon(account.ACCTTYPE)" size="18" />
-                  </v-avatar>
-                  <div class="flex-grow-1">
-                    <div class="text-body-2 font-weight-medium">
-                      {{ account.displayName || account.ACCTTYPE || 'Account' }}
-                    </div>
-                    <div v-if="account.ORG" class="text-caption text-medium-emphasis">
-                      {{ account.ORG }}
-                    </div>
-                  </div>
-                  <span class="text-body-2 font-weight-bold">{{
-                    formatCurrency(account.balance)
-                  }}</span>
-                </div>
-              </template>
-            </v-card>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
-    </v-card>
-
-    <!-- Debts by category -->
-    <v-card rounded="sm" elevation="2" class="mt-6">
-      <v-card-item class="pa-4 pb-0">
-        <template #prepend>
-          <v-icon color="error" size="20" :opacity="0.7">mdi-credit-card-outline</v-icon>
-        </template>
-        <v-card-title class="text-h6 font-weight-bold pl-2">Debts</v-card-title>
-      </v-card-item>
-
-      <div
-        v-if="debtCategories.length === 0"
-        class="pa-6 text-center text-medium-emphasis text-body-2"
-      >
-        No debts. Nicely done.
-      </div>
-
-      <v-expansion-panels v-model="openDebtPanels" multiple flat class="mt-2">
-        <v-expansion-panel
-          v-for="category in debtCategories"
-          :key="category.name"
-          :value="category.name"
-        >
-          <v-expansion-panel-title>
-            <div class="d-flex align-center w-100 ga-4">
-              <span class="text-body-2 font-weight-medium flex-grow-1">{{ category.name }}</span>
-              <span class="text-body-2 text-medium-emphasis text-right" style="min-width: 110px"
-                >{{ category.percentage }}% of debts</span
-              >
-              <span
-                class="text-body-2 font-weight-bold text-error text-right"
-                style="min-width: 90px"
-                >{{ formatCurrency(category.total) }}</span
-              >
-            </div>
-          </v-expansion-panel-title>
-
-          <v-expansion-panel-text>
-            <v-card variant="flat" rounded="sm" class="mx-2 mb-2">
-              <div
-                class="d-flex align-center justify-space-between px-4 py-2 text-caption text-medium-emphasis"
-              >
-                <span
-                  >{{ category.accounts.length }} Account{{
-                    category.accounts.length !== 1 ? 's' : ''
-                  }}</span
-                >
-                <span>Balance Owed</span>
-              </div>
-              <template v-for="account in category.accounts" :key="account.ACCTID">
-                <v-divider />
-                <div class="d-flex align-center px-4 py-3 ga-3">
-                  <v-avatar size="36" :color="accountTypeColor(account.ACCTTYPE)" variant="tonal">
-                    <v-icon :icon="accountTypeIcon(account.ACCTTYPE)" size="18" />
-                  </v-avatar>
-                  <div class="flex-grow-1">
-                    <div class="text-body-2 font-weight-medium">
-                      {{ account.displayName || account.ACCTTYPE || 'Account' }}
-                    </div>
-                    <div v-if="account.ORG" class="text-caption text-medium-emphasis">
-                      {{ account.ORG }}
-                    </div>
-                  </div>
-                  <span class="text-body-2 font-weight-bold text-error">{{
-                    formatCurrency(account.balance)
-                  }}</span>
-                </div>
-              </template>
-            </v-card>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
-    </v-card>
+    <!-- ── Trend chart ─────────────────────────────────────────────────────── -->
+    <div class="mb-4">
+      <v-card rounded="lg" elevation="0" border>
+        <v-card-item class="pa-5 pb-0">
+          <v-card-title class="text-body-1 font-weight-bold">Trend</v-card-title>
+          <template #append>
+            <v-chip size="x-small" variant="tonal" class="font-weight-medium">{{ trendChipLabel }}</v-chip>
+          </template>
+        </v-card-item>
+        <div style="height: 240px; padding: 8px 16px 16px">
+          <Line
+            v-if="filteredChartData.labels.length > 0"
+            :data="filteredChartData"
+            :options="chartOptions"
+          />
+          <div v-else class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2">
+            No history yet
+          </div>
+        </div>
+      </v-card>
+    </div>
   </v-container>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { usePeriodFilter } from '../stores/usePeriodFilter'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -279,15 +99,9 @@ import {
 } from 'chart.js'
 import {
   useUserAccountsStore,
-  accountTypeColor,
-  accountTypeIcon,
-  resolveIsAsset,
-  CATEGORY_MAP,
-  CATEGORY_ORDER,
-  ALWAYS_SHOW_CATEGORIES
+  resolveIsAsset
 } from '../stores/userAccounts'
 import { useUserTransactionsStore } from '../stores/userTransactions'
-import { useUserDebtsStore } from '../stores/userDebts'
 import { useUserSettingsStore } from '../stores/userSettings'
 
 ChartJS.register(
@@ -304,32 +118,103 @@ ChartJS.register(
 
 const accountsStore = useUserAccountsStore()
 const transactionsStore = useUserTransactionsStore()
-const debtsStore = useUserDebtsStore()
 const { formatCurrency } = useUserSettingsStore()
 
 const reportError = ref(null)
-const openPanels = ref([])
-const openDebtPanels = ref([])
-const selectedRange = ref('6M')
-const timeRanges = ['1M', '3M', '6M', '1Y', 'ALL']
 
-const ALWAYS_SHOW = ALWAYS_SHOW_CATEGORIES
+const {
+  period,
+  periodStart,
+  periodLength,
+  periodMonths,
+  periodLabel,
+  isNextPeriodFuture,
+  prevPeriod,
+  nextPeriod,
+  offsetMonth
+} = usePeriodFilter()
 
 const netWorthHistory = computed(() => transactionsStore.netWorthHistory)
 const latest = computed(() => netWorthHistory.value[netWorthHistory.value.length - 1] || null)
 
 const netWorth = computed(() => latest.value?.netWorth ?? 0)
-const sixMonthChange = computed(() => {
-  const rows = netWorthHistory.value
-  if (rows.length < 2) return 0
-  const from = rows.length >= 7 ? rows[rows.length - 7] : rows[0]
-  return rows[rows.length - 1].netWorth - from.netWorth
+
+// Active period's history record
+const activePeriodRecord = computed(() => {
+  const history = netWorthHistory.value
+  if (!history || history.length === 0) return null
+
+  const activeMonths = periodMonths.value
+  if (activeMonths.length === 0) return null
+  const lastActiveMonth = activeMonths[activeMonths.length - 1]
+
+  // Find the latest record in history that is <= lastActiveMonth
+  const activeHistory = history.filter((r) => r.month <= lastActiveMonth)
+  if (activeHistory.length === 0) return history[0]
+  return activeHistory[activeHistory.length - 1]
+})
+
+const displayAssets = computed(() => activePeriodRecord.value?.assets ?? totalAssets.value)
+const displayLiabilities = computed(() => activePeriodRecord.value?.liabilities ?? totalLiabilities.value)
+const displayNetWorth = computed(() => activePeriodRecord.value?.netWorth ?? netWorth.value)
+
+// Net Worth change over the active period
+const periodChange = computed(() => {
+  const history = netWorthHistory.value
+  if (!history || history.length === 0) return 0
+
+  const activeMonths = periodMonths.value
+  if (activeMonths.length === 0) return 0
+  const firstActiveMonth = activeMonths[0]
+
+  const endRecord = activePeriodRecord.value
+  if (!endRecord) return 0
+
+  // Find the net worth just before the active period starts
+  const precedingMonth = offsetMonth(firstActiveMonth, -1)
+  const precedingRecord = history.find((r) => r.month === precedingMonth)
+
+  // Fall back to first available record <= endRecord if no preceding month found
+  const startNetWorth = precedingRecord
+    ? precedingRecord.netWorth
+    : (history.filter((r) => r.month <= endRecord.month)[0]?.netWorth ?? 0)
+
+  return endRecord.netWorth - startNetWorth
+})
+
+// Trend months to display
+const trendMonths = computed(() => {
+  const all = netWorthHistory.value
+  if (!all || all.length === 0) return []
+
+  if (period.value === 'month') {
+    // Show 6 months ending at the selected periodStart month
+    const targetMonth = periodStart.value
+    const idx = all.findIndex((r) => r.month === targetMonth)
+    if (idx === -1) {
+      return all.slice(-6)
+    }
+    const startIdx = Math.max(0, idx - 5)
+    return all.slice(startIdx, idx + 1)
+  } else {
+    // Show the months within the active period
+    const activeMonths = new Set(periodMonths.value)
+    return all.filter((r) => activeMonths.has(r.month))
+  }
+})
+
+const trendChipLabel = computed(() => {
+  const n = trendMonths.value.length
+  if (n > 0) {
+    return n === 1 ? '1 month' : `${n} months`
+  }
+  // Fallback to default period duration
+  const defaultMonths = { month: 6, quarter: 3, semi: 6, annual: 12 }[period.value] ?? 3
+  return `${defaultMonths} month${defaultMonths > 1 ? 's' : ''}`
 })
 
 const filteredChartData = computed(() => {
-  const all = netWorthHistory.value
-  const count = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12 }[selectedRange.value]
-  const rows = count ? all.slice(-count) : all
+  const rows = trendMonths.value
   return {
     labels: rows.map((r) => {
       const y = r.month.slice(0, 4)
@@ -382,7 +267,7 @@ const accountBalances = computed(() => {
     const txTotal = balanceById.get(account.ACCTID) || 0
     const starting = Number(account.startingBalance) || 0
     const raw = starting + txTotal
-    const isAsset = resolveIsAsset(account) // honours accountCategory override
+    const isAsset = resolveIsAsset(account)
     return { ...account, isAsset, balance: isAsset ? raw : -raw }
   })
 })
@@ -398,47 +283,12 @@ const liabilityRows = computed(() =>
 const totalAssets = computed(() => assetRows.value.reduce((sum, a) => sum + a.balance, 0))
 const totalLiabilities = computed(() => liabilityRows.value.reduce((sum, a) => sum + a.balance, 0))
 
-const debtCategories = computed(() => {
-  const detailMap = new Map(debtsStore.details.map((d) => [d.id, d]))
-  const grouped = {}
-  for (const account of liabilityRows.value) {
-    const type = account.ACCTTYPE || 'Other'
-    if (!grouped[type]) grouped[type] = []
-    const detail = detailMap.get(account.ACCTID)
-    grouped[type].push({
-      ...account,
-      balance: detail?.currentBalance > 0 ? detail.currentBalance : account.balance
-    })
-  }
-  const total = totalLiabilities.value || 1
-  return Object.entries(grouped)
-    .map(([name, accounts]) => {
-      const catTotal = accounts.reduce((s, a) => s + a.balance, 0)
-      return { name, accounts, total: catTotal, percentage: Math.round((catTotal / total) * 100) }
-    })
-    .sort((a, b) => b.total - a.total)
-})
-
-const assetCategories = computed(() => {
-  const grouped = Object.fromEntries(CATEGORY_ORDER.map((n) => [n, []]))
-  for (const account of assetRows.value) {
-    const cat = CATEGORY_MAP[account.ACCTTYPE] || 'Other Assets'
-    grouped[cat].push(account)
-  }
-  const total = totalAssets.value || 1
-  return CATEGORY_ORDER.map((name) => {
-    const accounts = grouped[name]
-    const catTotal = accounts.reduce((s, a) => s + a.balance, 0)
-    return { name, accounts, total: catTotal, percentage: Math.round((catTotal / total) * 100) }
-  }).filter((c) => c.accounts.length > 0 || ALWAYS_SHOW.has(c.name))
-})
-
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
   plugins: {
-    legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } },
+    legend: { position: 'top', labels: { usePointStyle: true, padding: 16, boxWidth: 6, boxHeight: 6 } },
     tooltip: {
       callbacks: {
         label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
@@ -446,9 +296,17 @@ const chartOptions = {
     }
   },
   scales: {
-    x: { grid: { display: false } },
+    x: {
+      grid: { display: false },
+      border: { display: false },
+      ticks: { color: 'rgba(100,100,100,0.6)', font: { size: 11 } }
+    },
     y: {
+      grid: { color: 'rgba(0,0,0,0.07)' },
+      border: { display: false },
       ticks: {
+        color: 'rgba(100,100,100,0.6)',
+        font: { size: 11 },
         callback: (v) => formatCurrency(v)
       }
     }
@@ -461,8 +319,7 @@ async function loadReport() {
     await Promise.all([
       transactionsStore.fetchNetWorthHistory(),
       transactionsStore.fetchAccountSummary(),
-      accountsStore.fetchAccounts(),
-      debtsStore.fetchDebtDetails()
+      accountsStore.fetchAccounts()
     ])
   } catch (err) {
     reportError.value = err?.message ?? String(err)
