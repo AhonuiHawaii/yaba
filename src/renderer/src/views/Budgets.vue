@@ -1,58 +1,116 @@
 <template>
-  <v-container fluid class="pa-6">
-    <div class="d-flex align-center mb-6">
-      <div>
-        <div class="text-h5 font-weight-bold">Budgets</div>
-        <div class="text-body-2 text-medium-emphasis">Group spending &amp; set auto-rules</div>
-      </div>
-      <v-spacer />
-      <v-btn color="primary" variant="flat" rounded="sm" prepend-icon="mdi-plus" @click="openAdd">
-        New category
-      </v-btn>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start">
-      <v-card v-for="section in sections" :key="section.type" rounded="lg" elevation="1">
-        <div class="px-5 pt-5 pb-3 text-h6 font-weight-bold">{{ section.label }}</div>
-        <div v-for="g in section.groups" :key="g.id" class="d-flex align-center px-5 py-3">
-          <v-avatar size="36" color="primary" variant="tonal" rounded="sm" class="mr-4 flex-shrink-0">
-            <v-icon size="18" color="primary">{{ g.icon }}</v-icon>
-          </v-avatar>
-          <div style="flex: 1; min-width: 0" class="mr-3">
-            <div class="text-body-2 font-weight-bold">{{ g.label }}</div>
-            <div v-if="g.rules.length" class="text-caption text-medium-emphasis">
-              Rule: {{ g.rules.join(', ') }}
-            </div>
-          </div>
-          <span class="text-body-2 font-weight-bold mr-1" style="white-space: nowrap">
-            ${{ g.amount }}/mo
-          </span>
-          <v-menu>
-            <template #activator="{ props }">
-              <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" size="small" density="compact" />
-            </template>
-            <v-list density="compact">
-              <v-list-item title="Edit" prepend-icon="mdi-pencil-outline" @click="openEdit(g)" />
-              <v-list-item title="Delete" prepend-icon="mdi-delete-outline" @click="store.deleteGroup(g.id)" />
-            </v-list>
-          </v-menu>
-        </div>
-        <div class="pb-2" />
-      </v-card>
-    </div>
-
-    <v-sheet
-      color="primary"
-      variant="tonal"
-      rounded="sm"
-      class="d-flex align-center pa-4 mt-5 gap-3"
+  <v-container class="pa-6" style="max-width: 1100px">
+    <!-- Header card -->
+    <v-card
+      rounded="lg"
+      elevation="0"
+      border
+      class="d-flex align-center justify-space-between pa-5 mb-4"
     >
-      <v-icon color="primary" size="22">mdi-cog-outline</v-icon>
-      <span class="text-body-2"
-        >When a rule matches a new import, the category is applied automatically.</span
+      <div>
+        <div class="text-subtitle-1 font-weight-bold">Payee Rules</div>
+        <div class="text-body-2 text-medium-emphasis">
+          Group spending &amp; set auto-rules
+        </div>
+      </div>
+      <v-btn
+        variant="flat"
+        color="primary"
+        rounded="lg"
+        prepend-icon="mdi-plus"
+        @click="openAdd"
+        >New category</v-btn
       >
-    </v-sheet>
+    </v-card>
 
+    <!-- Empty State -->
+    <v-card v-if="store.groups.length === 0" rounded="lg" elevation="0" border>
+      <v-card-text class="pa-12 text-center">
+        <v-icon size="60" class="mb-4 text-disabled">mdi-tag-multiple-outline</v-icon>
+        <div class="text-h6 font-weight-medium mb-2">No payee rules yet</div>
+        <div class="text-body-2 text-medium-emphasis">
+          Add a category with keywords to auto-categorize transactions on import.
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <!-- Table -->
+    <v-card v-else rounded="lg" elevation="0" border class="mb-4">
+      <v-data-table
+        :headers="headers"
+        :items="store.groups"
+        density="comfortable"
+        :items-per-page="-1"
+        hide-default-footer
+        hover
+      >
+        <template #item.label="{ item }">
+          <span class="text-body-2 font-weight-medium">{{ item.label }}</span>
+        </template>
+
+        <template #item.type="{ item }">
+          <v-chip size="x-small" variant="tonal" rounded="pill">{{ sectionLabel(item.type) }}</v-chip>
+        </template>
+
+        <template #item.rules="{ item }">
+          <div class="d-flex flex-wrap ga-1">
+            <v-chip
+              v-for="r in item.rules"
+              :key="r"
+              size="x-small"
+              variant="tonal"
+              rounded="sm"
+              class="font-weight-bold text-uppercase"
+            >{{ r }}</v-chip>
+            <span v-if="!item.rules.length" class="text-body-2 text-medium-emphasis">—</span>
+          </div>
+        </template>
+
+        <template #item.categoryId="{ item }">
+          <v-chip v-if="categoryName(item.categoryId)" size="x-small" variant="tonal" color="primary" rounded="pill">
+            {{ categoryName(item.categoryId) }}
+          </v-chip>
+          <span v-else class="text-body-2 text-medium-emphasis">—</span>
+        </template>
+
+        <template #item.amount="{ item }">
+          <span class="text-body-2">${{ item.amount }}/mo</span>
+        </template>
+
+        <template #item.actions="{ item }">
+          <div class="d-flex align-center justify-end ga-1">
+            <v-btn
+              icon="mdi-pencil-outline"
+              variant="text"
+              size="small"
+              density="compact"
+              @click="openEdit(item)"
+            />
+            <v-btn
+              icon="mdi-delete-outline"
+              variant="text"
+              size="small"
+              color="error"
+              density="compact"
+              @click="store.deleteGroup(item.id)"
+            />
+          </div>
+        </template>
+      </v-data-table>
+    </v-card>
+
+    <!-- Info banner -->
+    <v-alert
+      variant="tonal"
+      color="primary"
+      density="compact"
+      rounded="lg"
+      prepend-icon="mdi-information-outline"
+    >
+      When a rule matches a new import, the category is applied automatically.
+    </v-alert>
+
+    <!-- Add / Edit Dialog -->
     <v-dialog v-model="addDialog" max-width="420">
       <v-card rounded="sm">
         <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">{{
@@ -60,6 +118,23 @@
         }}</v-card-title>
         <v-divider />
         <v-card-text class="pa-5">
+          <div class="form-row mb-3">
+            <label>Category</label>
+            <v-autocomplete
+              v-model="form.categoryId"
+              :items="categoryItems"
+              item-title="name"
+              item-value="id"
+              placeholder="Pick existing or leave blank"
+              variant="outlined"
+              density="compact"
+              rounded="sm"
+              hide-details
+              clearable
+              color="primary"
+              @update:model-value="onCategoryPicked"
+            />
+          </div>
           <div class="form-row mb-3">
             <label>Name</label>
             <v-text-field
@@ -69,7 +144,8 @@
               rounded="sm"
               autofocus
               hide-details
-             color="primary" />
+              color="primary"
+            />
           </div>
           <div class="form-row mb-3">
             <label>Section</label>
@@ -80,18 +156,8 @@
               density="compact"
               rounded="sm"
               hide-details
-             color="primary" />
-          </div>
-          <div class="form-row mb-3">
-            <label>Icon</label>
-            <v-select
-              v-model="form.icon"
-              :items="iconItems"
-              variant="outlined"
-              density="compact"
-              rounded="sm"
-              hide-details
-             color="primary" />
+              color="primary"
+            />
           </div>
           <div class="form-row mb-3">
             <label>Monthly amount</label>
@@ -103,10 +169,11 @@
               density="compact"
               rounded="sm"
               hide-details
-             color="primary" />
+              color="primary"
+            />
           </div>
           <div class="form-row">
-            <label>Rules</label>
+            <label>Keywords</label>
             <v-text-field
               v-model="form.rulesRaw"
               placeholder="e.g. NETFLIX, SPOTIFY"
@@ -114,7 +181,8 @@
               density="compact"
               rounded="sm"
               hide-details
-             color="primary" />
+              color="primary"
+            />
           </div>
         </v-card-text>
         <v-card-actions class="pa-5 pt-0">
@@ -137,28 +205,42 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useUserBudgetsRulesStore } from '../stores/userBudgetsRules'
+import { useUserCategoriesStore } from '../stores/userCategories'
 
 const store = useUserBudgetsRulesStore()
+const categoriesStore = useUserCategoriesStore()
 
-const SECTIONS = [
-  { type: 'variable', label: 'Spending' },
-  { type: 'bills', label: 'Bills' },
-  { type: 'income', label: 'Income' }
-]
+const categoryItems = computed(() => categoriesStore.categories)
 
-const sections = computed(() =>
-  SECTIONS.map((s) => ({ ...s, groups: store.groups.filter((g) => g.type === s.type) }))
+const categoryById = computed(() =>
+  Object.fromEntries(categoriesStore.categories.map((c) => [c.id, c.name]))
 )
 
-const addDialog = ref(false)
-const editingId = ref(null)
-const form = ref({
-  label: '',
-  type: 'variable',
-  icon: 'mdi-tag-outline',
-  amount: 0,
-  rulesRaw: ''
-})
+function categoryName(id) {
+  return id ? (categoryById.value[id] ?? null) : null
+}
+
+function onCategoryPicked(id) {
+  if (!id) return
+  const cat = categoriesStore.categories.find((c) => c.id === id)
+  if (!cat) return
+  form.value.label = cat.name
+  form.value.type = cat.type
+}
+
+const SECTION_LABELS = { variable: 'Spending', bills: 'Bills', income: 'Income' }
+function sectionLabel(type) {
+  return SECTION_LABELS[type] ?? type
+}
+
+const headers = [
+  { title: 'Name', key: 'label', sortable: false },
+  { title: 'Category', key: 'categoryId', width: '160px', sortable: false },
+  { title: 'Section', key: 'type', width: '130px', sortable: false },
+  { title: 'Keywords', key: 'rules', sortable: false },
+  { title: 'Amount', key: 'amount', width: '120px', sortable: false },
+  { title: '', key: 'actions', width: '90px', sortable: false, align: 'end' }
+]
 
 const typeItems = [
   { title: 'Variable Expenses', value: 'variable' },
@@ -166,43 +248,28 @@ const typeItems = [
   { title: 'Income', value: 'income' }
 ]
 
-const iconItems = [
-  { title: 'Cart', value: 'mdi-cart-outline' },
-  { title: 'Dining', value: 'mdi-silverware-fork-knife' },
-  { title: 'Car', value: 'mdi-car-outline' },
-  { title: 'Subscriptions', value: 'mdi-autorenew' },
-  { title: 'Home', value: 'mdi-home-outline' },
-  { title: 'Utilities', value: 'mdi-lightning-bolt-outline' },
-  { title: 'Cash', value: 'mdi-cash-multiple' },
-  { title: 'Tag', value: 'mdi-tag-outline' }
-]
+
+const addDialog = ref(false)
+const editingId = ref(null)
+const form = ref({ label: '', type: 'variable', amount: 0, rulesRaw: '', categoryId: null })
 
 function openAdd() {
   editingId.value = null
-  form.value = { label: '', type: 'variable', icon: 'mdi-tag-outline', amount: 0, rulesRaw: '' }
+  form.value = { label: '', type: 'variable', amount: 0, rulesRaw: '', categoryId: null }
   addDialog.value = true
 }
 
 function openEdit(g) {
   editingId.value = g.id
-  form.value = {
-    label: g.label,
-    type: g.type,
-    icon: g.icon,
-    amount: g.amount,
-    rulesRaw: g.rules.join(', ')
-  }
+  form.value = { label: g.label, type: g.type, amount: g.amount, rulesRaw: g.rules.join(', '), categoryId: g.categoryId ?? null }
   addDialog.value = true
 }
 
 async function save() {
   const label = form.value.label.trim()
   if (!label) return
-  const rules = form.value.rulesRaw
-    .split(',')
-    .map((r) => r.trim())
-    .filter(Boolean)
-  const payload = { type: form.value.type, icon: form.value.icon, label, rules, amount: Number(form.value.amount) || 0 }
+  const rules = form.value.rulesRaw.split(',').map((r) => r.trim()).filter(Boolean)
+  const payload = { type: form.value.type, label, rules, amount: Number(form.value.amount) || 0, categoryId: form.value.categoryId || null }
   if (editingId.value) {
     await store.updateGroup(editingId.value, payload)
   } else {

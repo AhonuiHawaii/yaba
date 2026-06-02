@@ -56,18 +56,25 @@ export const useUserBudgetsRulesStore = defineStore('userBudgetsRules', () => {
 
   async function addGroup(group) {
     const now = new Date().toISOString()
-    const categoryId = crypto.randomUUID()
+    const categoryId = group.categoryId || crypto.randomUUID()
 
-    // Write into the shared category table MonthlyBudgets reads from
-    await catTable(group.type).add({ id: categoryId, name: group.label, createdAt: now })
+    // Only create a new category row if not linking to an existing one
+    if (!group.categoryId) {
+      await catTable(group.type).add({ id: categoryId, name: group.label, createdAt: now })
+    }
 
-    // Write the budget amount into the shared budgets table
-    await db.budgets.add({
-      id: crypto.randomUUID(),
-      categoryId,
-      amount: group.amount || 0,
-      createdAt: now
-    })
+    // Upsert the budget amount into the shared budgets table
+    const existingBudget = await db.budgets.where('categoryId').equals(categoryId).first()
+    if (existingBudget) {
+      await db.budgets.update(existingBudget.id, { amount: group.amount || 0 })
+    } else {
+      await db.budgets.add({
+        id: crypto.randomUUID(),
+        categoryId,
+        amount: group.amount || 0,
+        createdAt: now
+      })
+    }
 
     // Create SQLite auto-categorization rules keyed by categoryId
     const ruleIds = await createSQLiteRules(categoryId, group.rules)

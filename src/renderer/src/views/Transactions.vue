@@ -1,15 +1,15 @@
 <template>
   <v-container fluid class="pa-6">
-    <!-- Header: period nav + Export/Import -->
+    <!-- Header -->
     <div class="d-flex align-center justify-space-between mb-4">
       <div>
-        <div class="text-h6 font-weight-bold">Transactions</div>
-        <div class="text-body-2 text-medium-emphasis">
+        <div class="text-h6 font-weight-bold">{{ viewTitle }}</div>
+        <div v-if="activeTab === 'transactions'" class="text-body-2 text-medium-emphasis">
           {{ periodLabel }} · {{ uncategorizedCount }} need a category
         </div>
       </div>
 
-      <div class="d-flex align-center ga-2">
+      <div v-if="activeTab === 'transactions'" class="d-flex align-center ga-2">
         <v-btn icon="mdi-chevron-left" variant="text" density="compact" @click="prevPeriod" />
         <span class="text-body-1 font-weight-medium">{{ periodLabel }}</span>
         <v-btn
@@ -51,7 +51,8 @@
     <!-- Tabs -->
     <v-tabs v-model="activeTab" class="mb-4" color="primary">
       <v-tab value="transactions" prepend-icon="mdi-format-list-bulleted">Transactions</v-tab>
-      <v-tab value="rules" prepend-icon="mdi-auto-fix">Rules</v-tab>
+      <v-tab value="payee-rules" prepend-icon="mdi-tag-multiple-outline">Category Rules</v-tab>
+      <v-tab value="category-rules" prepend-icon="mdi-auto-fix">Payee Rules</v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="activeTab">
@@ -800,8 +801,13 @@
         </v-dialog>
       </v-tabs-window-item>
 
-      <!-- ── Rules Tab ─────────────────────────────────────────────────────── -->
-      <v-tabs-window-item value="rules">
+      <!-- ── Category Rules Tab ───────────────────────────────────────────── -->
+      <v-tabs-window-item value="category-rules">
+        <BudgetsView />
+      </v-tabs-window-item>
+
+      <!-- ── Payee Rules Tab ───────────────────────────────────────────────── -->
+      <v-tabs-window-item value="payee-rules">
         <RulesView />
       </v-tabs-window-item>
     </v-tabs-window>
@@ -820,6 +826,7 @@ import { useUserRulesStore } from '../stores/userRules'
 import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import RulesView from './Rules.vue'
+import BudgetsView from './Budgets.vue'
 
 const store = useUserTransactionsStore()
 const accountsStore = useUserAccountsStore()
@@ -945,31 +952,6 @@ async function handleImport() {
   }
 }
 
-// ── Month navigation ──────────────────────────────────────────────────────────
-function currentMonthValue() {
-  const now = new Date()
-  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
-}
-
-const selectedMonth = ref(currentMonthValue())
-
-function offsetMonth(yyyymm, delta) {
-  const year = Number(yyyymm.slice(0, 4))
-  const month = Number(yyyymm.slice(4)) - 1 + delta
-  const d = new Date(year, month, 1)
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-const isNextMonthFuture = computed(() => offsetMonth(selectedMonth.value, 1) > currentMonthValue())
-
-function prevMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, -1)
-}
-
-function nextMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, 1)
-}
-
 // ── On mount ──────────────────────────────────────────────────────────────────
 onMounted(async () => {
   await Promise.all([
@@ -977,10 +959,10 @@ onMounted(async () => {
     store.fetchMonthsWithData(),
     categoriesStore.fetchCategories()
   ])
-  await store.fetchTransactionsByMonth(selectedMonth.value)
+  await store.fetchTransactionsForPeriod(periodMonths.value)
 })
 
-watch(selectedMonth, (month) => store.fetchTransactionsByMonth(month))
+watch(periodMonths, (months) => store.fetchTransactionsForPeriod(months))
 
 // ── Filters ───────────────────────────────────────────────────────────────────
 const search = ref('')
