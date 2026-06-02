@@ -3,6 +3,9 @@ import { setupBackupHandlers } from './backup.js'
 import {
   importAccount,
   importTransactions,
+  parseOfxFile,
+  checkDuplicates,
+  importBatch,
   fetchTransactions,
   editTransaction,
   removeTransaction,
@@ -62,6 +65,9 @@ export const setupIpcHandlers = () => {
 
   ipcMain.handle('ofx:importAccount', (_, ofxData) => importAccount(ofxData))
   ipcMain.handle('ofx:importTransactions', (_, ofxData) => importTransactions(ofxData))
+  ipcMain.handle('ofx:parseFile', (_, ofxText) => parseOfxFile(ofxText))
+  ipcMain.handle('ofx:checkDuplicates', (_, fitids) => checkDuplicates(fitids))
+  ipcMain.handle('ofx:importBatch', (_, items) => importBatch(items))
 
   ipcMain.handle('transactions:fetch', (_, filters) => {
     if (filters !== undefined && !isObject(filters)) throw new Error('Invalid filters')

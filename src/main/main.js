@@ -29,7 +29,8 @@ import {
   createCustomRecurring as dbCreateCustomRecurring,
   updateCustomRecurring as dbUpdateCustomRecurring,
   deleteCustomRecurring as dbDeleteCustomRecurring,
-  matchesCustomEntry
+  matchesCustomEntry,
+  checkDuplicateFitids
 } from './db.js'
 
 /*
@@ -355,6 +356,88 @@ export const applyRulesToMonth = (yyyymm) => {
       updateTransaction(patch.FITID, updates)
     }
     return ok({ applied: patches.length })
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+// ─── Wizard Import ───────────────────────────────────────────────────────────
+
+export const parseOfxFile = async (ofxText) => {
+  try {
+    const account = await extractAccountData(ofxText)
+    const transactions = await extractTransactionData(ofxText)
+    return ok({
+      account: account ? { ...account, ACCTID: maskAcctid(account.ACCTID) } : null,
+      txCount: transactions.length,
+      fitids: transactions.map((t) => t.FITID)
+    })
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const checkDuplicates = (fitids) => {
+  try {
+    if (!Array.isArray(fitids)) return fail(new Error('fitids must be an array'))
+    return ok({ duplicates: checkDuplicateFitids(fitids) })
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const importBatch = async (items) => {
+  try {
+    const results = []
+    for (const { ofxText, targetAcctId } of items) {
+      const transactions = await extractTransactionData(ofxText)
+      if (!transactions.length) {
+        results.push({ total: 0, inserted: 0, skipped: 0 })
+        continue
+      }
+
+      let realAcctid = null
+
+      if (targetAcctId) {
+        realAcctid = resolveAcctid(targetAcctId)
+        if (!realAcctid) throw new Error(`Account not found: ${targetAcctId}`)
+      } else {
+        const accountData =
+          (await extractAccountData(ofxText)) ||
+          ({
+            ACCTID: transactions[0].ACCTID,
+            ACCTTYPE: transactions[0].ACCTTYPE,
+            ORG: transactions[0].ORG,
+            INTU_BID: transactions[0].INTU_BID
+          })
+        if (accountData.ACCTID) {
+          upsertAccount(accountData)
+          realAcctid = accountData.ACCTID
+        }
+      }
+
+      const remapped = realAcctid ? transactions.map((t) => ({ ...t, ACCTID: realAcctid })) : transactions
+      const result = createTransactions(remapped)
+
+      const customEntries = getCustomRecurring()
+      if (customEntries.length) {
+        for (const tx of remapped) {
+          if (customEntries.some((e) => matchesCustomEntry(tx.MEMO, e))) {
+            updateTransaction(tx.FITID, { recurring: 1 })
+          }
+        }
+      }
+
+      const patches = applyRules(remapped)
+      for (const patch of patches) {
+        const upd = { category: patch.category }
+        if (patch.transactionType) upd.transactionType = patch.transactionType
+        updateTransaction(patch.FITID, upd)
+      }
+
+      results.push({ ...result, accountId: maskAcctid(realAcctid) })
+    }
+    return ok(results)
   } catch (e) {
     return fail(e)
   }

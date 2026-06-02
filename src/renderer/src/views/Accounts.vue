@@ -1,100 +1,134 @@
 <template>
-  <v-container fluid class="pa-4">
-    <!-- Add Account Button -->
-    <div class="mb-8 d-flex justify-center align-center gap-2">
-      <v-btn-group variant="flat" density="comfortable" rounded="sm" divided>
-        <v-btn prepend-icon="mdi-plus" @click="importDialog = true">Add Account</v-btn>
-        <v-btn prepend-icon="mdi-pencil-plus-outline" @click="manualDialog = true"
-          >Add Manual Loan</v-btn
-        >
-      </v-btn-group>
-
-      <v-slide-x-transition>
-        <v-chip
-          v-if="lastImported"
-          color="success"
-          variant="tonal"
-          prepend-icon="mdi-check-circle-outline"
-          size="small"
-          class="ml-3"
-        >
-          Imported {{ lastImported }}
-        </v-chip>
-      </v-slide-x-transition>
+  <v-container fluid class="pa-6" style="max-width: 960px; margin: 0 auto">
+    <!-- Header -->
+    <div class="d-flex align-start justify-space-between mb-6">
+      <div>
+        <div class="text-h5 font-weight-bold">Accounts</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">Balances from your last import</div>
+      </div>
+      <v-btn
+        color="primary"
+        variant="flat"
+        rounded="sm"
+        prepend-icon="mdi-download-outline"
+        @click="emit('navigate', 'Import')"
+      >
+        Update via OFX
+      </v-btn>
     </div>
 
-    <!-- Import Account Modal -->
-    <v-dialog v-model="importDialog" max-width="500">
-      <v-card rounded="sm">
-        <v-card-title class="pa-6 pb-4">
-          <div class="d-flex align-center justify-space-between">
-            <div class="d-flex align-center gap-3">
-              <v-icon color="primary" size="22">mdi-file-import-outline</v-icon>
-              <span class="text-h6 font-weight-bold">Import Account</span>
+    <!-- Empty state -->
+    <v-card v-if="store.accounts.length === 0" rounded="sm" elevation="1">
+      <v-card-text class="pa-12 text-center">
+        <v-icon size="60" class="mb-4 text-disabled">mdi-bank-off-outline</v-icon>
+        <div class="text-h6 font-weight-medium mb-2">No accounts yet</div>
+        <div class="text-body-2 text-medium-emphasis mb-4">
+          Import an OFX or QFX file from your bank to get started.
+        </div>
+        <v-btn
+          color="primary"
+          variant="flat"
+          rounded="sm"
+          prepend-icon="mdi-download-outline"
+          @click="emit('navigate', 'Import')"
+        >
+          Import via OFX
+        </v-btn>
+      </v-card-text>
+    </v-card>
+
+    <!-- Account cards grid -->
+    <v-row v-else>
+      <v-col v-for="account in store.accounts" :key="account.ACCTID" cols="12" sm="6" md="4">
+        <v-card rounded="sm" elevation="1" class="h-100">
+          <v-card-text class="pa-4">
+            <!-- Top row: icon + chip + menu -->
+            <div class="d-flex justify-space-between align-center mb-4">
+              <v-avatar
+                :color="accountTypeColor(account.ACCTTYPE)"
+                variant="tonal"
+                size="40"
+                rounded="sm"
+              >
+                <v-icon :icon="accountTypeIcon(account.ACCTTYPE)" size="20" />
+              </v-avatar>
+              <div class="d-flex align-center gap-1">
+                <v-chip size="small" variant="outlined">
+                  {{ shortTypeLabel(account.ACCTTYPE) }}
+                </v-chip>
+                <v-menu location="bottom end">
+                  <template #activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon="mdi-dots-vertical"
+                      variant="text"
+                      size="x-small"
+                      density="compact"
+                    />
+                  </template>
+                  <v-list density="compact" rounded="sm" min-width="140">
+                    <v-list-item prepend-icon="mdi-pencil-outline" title="Edit" @click="openEditName(account)" />
+                    <v-list-item prepend-icon="mdi-delete-outline" title="Remove" base-color="error" @click="confirmRemove(account)" />
+                  </v-list>
+                </v-menu>
+              </div>
             </div>
-            <v-btn
-              icon="mdi-close"
-              variant="text"
-              density="compact"
-              @click="importDialog = false"
-            />
-          </div>
-        </v-card-title>
 
-        <v-divider />
+            <!-- Account name -->
+            <div class="text-subtitle-1 font-weight-bold mb-1">
+              {{ account.displayName || account.ACCTTYPE || 'Unknown' }}
+            </div>
 
-        <v-card-text class="pa-6">
-          <p class="text-body-2 text-medium-emphasis mb-4">
-            Select an OFX or QFX file exported from your bank.
-          </p>
+            <!-- Balance -->
+            <div
+              class="text-h5 font-weight-bold mb-3"
+              :class="accountBalance(account) !== null && accountBalance(account) < 0 ? 'text-error' : ''"
+            >
+              {{ accountBalance(account) !== null ? formatBalance(accountBalance(account)) : '—' }}
+            </div>
 
-          <v-file-input
-            v-model="selectedFile"
-            accept=".ofx,.qfx"
-            label="Choose OFX / QFX file"
-            prepend-icon=""
-            prepend-inner-icon="mdi-folder-open-outline"
-            variant="solo-filled"
-            density="comfortable"
-            rounded="sm"
-            hide-details="auto"
-            :error-messages="store.error ? [store.error] : []"
-            @update:model-value="store.clearError()"
-          />
-        </v-card-text>
+            <!-- Footer -->
+            <div class="text-caption text-medium-emphasis">
+              <template v-if="account.lastImport">
+                ••{{ account.ACCTID }} · synced {{ formatSyncDate(account.lastImport) }}
+              </template>
+              <template v-else>
+                manual ·
+                <span
+                  class="text-primary"
+                  style="cursor: pointer; text-decoration: underline"
+                  @click.stop="openEditName(account)"
+                >
+                  edit value
+                </span>
+              </template>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
-        <v-card-actions class="pa-6 pt-0">
-          <v-spacer />
-          <v-btn variant="text" @click="importDialog = false">Cancel</v-btn>
-          <v-btn
-            variant="flat"
-            rounded="sm"
-            :loading="store.loading"
-            :disabled="!selectedFile"
-            prepend-icon="mdi-import"
-            @click="handleImport"
-          >
-            Import
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+      <!-- Add account slot -->
+      <v-col cols="12" sm="6" md="4">
+        <div
+          class="d-flex align-center justify-center rounded"
+          style="height: 100%; min-height: 176px; border: 2px dashed rgba(0,0,0,0.12); cursor: pointer"
+          @click="manualDialog = true"
+        >
+          <v-icon size="36" color="medium-emphasis">mdi-plus-circle-outline</v-icon>
+        </div>
+      </v-col>
+    </v-row>
 
-    <!-- Add Manual Loan Modal -->
+    <!-- Add Manual Account Modal -->
     <v-dialog v-model="manualDialog" max-width="500">
       <v-card rounded="sm">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center gap-3">
               <v-icon color="primary" size="22">mdi-pencil-plus-outline</v-icon>
-              <span class="text-h6 font-weight-bold">Add Manual Loan</span>
+              <span class="text-h6 font-weight-bold">Add Manual Account</span>
             </div>
-            <v-btn
-              icon="mdi-close"
-              variant="text"
-              density="compact"
-              @click="manualDialog = false"
-            />
+            <v-btn icon="mdi-close" variant="text" density="compact" @click="manualDialog = false" />
           </div>
         </v-card-title>
         <v-divider />
@@ -170,7 +204,6 @@
               <v-btn value="BiWeekly" size="small">Bi-Weekly</v-btn>
               <v-btn value="Monthly" size="small">Monthly</v-btn>
             </v-btn-toggle>
-            <!-- Monthly: day-of-month picker -->
             <v-menu
               v-if="manualForm.paymentFrequency === 'Monthly'"
               :close-on-content-click="false"
@@ -207,7 +240,6 @@
                 "
               />
             </v-menu>
-            <!-- Weekly / BiWeekly: start date + payment count -->
             <template v-else>
               <v-menu :close-on-content-click="false" location="bottom end" class="mb-4">
                 <template #activator="{ props }">
@@ -231,11 +263,7 @@
                   color="primary"
                   hide-header
                   show-adjacent-months
-                  @update:model-value="
-                    (val) => {
-                      manualForm.paymentStartDate = pickerValToIso(val)
-                    }
-                  "
+                  @update:model-value="(val) => { manualForm.paymentStartDate = pickerValToIso(val) }"
                 />
               </v-menu>
               <v-text-field
@@ -299,140 +327,6 @@
       </v-card>
     </v-dialog>
 
-    <!-- Accounts List -->
-    <div>
-      <div class="d-flex align-center justify-space-between mb-4">
-        <div class="text-h6 font-weight-bold">Linked Accounts</div>
-      </div>
-
-      <!-- Empty State -->
-      <v-card v-if="store.accounts.length === 0" rounded="sm" elevation="2">
-        <v-card-text class="pa-12 text-center">
-          <v-icon size="60" class="mb-4 text-disabled">mdi-bank-off-outline</v-icon>
-          <div class="text-h6 font-weight-medium mb-2">No accounts yet</div>
-          <div class="text-body-2 text-medium-emphasis">
-            Import an OFX or QFX file from your bank to get started.
-          </div>
-        </v-card-text>
-      </v-card>
-
-      <!-- Grouped Account List -->
-      <template v-else>
-        <div v-for="(accounts, bank) in groupedAccounts" :key="bank" class="mb-4">
-          <!-- Bank subheader -->
-          <div class="d-flex align-center justify-space-between mb-1">
-            <div class="d-flex align-center gap-2">
-              <v-icon size="16" color="primary">mdi-bank-outline</v-icon>
-              <span class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
-                {{ bank }}
-              </span>
-            </div>
-            <v-btn
-              icon="mdi-pencil-outline"
-              variant="text"
-              size="small"
-              density="compact"
-              @click="openEditBank(bank)"
-            />
-          </div>
-
-          <v-card rounded="sm" elevation="2">
-            <v-list lines="two" class="pa-0">
-              <template v-for="(account, i) in accounts" :key="account.ACCTID">
-                <v-list-item class="py-3">
-                  <template #prepend>
-                    <v-avatar
-                      :color="accountTypeColor(account.ACCTTYPE)"
-                      variant="tonal"
-                      size="36"
-                      class="mr-1"
-                    >
-                      <v-icon :icon="accountTypeIcon(account.ACCTTYPE)" size="18" />
-                    </v-avatar>
-                  </template>
-
-                  <v-list-item-title class="font-weight-medium">
-                    {{ account.displayName || account.ACCTTYPE || 'Unknown' }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle>
-                    <span>*{{ account.ACCTID || '----' }}</span>
-                    <span
-                      v-if="accountBalance(account) !== null"
-                      :class="[
-                        'ml-3 font-weight-medium',
-                        accountBalance(account) >= 0 ? 'text-success' : 'text-error'
-                      ]"
-                    >
-                      {{ formatBalance(accountBalance(account)) }}
-                    </span>
-                    <span v-else class="ml-3 text-disabled text-caption">no balance set</span>
-                  </v-list-item-subtitle>
-
-                  <template #append>
-                    <v-btn
-                      icon="mdi-pencil-outline"
-                      variant="text"
-                      size="small"
-                      density="compact"
-                      @click="openEditName(account)"
-                    />
-                    <v-btn
-                      icon="mdi-delete-outline"
-                      variant="text"
-                      size="small"
-                      color="error"
-                      density="compact"
-                      @click="confirmRemove(account)"
-                    />
-                  </template>
-                </v-list-item>
-
-                <v-divider v-if="i < accounts.length - 1" />
-              </template>
-            </v-list>
-          </v-card>
-        </div>
-      </template>
-    </div>
-
-    <!-- Edit Bank Name Modal -->
-    <v-dialog v-model="editBankDialog" max-width="400">
-      <v-card rounded="sm">
-        <v-card-title class="pa-6 pb-4">
-          <div class="d-flex align-center justify-space-between">
-            <div class="d-flex align-center gap-3">
-              <v-icon color="primary" size="20">mdi-domain</v-icon>
-              <span class="text-h6 font-weight-bold">Edit Bank Name</span>
-            </div>
-            <v-btn
-              icon="mdi-close"
-              variant="text"
-              density="compact"
-              @click="editBankDialog = false"
-            />
-          </div>
-        </v-card-title>
-        <v-divider />
-        <v-card-text class="pa-6">
-          <v-text-field
-            v-model="editBankValue"
-            label="Bank name"
-            variant="solo-filled"
-            density="comfortable"
-            rounded="sm"
-            hide-details
-            autofocus
-            @keyup.enter="saveEditBank"
-          />
-        </v-card-text>
-        <v-card-actions class="pa-6 pt-0">
-          <v-spacer />
-          <v-btn variant="text" @click="editBankDialog = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" rounded="sm" @click="saveEditBank">Save</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <!-- Edit Account Modal -->
     <v-dialog v-model="editNameDialog" max-width="400">
       <v-card rounded="sm">
@@ -442,12 +336,7 @@
               <v-icon color="primary" size="20">mdi-pencil-outline</v-icon>
               <span class="text-h6 font-weight-bold">Edit Account</span>
             </div>
-            <v-btn
-              icon="mdi-close"
-              variant="text"
-              density="compact"
-              @click="editNameDialog = false"
-            />
+            <v-btn icon="mdi-close" variant="text" density="compact" @click="editNameDialog = false" />
           </div>
         </v-card-title>
         <v-divider />
@@ -520,7 +409,6 @@
                 <v-btn value="BiWeekly" size="small">Bi-Weekly</v-btn>
                 <v-btn value="Monthly" size="small">Monthly</v-btn>
               </v-btn-toggle>
-              <!-- Monthly: day-of-month picker -->
               <v-menu
                 v-if="editPaymentFrequency === 'Monthly'"
                 :close-on-content-click="false"
@@ -557,7 +445,6 @@
                   "
                 />
               </v-menu>
-              <!-- Weekly / BiWeekly: start date + payment count -->
               <template v-else>
                 <v-menu :close-on-content-click="false" location="bottom end">
                   <template #activator="{ props }">
@@ -581,11 +468,7 @@
                     color="primary"
                     hide-header
                     show-adjacent-months
-                    @update:model-value="
-                      (val) => {
-                        editPaymentStartDate = pickerValToIso(val)
-                      }
-                    "
+                    @update:model-value="(val) => { editPaymentStartDate = pickerValToIso(val) }"
                   />
                 </v-menu>
                 <v-text-field
@@ -658,9 +541,8 @@
       <v-card rounded="sm">
         <v-card-title class="text-h6 pa-6 pb-4">Remove Account</v-card-title>
         <v-card-text class="pa-6 pt-0 text-body-2 text-medium-emphasis">
-          Remove <strong>{{ pendingRemove?.ORG || 'this account' }}</strong> ending in
-          <strong>{{ pendingRemove?.ACCTID }}</strong
-          >? This only removes the account from this app — no bank data is affected.
+          Remove <strong>{{ pendingRemove?.displayName || pendingRemove?.ORG || 'this account' }}</strong> ending in
+          <strong>{{ pendingRemove?.ACCTID }}</strong>? This only removes the account from this app — no bank data is affected.
         </v-card-text>
         <v-card-actions class="pa-6 pt-0 gap-2">
           <v-spacer />
@@ -678,10 +560,39 @@ import { useUserAccountsStore, accountTypeColor, accountTypeIcon } from '../stor
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
 
+const emit = defineEmits(['navigate'])
+
 const store = useUserAccountsStore()
 const txStore = useUserTransactionsStore()
 const userSettings = useUserSettingsStore()
 const { formatCurrency } = userSettings
+
+const SHORT_TYPE_LABELS = {
+  Checking: 'Checking',
+  Savings: 'Savings',
+  'Money Market': 'Money Market',
+  'Credit Line': 'Credit',
+  'Buy Now Pay Later': 'BNPL',
+  'Personal Loan': 'Loan',
+  'Auto Loan': 'Loan',
+  'Student Loan': 'Loan',
+  Mortgage: 'Mortgage',
+  'Medical Debt': 'Medical',
+  'Family / Friend Loan': 'Loan',
+  Investing: 'Investing',
+  Other: 'Other'
+}
+
+function shortTypeLabel(acctType) {
+  return SHORT_TYPE_LABELS[acctType] || acctType || 'Account'
+}
+
+function formatSyncDate(isoStr) {
+  if (!isoStr) return null
+  const d = new Date(isoStr.replace(' ', 'T'))
+  if (isNaN(d.getTime())) return null
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
 
 const isVariableDueDate = (account) => isLoanAccount(account)
 
@@ -727,7 +638,6 @@ onMounted(() => {
   txStore.fetchAccountSummary()
 })
 
-// Map of masked ACCTID → transaction sum for all stored transactions
 const txSummaryMap = computed(() => {
   const map = {}
   for (const s of txStore.accountSummary) {
@@ -747,40 +657,8 @@ function formatBalance(amount) {
   return formatCurrency(amount)
 }
 
-// Group accounts by institution name (ORG), falling back to 'Unknown Institution'
-const groupedAccounts = computed(() => {
-  return store.accounts.reduce((groups, account) => {
-    const bank = account.ORG || 'Unknown Institution'
-    if (!groups[bank]) groups[bank] = []
-    groups[bank].push(account)
-    return groups
-  }, {})
-})
-
-const selectedFile = ref(null)
-const lastImported = ref('')
-const importDialog = ref(false)
 const removeDialog = ref(false)
 const pendingRemove = ref(null)
-
-// Edit bank name
-const editBankDialog = ref(false)
-const editBankValue = ref('')
-const editBankOldName = ref('')
-
-function openEditBank(bankName) {
-  editBankOldName.value = bankName
-  editBankValue.value = bankName
-  editBankDialog.value = true
-}
-
-function saveEditBank() {
-  const newName = editBankValue.value.trim()
-  if (newName && newName !== editBankOldName.value) {
-    store.updateBankName(editBankOldName.value, newName)
-  }
-  editBankDialog.value = false
-}
 
 // Edit account details
 const editNameDialog = ref(false)
@@ -792,7 +670,7 @@ const editPaymentFrequency = ref('Monthly')
 const editPaymentStartDate = ref(null)
 const editPaymentCount = ref(null)
 const editStartingBalance = ref(null)
-const editAccountCategory = ref(null) // null | 'asset' | 'liability'
+const editAccountCategory = ref(null)
 
 const accountRoleItems = [
   { title: 'Default (auto-detect)', value: null },
@@ -846,7 +724,7 @@ async function saveEditName() {
   editNameTarget.value = null
 }
 
-// Add manual loan account
+// Add manual account
 const manualDialog = ref(false)
 const manualAccountTypes = [
   'Buy Now Pay Later',
@@ -903,26 +781,6 @@ async function saveManualAccount() {
   }
 }
 
-async function handleImport() {
-  if (!selectedFile.value) return
-
-  const file = selectedFile.value
-  const text = await file.text()
-
-  const result = await store.importAccountFromOfx(text)
-
-  if (result) {
-    lastImported.value = result.ORG ? `${result.ORG} ••••${result.ACCTID}` : `••••${result.ACCTID}`
-    selectedFile.value = null
-    importDialog.value = false
-
-    // Clear the success badge after 4 s
-    setTimeout(() => {
-      lastImported.value = ''
-    }, 4000)
-  }
-}
-
 function confirmRemove(account) {
   pendingRemove.value = account
   removeDialog.value = true
@@ -935,7 +793,4 @@ function doRemove() {
   removeDialog.value = false
   pendingRemove.value = null
 }
-
-// accountTypeColor, accountTypeIcon, and formatCurrency are imported from the store.
-// resolveIsAsset is used by the template to show the correct colour when an override is active.
 </script>

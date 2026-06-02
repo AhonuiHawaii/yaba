@@ -9,6 +9,7 @@ import Transactions from './views/Transactions.vue'
 import Spending from './views/Spending.vue'
 import Debts from './views/Debt.vue'
 import Budgets from './views/Budgets.vue'
+import Import from './views/Import.vue'
 import MonthlyBudgets from './views/MonthlyBudgets.vue'
 import Income from './views/Income.vue'
 import NetWorth from './views/NetWorth.vue'
@@ -35,7 +36,8 @@ const views = {
   Rules,
   Recurring,
   Backup,
-  Privacy
+  Privacy,
+  Import
 }
 
 const currentView = ref('Dashboard')
@@ -64,7 +66,7 @@ onErrorCaptured((err) => {
     <AppBar />
     <Drawer :current-view="currentView" :rail="isRail" @change-view="changeView" />
     <v-main>
-      <ViewBar :title="currentView" @toggle-drawer="isRail = !isRail" />
+      <ViewBar :title="currentView" @toggle-drawer="isRail = !isRail" @navigate="changeView" />
       <v-alert v-if="appError" type="error" class="ma-4" closable @click:close="appError = null">
         {{ appError }}
       </v-alert>

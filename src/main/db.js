@@ -766,6 +766,15 @@ function getMonthsWithData() {
     .map((r) => r.month)
 }
 
+function checkDuplicateFitids(fitids) {
+  if (!fitids.length) return []
+  const placeholders = fitids.map(() => '?').join(',')
+  return db
+    .prepare(`SELECT FITID FROM Transactions WHERE FITID IN (${placeholders})`)
+    .all(...fitids)
+    .map((r) => r.FITID)
+}
+
 export default db
 export {
   // Transactions
@@ -803,7 +812,8 @@ export {
   createCustomRecurring,
   updateCustomRecurring,
   deleteCustomRecurring,
-  matchesCustomEntry
+  matchesCustomEntry,
+  checkDuplicateFitids
 }
 
 function runRescanRecurring() {
