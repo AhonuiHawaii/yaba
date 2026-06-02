@@ -7,7 +7,7 @@ const navGroups = [
     label: 'BUDGET',
     items: [
       { title: 'Dashboard', value: 'Dashboard', icon: 'mdi-view-dashboard' },
-      { title: 'Monthly Budgets', value: 'Budgets', icon: 'mdi-calendar-month-outline' },
+      { title: 'Monthly Budgets', value: 'MonthlyBudgets', icon: 'mdi-calendar-month-outline' },
       { title: 'Transactions', value: 'Transactions', icon: 'mdi-swap-vertical' },
       { title: 'Spending', value: 'Spending', icon: 'mdi-credit-card-outline' },
       { title: 'Earnings', value: 'Income', icon: 'mdi-cash-plus' },
