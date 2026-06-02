@@ -22,54 +22,30 @@
             </div>
           </v-card-item>
 
-          <v-card-text class="pt-4">
-            <v-row>
-              <v-col
-                v-for="themeOption in baseThemes"
-                :key="themeOption.value"
-                cols="12"
-                sm="6"
-                md="4"
+          <v-card-text class="pt-4 pb-4">
+            <div class="d-flex flex-wrap justify-center">
+              <div
+                v-for="(accent, index) in accentColors"
+                :key="accent.value"
+                class="accent-swatch-circle"
+                :class="{ 
+                  'active': selectedBaseTheme === accent.value,
+                  'mr-4': index !== accentColors.length - 1 
+                }"
+                :style="{ backgroundColor: accent.color }"
+                v-ripple
+                @click="selectTheme(accent.value)"
+                :title="accent.title"
               >
-                <v-card
-                  :variant="selectedBaseTheme === themeOption.value ? 'outlined' : 'elevated'"
-                  :color="selectedBaseTheme === themeOption.value ? 'primary' : undefined"
-                  :elevation="selectedBaseTheme === themeOption.value ? 0 : 2"
-                  hover
-                  class="cursor-pointer transition-swing h-100 d-flex flex-column"
-                  @click="selectTheme(themeOption.value)"
+                <v-icon
+                  v-if="selectedBaseTheme === accent.value"
+                  color="white"
+                  size="20"
                 >
-                  <v-img
-                    :src="getThemeImage(themeOption.value)"
-                    height="160"
-                    cover
-                    class="bg-surface-variant flex-grow-0"
-                  >
-                    <template #placeholder>
-                      <div
-                        class="d-flex align-center justify-center fill-height bg-surface-variant text-medium-emphasis"
-                      >
-                        <v-icon size="40">mdi-image-outline</v-icon>
-                      </div>
-                    </template>
-                  </v-img>
-
-                  <v-card-text
-                    class="text-center text-subtitle-1 font-weight-bold d-flex align-center justify-center flex-grow-1"
-                  >
-                    {{ themeOption.title }}
-                    <v-icon
-                      v-if="selectedBaseTheme === themeOption.value"
-                      color="primary"
-                      class="ml-2"
-                      size="20"
-                    >
-                      mdi-check-circle
-                    </v-icon>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-            </v-row>
+                  mdi-check
+                </v-icon>
+              </div>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -203,17 +179,26 @@ import { useUserSettingsStore } from '../stores/userSettings'
 const theme = useTheme()
 const userSettings = useUserSettingsStore()
 
-const baseThemes = [
-  { title: 'Pastel Pink', value: 'pastelPink' },
-  { title: 'Pastel Blue', value: 'pastelBlue' },
-  { title: 'Pastel Green', value: 'pastelGreen' },
-  { title: 'Pastel Yellow', value: 'pastelYellow' },
-  { title: 'Blue Grey', value: 'blueGrey' },
-  { title: 'Black & White', value: 'blackWhite' }
+const accentColors = [
+  { title: 'Red', value: 'red', color: '#F44336' },
+  { title: 'Orange', value: 'orange', color: '#FF9800' },
+  { title: 'Yellow', value: 'yellow', color: '#FFEB3B' },
+  { title: 'Green', value: 'green', color: '#4CAF50' },
+  { title: 'Blue', value: 'blue', color: '#2196F3' },
+  { title: 'Indigo', value: 'indigo', color: '#3F51B5' },
+  { title: 'Violet', value: 'violet', color: '#9C27B0' },
+  { title: 'Pink', value: 'pink', color: '#E91E63' },
+  { title: 'Teal', value: 'teal', color: '#009688' },
+  { title: 'Amber', value: 'amber', color: '#FFC107' },
+  { title: 'Mint', value: 'mint', color: '#00BFA5' },
+  { title: 'Coral', value: 'coral', color: '#FF7043' },
+  { title: 'Plum', value: 'plum', color: '#880E4F' },
+  { title: 'Slate', value: 'slate', color: '#607D8B' },
+  { title: 'Grey', value: 'grey', color: '#9E9E9E' }
 ]
 
-const currentThemeName = theme.global.name.value
-let initialBase = 'pastelPink'
+const currentThemeName = theme.global.name.value || 'greyDark'
+let initialBase = 'grey'
 let initialDark = false
 
 if (currentThemeName.includes('Dark')) {
@@ -226,14 +211,6 @@ if (currentThemeName.includes('Dark')) {
 
 const selectedBaseTheme = ref(initialBase)
 const isDark = ref(initialDark)
-
-const getThemeImage = (baseThemeName) => {
-  // Construct a dynamic URL for the theme image.
-  // Make sure you place images like "pastelLight.png" or "pastelDark.png" in src/assets/themes/
-  const mode = isDark.value ? 'Dark' : 'Light'
-  const fileName = `${baseThemeName}${mode}.png`
-  return new URL(`../assets/themes/${fileName}`, import.meta.url).href
-}
 
 const updateTheme = () => {
   const mode = isDark.value ? 'Dark' : 'Light'
@@ -519,5 +496,26 @@ const updateDecimalPlaces = (places) => {
 .setting-label {
   width: 130px;
   flex-shrink: 0;
+}
+
+.accent-swatch-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.accent-swatch-circle:hover {
+  transform: scale(1.1);
+}
+
+.accent-swatch-circle.active {
+  box-shadow: 0 0 0 3px rgb(var(--v-theme-surface)), 0 0 0 5px rgb(var(--v-theme-primary));
+  transform: scale(1.05);
 }
 </style>

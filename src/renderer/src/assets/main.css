@@ -1,1 +1,16 @@
 @import './base.css';
+
+/* --- Component Overrides --- */
+.v-navigation-drawer {
+    background-color: rgba(var(--v-theme-primary-container), 0.5) !important;
+    color: rgb(var(--v-theme-on-primary-container)) !important;
+}
+
+.v-card {
+    background-color: rgba(var(--v-theme-primary-container), 0.2) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    color: rgb(var(--v-theme-on-primary-container)) !important;
+    /* Optional: Adds a subtle border to make the glass edge pop */
+    border: 1px solid rgba(var(--v-theme-primary), 0.2) !important;
+}
