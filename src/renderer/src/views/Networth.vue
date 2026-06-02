@@ -128,6 +128,7 @@ import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import { Line } from 'vue-chartjs'
+import { useTheme } from 'vuetify'
 import {
   Chart as ChartJS,
   ArcElement,
@@ -160,6 +161,7 @@ const accountsStore = useUserAccountsStore()
 const transactionsStore = useUserTransactionsStore()
 const { formatCurrency } = useUserSettingsStore()
 
+const theme = useTheme()
 const reportError = ref(null)
 
 const _pf = usePeriodFilter()
@@ -248,7 +250,20 @@ const trendChipLabel = computed(() => {
   return `${defaultMonths} month${defaultMonths > 1 ? 's' : ''}`
 })
 
+const hexToRgba = (hex, alpha) => {
+  if (!hex) return `rgba(0, 0, 0, ${alpha})`
+  if (hex.startsWith('rgb')) return hex
+  const r = parseInt(hex.slice(1, 3), 16) || 0
+  const g = parseInt(hex.slice(3, 5), 16) || 0
+  const b = parseInt(hex.slice(5, 7), 16) || 0
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 const filteredChartData = computed(() => {
+  const primaryColor = theme.current.value.colors.primary || '#1976d2'
+  const successColor = theme.current.value.colors.success || '#4caf50'
+  const errorColor = theme.current.value.colors.error || '#f44336'
+
   const rows = trendMonths.value
   return {
     labels: rows.map((r) => {
@@ -260,8 +275,8 @@ const filteredChartData = computed(() => {
       {
         label: 'Net Worth',
         data: rows.map((r) => r.netWorth),
-        borderColor: '#1976d2',
-        backgroundColor: 'rgba(25,118,210,0.12)',
+        borderColor: primaryColor,
+        backgroundColor: hexToRgba(primaryColor, 0.12),
         fill: true,
         tension: 0.3,
         pointRadius: 4,
@@ -271,8 +286,8 @@ const filteredChartData = computed(() => {
       {
         label: 'Assets',
         data: rows.map((r) => r.assets),
-        borderColor: '#4caf50',
-        backgroundColor: 'rgba(76,175,80,0.04)',
+        borderColor: successColor,
+        backgroundColor: hexToRgba(successColor, 0.04),
         fill: false,
         tension: 0.3,
         pointRadius: 3,
@@ -282,8 +297,8 @@ const filteredChartData = computed(() => {
       {
         label: 'Liabilities',
         data: rows.map((r) => r.liabilities),
-        borderColor: '#f44336',
-        backgroundColor: 'rgba(244,67,54,0.04)',
+        borderColor: errorColor,
+        backgroundColor: hexToRgba(errorColor, 0.04),
         fill: false,
         tension: 0.3,
         pointRadius: 3,
@@ -318,38 +333,45 @@ const liabilityRows = computed(() =>
 const totalAssets = computed(() => assetRows.value.reduce((sum, a) => sum + a.balance, 0))
 const totalLiabilities = computed(() => liabilityRows.value.reduce((sum, a) => sum + a.balance, 0))
 
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: { mode: 'index', intersect: false },
-  plugins: {
-    legend: {
-      position: 'top',
-      labels: { usePointStyle: true, padding: 16, boxWidth: 6, boxHeight: 6 }
-    },
-    tooltip: {
-      callbacks: {
-        label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
+const chartOptions = computed(() => {
+  const outlineColor = theme.current.value.colors.outline || '#9e9e9e'
+  const tickColor = hexToRgba(outlineColor, 0.6)
+  const gridColor = hexToRgba(outlineColor, 0.15)
+  const onSurfaceColor = theme.current.value.colors['on-surface'] || '#000'
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { color: onSurfaceColor, usePointStyle: true, padding: 16, boxWidth: 6, boxHeight: 6 }
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
+        }
       }
-    }
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      border: { display: false },
-      ticks: { color: 'rgba(100,100,100,0.6)', font: { size: 11 } }
     },
-    y: {
-      grid: { color: 'rgba(0,0,0,0.07)' },
-      border: { display: false },
-      ticks: {
-        color: 'rgba(100,100,100,0.6)',
-        font: { size: 11 },
-        callback: (v) => formatCurrency(v)
+    scales: {
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { color: tickColor, font: { size: 11 } }
+      },
+      y: {
+        grid: { color: gridColor },
+        border: { display: false },
+        ticks: {
+          color: tickColor,
+          font: { size: 11 },
+          callback: (v) => formatCurrency(v)
+        }
       }
     }
   }
-}
+})
 
 async function loadReport() {
   reportError.value = null

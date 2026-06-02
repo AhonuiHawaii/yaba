@@ -166,7 +166,7 @@
                 density="comfortable"
                 rounded="sm"
                 hide-details
-              />
+               color="primary" />
             </v-col>
             <v-col cols="6">
               <v-select
@@ -180,7 +180,7 @@
                 density="comfortable"
                 rounded="sm"
                 hide-details
-              />
+               color="primary" />
             </v-col>
             <v-col cols="12" class="mt-3">
               <v-text-field
@@ -193,7 +193,7 @@
                 persistent-hint
                 :hint="operatorHint"
                 autofocus
-              />
+               color="primary" />
             </v-col>
             <v-col cols="8" class="mt-3">
               <v-combobox
@@ -206,7 +206,7 @@
                 rounded="sm"
                 hide-details
                 clearable
-              />
+               color="primary" />
             </v-col>
             <v-col cols="4" class="mt-3">
               <v-text-field
@@ -218,7 +218,7 @@
                 density="comfortable"
                 rounded="sm"
                 hide-details
-              />
+               color="primary" />
             </v-col>
             <v-col cols="12" class="mt-3">
               <v-select
@@ -233,7 +233,7 @@
                 rounded="sm"
                 hide-details
                 clearable
-              />
+               color="primary" />
             </v-col>
           </v-row>
         </v-card-text>

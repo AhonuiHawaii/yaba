@@ -80,7 +80,7 @@ const toggleTheme = () => {
       rounded="lg"
       style="max-width: 260px"
       class="mr-2"
-    />
+     color="primary" />
 
     <v-menu :close-on-content-click="false" location="bottom end">
       <template #activator="{ props: menuProps }">

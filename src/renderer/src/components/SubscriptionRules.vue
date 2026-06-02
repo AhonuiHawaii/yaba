@@ -96,7 +96,7 @@
             class="mb-4"
             hint="Transactions containing this will be tracked as subscriptions"
             persistent-hint
-          />
+           color="primary" />
           <v-select
             v-model="form.operator"
             :items="operatorOptions"
@@ -104,7 +104,7 @@
             variant="outlined"
             density="compact"
             rounded="sm"
-          />
+           color="primary" />
         </v-card-text>
         <v-card-actions class="pa-5 pt-0">
           <v-spacer />

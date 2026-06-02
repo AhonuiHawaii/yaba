@@ -20,7 +20,7 @@
         hide-details
         style="max-width: 180px"
         @update:model-value="debtsStore.setStrategy"
-      />
+       color="primary" />
     </div>
 
     <!-- Summary Cards -->

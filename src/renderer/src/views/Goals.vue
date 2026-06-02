@@ -120,7 +120,7 @@
                 flat
                 density="compact"
                 hide-details
-                @update:model-value="(value) => updateCurrentAmount(goal.id, value)"
+                @update:model-value="(value) = color="primary"> updateCurrentAmount(goal.id, value)"
               />
             </td>
             <td class="text-center text-body-2 font-weight-bold">
@@ -188,7 +188,7 @@
             rounded="sm"
             hide-details="auto"
             class="mb-4"
-          />
+           color="primary" />
           <v-text-field
             v-model.number="goalForm.targetAmount"
             label="Target amount"
@@ -199,7 +199,7 @@
             rounded="sm"
             hide-details="auto"
             class="mb-4"
-          />
+           color="primary" />
           <v-text-field
             v-model.number="goalForm.currentAmount"
             label="Saved so far"
@@ -210,7 +210,7 @@
             rounded="sm"
             hide-details="auto"
             class="mb-4"
-          />
+           color="primary" />
           <v-text-field
             v-model="goalForm.targetDate"
             label="Target date"
@@ -219,7 +219,7 @@
             density="comfortable"
             rounded="sm"
             hide-details="auto"
-          />
+           color="primary" />
         </v-card-text>
         <v-card-actions class="pa-6 pt-0">
           <v-spacer />

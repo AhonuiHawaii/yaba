@@ -33,6 +33,7 @@
           density="compact"
           rounded="lg"
           variant="outlined"
+          color="primary"
           divided
         >
           <v-btn value="month" size="small">Month</v-btn>
@@ -165,7 +166,7 @@
               </td>
               <td>
                 <v-text-field
-                  :model-value="row.periodBudget > 0 ? row.periodBudget : ''"
+                  :model-value="row.periodBudget  color="primary"> 0 ? row.periodBudget : ''"
                   type="number"
                   :prefix="userSettings.currencySymbol"
                   variant="outlined"
@@ -218,7 +219,7 @@
                   @keyup.enter="saveNewCategory(section.type)"
                   @keyup.esc="cancelNewCategory"
                   @blur="saveNewCategory(section.type)"
-                />
+                 color="primary" />
               </td>
             </tr>
 
@@ -245,7 +246,7 @@
             variant="outlined"
             density="compact"
             hide-details
-          />
+           color="primary" />
           <v-text-field
             v-model="newCategoryName"
             label="Name"
@@ -254,7 +255,7 @@
             hide-details
             autofocus
             @keyup.enter="saveNewCategoryFromDialog"
-          />
+           color="primary" />
         </v-card-text>
         <v-card-actions class="px-5 pb-5 pt-0">
           <v-spacer />

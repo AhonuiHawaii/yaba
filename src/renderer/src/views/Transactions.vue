@@ -124,7 +124,7 @@
             hide-details
             rounded="pill"
             style="max-width: 260px"
-          />
+           color="primary" />
 
           <div class="d-flex gap-2">
             <v-btn
@@ -154,7 +154,7 @@
             hide-details
             rounded="lg"
             style="max-width: 200px"
-          />
+           color="primary" />
         </v-sheet>
 
         <!-- Bulk Action Bar -->
@@ -321,7 +321,7 @@
                 autofocus
                 clearable
                 @keyup.enter="saveCategory"
-              />
+               color="primary" />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -368,7 +368,7 @@
                 autofocus
                 clearable
                 @keyup.enter="savePayee"
-              />
+               color="primary" />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -440,7 +440,7 @@
                   hide-details
                   clearable
                   class="flex-grow-1"
-                />
+                 color="primary" />
                 <v-text-field
                   v-model.number="splitState.amount1"
                   label="Amount"
@@ -450,7 +450,7 @@
                   density="compact"
                   hide-details
                   :prefix="userSettings.currencySymbol"
-                />
+                 color="primary" />
               </div>
 
               <!-- Split 2 -->
@@ -465,7 +465,7 @@
                   hide-details
                   clearable
                   class="flex-grow-1"
-                />
+                 color="primary" />
                 <v-text-field
                   v-model.number="splitState.amount2"
                   label="Amount"
@@ -475,7 +475,7 @@
                   density="compact"
                   hide-details
                   :prefix="userSettings.currencySymbol"
-                />
+                 color="primary" />
               </div>
             </v-card-text>
 
@@ -527,7 +527,7 @@
                 hide-details
                 autofocus
                 no-resize
-              />
+               color="primary" />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -576,7 +576,7 @@
                 hide-details
                 autofocus
                 clearable
-              />
+               color="primary" />
               <div
                 v-if="bulkSelectionKind === 'mixed'"
                 class="text-caption text-medium-emphasis mt-2"
@@ -636,7 +636,7 @@
                 autofocus
                 clearable
                 @keyup.enter="saveBulkPayee"
-              />
+               color="primary" />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -683,7 +683,7 @@
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                  />
+                   color="primary" />
                 </v-col>
                 <v-col cols="6">
                   <v-select
@@ -697,7 +697,7 @@
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                  />
+                   color="primary" />
                 </v-col>
                 <v-col cols="12" class="mt-3">
                   <v-text-field
@@ -709,7 +709,7 @@
                     rounded="sm"
                     persistent-hint
                     :hint="ruleOperatorHint"
-                  />
+                   color="primary" />
                 </v-col>
                 <v-col cols="8" class="mt-3">
                   <v-autocomplete
@@ -722,7 +722,7 @@
                     rounded="sm"
                     hide-details
                     clearable
-                  />
+                   color="primary" />
                 </v-col>
                 <v-col cols="4" class="mt-3">
                   <v-text-field
@@ -734,7 +734,7 @@
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                  />
+                   color="primary" />
                 </v-col>
                 <v-col cols="12" class="mt-3">
                   <v-select
@@ -749,7 +749,7 @@
                     rounded="sm"
                     hide-details
                     clearable
-                  />
+                   color="primary" />
                 </v-col>
               </v-row>
             </v-card-text>

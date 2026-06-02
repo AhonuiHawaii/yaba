@@ -31,6 +31,7 @@
         <!-- Period toggle -->
         <v-btn-toggle
           v-model="period"
+          color="primary"
           mandatory
           density="compact"
           rounded="lg"
@@ -164,7 +165,7 @@
                 color="primary"
                 height="4"
                 rounded
-                bg-color="rgba(0,0,0,0.06)"
+                bg-color="surface-variant"
               />
             </div>
           </v-card-text>
@@ -233,6 +234,7 @@ import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
 import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
+import { useTheme } from 'vuetify'
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip)
 
@@ -241,6 +243,7 @@ const budgetsStore = useUserBudgetsStore()
 const transactionsStore = useUserTransactionsStore()
 const { formatCurrency } = useUserSettingsStore()
 
+const theme = useTheme()
 const ipc = window.electron?.ipcRenderer
 
 // ── Period filter (same as Dashboard) ────────────────────────────────────────
@@ -371,52 +374,71 @@ const trendChipLabel = computed(() => {
   return n === 1 ? '1 month' : `${n} months`
 })
 
-const spendingTrendData = computed(() => ({
-  labels: trendMonths.value.map((m) => {
-    const y = parseInt(m.month.slice(0, 4))
-    const mo = parseInt(m.month.slice(4, 6)) - 1
-    return new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'short' })
-  }),
-  datasets: [
-    {
-      label: 'Spending',
-      data: trendMonths.value.map((m) => m.spending || 0),
-      backgroundColor: '#5c6bc0',
-      borderRadius: 4,
-      barPercentage: 0.6
-    }
-  ]
-}))
+const hexToRgba = (hex, alpha) => {
+  if (!hex) return `rgba(0, 0, 0, ${alpha})`
+  if (hex.startsWith('rgb')) return hex
+  const r = parseInt(hex.slice(1, 3), 16) || 0
+  const g = parseInt(hex.slice(3, 5), 16) || 0
+  const b = parseInt(hex.slice(5, 7), 16) || 0
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
-const spendingTrendOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: { duration: 300 },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx) => ` ${formatCurrency(ctx.parsed.y)}`
+const spendingTrendData = computed(() => {
+  const primaryColor = theme.current.value.colors.primary || '#5c6bc0'
+
+  return {
+    labels: trendMonths.value.map((m) => {
+      const y = parseInt(m.month.slice(0, 4))
+      const mo = parseInt(m.month.slice(4, 6)) - 1
+      return new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'short' })
+    }),
+    datasets: [
+      {
+        label: 'Spending',
+        data: trendMonths.value.map((m) => m.spending || 0),
+        backgroundColor: primaryColor,
+        borderRadius: 4,
+        barPercentage: 0.6
       }
-    }
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      border: { display: false },
-      ticks: { color: 'rgba(100,100,100,0.6)', font: { size: 11 } }
+    ]
+  }
+})
+
+const spendingTrendOptions = computed(() => {
+  const outlineColor = theme.current.value.colors.outline || '#9e9e9e'
+  const tickColor = hexToRgba(outlineColor, 0.6)
+  const gridColor = hexToRgba(outlineColor, 0.15)
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 300 },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => ` ${formatCurrency(ctx.parsed.y)}`
+        }
+      }
     },
-    y: {
-      grid: { color: 'rgba(0,0,0,0.07)' },
-      border: { display: false },
-      ticks: {
-        color: 'rgba(100,100,100,0.6)',
-        font: { size: 11 },
-        callback: (v) => (v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}`)
+    scales: {
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { color: tickColor, font: { size: 11 } }
+      },
+      y: {
+        grid: { color: gridColor },
+        border: { display: false },
+        ticks: {
+          color: tickColor,
+          font: { size: 11 },
+          callback: (v) => (v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}`)
+        }
       }
     }
   }
-}
+})
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 function formatPercent(val, total) {

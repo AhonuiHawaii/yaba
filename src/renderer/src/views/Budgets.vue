@@ -69,7 +69,7 @@
               rounded="sm"
               autofocus
               hide-details
-            />
+             color="primary" />
           </div>
           <div class="form-row mb-3">
             <label>Section</label>
@@ -80,7 +80,7 @@
               density="compact"
               rounded="sm"
               hide-details
-            />
+             color="primary" />
           </div>
           <div class="form-row mb-3">
             <label>Icon</label>
@@ -91,7 +91,7 @@
               density="compact"
               rounded="sm"
               hide-details
-            />
+             color="primary" />
           </div>
           <div class="form-row mb-3">
             <label>Monthly amount</label>
@@ -103,7 +103,7 @@
               density="compact"
               rounded="sm"
               hide-details
-            />
+             color="primary" />
           </div>
           <div class="form-row">
             <label>Rules</label>
@@ -114,7 +114,7 @@
               density="compact"
               rounded="sm"
               hide-details
-            />
+             color="primary" />
           </div>
         </v-card-text>
         <v-card-actions class="pa-5 pt-0">

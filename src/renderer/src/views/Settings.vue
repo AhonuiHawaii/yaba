@@ -77,7 +77,7 @@
                     density="compact"
                     hide-details
                     @update:model-value="updateCurrency"
-                  ></v-autocomplete>
+                   color="primary"></v-autocomplete>
                 </div>
               </v-col>
 
