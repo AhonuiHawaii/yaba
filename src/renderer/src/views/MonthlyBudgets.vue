@@ -49,9 +49,7 @@
         >
           Copy last month
         </v-btn>
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddCategoryDialog">
-          Add category
-        </v-btn>
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddTypeDialog"> Add type </v-btn>
       </div>
     </div>
 
@@ -106,164 +104,154 @@
     <!-- Budget sections -->
     <div class="d-flex flex-column ga-4">
       <div v-for="section in budgetSections" :key="section.type">
-        <div class="text-caption font-weight-bold text-uppercase text-primary mb-2">
-          {{ section.label }}
+        <div class="d-flex align-center justify-space-between mb-2">
+          <div class="text-caption font-weight-bold text-uppercase text-primary">
+            {{ section.label }}
+          </div>
+          <v-btn
+            size="x-small"
+            variant="text"
+            prepend-icon="mdi-plus"
+            color="primary"
+            @click="openAddCategoryDialog(section.type)"
+          >
+            Add category
+          </v-btn>
         </div>
         <v-card rounded="lg" elevation="0" border>
-        <v-table density="comfortable">
-          <thead>
-            <tr>
-              <th class="text-start text-caption text-medium-emphasis pl-5" width="200">Category</th>
-              <th class="text-start text-caption text-medium-emphasis" width="170">Budgeted</th>
-              <th class="text-start text-caption text-medium-emphasis" width="130">Actual</th>
-              <th class="text-start text-caption text-medium-emphasis" width="120">Remaining</th>
-              <th class="text-start text-caption text-medium-emphasis" width="220">Progress</th>
-              <th width="88"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Empty state -->
-            <tr v-if="section.rows.length === 0 && addingType !== section.type">
-              <td colspan="6" class="text-center text-caption text-medium-emphasis py-3">
-                No {{ section.label.toLowerCase() }} categories yet.
-              </td>
-            </tr>
+          <v-table density="comfortable">
+            <thead>
+              <tr>
+                <th class="text-start text-caption text-medium-emphasis pl-5" width="200">
+                  Category
+                </th>
+                <th class="text-start text-caption text-medium-emphasis" width="170">Budgeted</th>
+                <th class="text-start text-caption text-medium-emphasis" width="130">Actual</th>
+                <th class="text-start text-caption text-medium-emphasis" width="120">Remaining</th>
+                <th class="text-start text-caption text-medium-emphasis" width="220">Progress</th>
+                <th width="88"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Empty state -->
+              <tr v-if="section.rows.length === 0 && addingType !== section.type">
+                <td colspan="6" class="text-center text-caption text-medium-emphasis py-3">
+                  No {{ section.label.toLowerCase() }} categories yet.
+                </td>
+              </tr>
 
-            <!-- Category rows -->
-            <tr v-for="row in section.rows" :key="row.id">
-              <td
-                class="text-body-2 font-weight-medium pl-5 text-truncate"
-                style="max-width: 200px"
-              >
-                {{ row.name }}
-              </td>
-              <td>
-                <v-text-field
-                  :model-value="row.periodBudget > 0 ? row.periodBudget : ''"
-                  type="number"
-                  :prefix="userSettings.currencySymbol"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  @update:model-value="(v) => updateBudget(row.id, v)"
-                />
-              </td>
-              <td class="text-body-2">{{ formatCurrency(row.actual) }}</td>
-              <td
-                class="text-body-2 font-weight-medium"
-                :class="row.remaining >= 0 ? 'text-success' : 'text-error'"
-              >
-                {{ (row.remaining >= 0 ? '+' : '') + formatCurrency(row.remaining) }}
-              </td>
-              <td class="pr-5">
-                <v-progress-linear
-                  :model-value="row.progress"
-                  :color="row.over ? 'error' : 'primary'"
-                  height="6"
-                  rounded
-                  bg-color="surface-variant"
-                />
-              </td>
-              <td class="pr-2">
-                <v-btn
-                  icon="mdi-pencil-outline"
-                  variant="text"
-                  size="small"
-                  density="compact"
-                  :opacity="0.4"
-                  @click="openEditCategory(row)"
-                />
-                <v-btn
-                  icon="mdi-delete-outline"
-                  variant="text"
-                  size="small"
-                  color="error"
-                  density="compact"
-                  :opacity="0.4"
-                  @click="categoriesStore.deleteCategory(row.id)"
-                />
-              </td>
-            </tr>
-
-            <!-- Inline add row -->
-            <tr v-if="addingType === section.type">
-              <td colspan="6" class="py-1 pl-4">
-                <v-text-field
-                  v-model="newCategoryName"
-                  placeholder="Category name"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  autofocus
-                  @keyup.enter="saveNewCategory(section.type)"
-                  @keyup.esc="cancelNewCategory"
-                  @blur="saveNewCategory(section.type)"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
+              <!-- Category rows -->
+              <tr v-for="row in section.rows" :key="row.id">
+                <td
+                  class="text-body-2 font-weight-medium pl-5 text-truncate"
+                  style="max-width: 200px"
+                >
+                  {{ row.name }}
+                </td>
+                <td>
+                  <v-text-field
+                    :model-value="row.periodBudget > 0 ? row.periodBudget : ''"
+                    type="number"
+                    :prefix="userSettings.currencySymbol"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    @update:model-value="(v) => updateBudget(row.id, v)"
+                  />
+                </td>
+                <td class="text-body-2">{{ formatCurrency(row.actual) }}</td>
+                <td
+                  class="text-body-2 font-weight-medium"
+                  :class="row.remaining >= 0 ? 'text-success' : 'text-error'"
+                >
+                  {{ (row.remaining >= 0 ? '+' : '') + formatCurrency(row.remaining) }}
+                </td>
+                <td class="pr-5">
+                  <v-progress-linear
+                    :model-value="row.progress"
+                    :color="row.over ? 'error' : 'primary'"
+                    height="6"
+                    rounded
+                    bg-color="surface-variant"
+                  />
+                </td>
+                <td class="pr-2">
+                  <v-btn
+                    icon="mdi-pencil-outline"
+                    variant="text"
+                    size="small"
+                    density="compact"
+                    :opacity="0.4"
+                    @click="openEditCategory(row)"
+                  />
+                  <v-btn
+                    icon="mdi-delete-outline"
+                    variant="text"
+                    size="small"
+                    color="error"
+                    density="compact"
+                    :opacity="0.4"
+                    @click="categoriesStore.deleteCategory(row.id)"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
         </v-card>
       </div>
     </div>
 
-    <!-- Add category dialog -->
-    <v-dialog v-model="addCategoryDialog" max-width="360">
+    <!-- Add type dialog -->
+    <v-dialog v-model="addTypeDialog" max-width="360">
       <v-card rounded="lg">
-        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">Add category</v-card-title>
-        <v-card-text class="pa-5 pt-0 d-flex flex-column ga-3">
-          <v-select
-            v-model="addCategoryType"
-            :items="SECTION_TYPES"
-            item-title="label"
-            item-value="type"
-            label="Section"
-            variant="outlined"
-            density="compact"
-            hide-details
-          />
+        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">Add type</v-card-title>
+        <v-card-text class="pa-5 pt-0">
           <v-text-field
-            v-model="newCategoryName"
+            v-model="newTypeName"
             label="Name"
             variant="outlined"
             density="compact"
             hide-details
             autofocus
-            @keyup.enter="saveNewCategoryFromDialog"
+            @keyup.enter="saveNewType"
           />
         </v-card-text>
         <v-card-actions class="px-5 pb-5 pt-0">
           <v-spacer />
-          <v-btn variant="text" @click="addCategoryDialog = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" @click="saveNewCategoryFromDialog">Add</v-btn>
+          <v-btn variant="text" @click="addTypeDialog = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" :disabled="!newTypeName.trim()" @click="saveNewType"
+            >Add</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <!-- Edit category dialog -->
-    <v-dialog v-model="editCategoryDialog" max-width="360">
+    <!-- Category dialog (add & edit) -->
+    <v-dialog v-model="categoryDialog" max-width="360">
       <v-card rounded="lg">
-        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">Edit category</v-card-title>
+        <v-card-title class="pa-5 pb-3 text-body-1">
+          {{ categoryDialogTitle }}
+        </v-card-title>
         <v-card-text class="pa-5 pt-0">
           <v-text-field
-            v-model="editCategoryName"
+            v-model="categoryDialogName"
             label="Name"
             variant="outlined"
             density="compact"
             hide-details
             autofocus
-            @keyup.enter="saveEditCategory"
+            @keyup.enter="saveCategoryDialog"
           />
         </v-card-text>
         <v-card-actions class="px-5 pb-5 pt-0">
           <v-spacer />
-          <v-btn variant="text" @click="editCategoryDialog = false">Cancel</v-btn>
+          <v-btn variant="text" @click="categoryDialog = false">Cancel</v-btn>
           <v-btn
             color="primary"
             variant="flat"
-            :disabled="!editCategoryName.trim()"
-            @click="saveEditCategory"
-            >Save</v-btn
+            :disabled="!categoryDialogName.trim()"
+            @click="saveCategoryDialog"
+            >{{ categoryDialogMode === 'edit' ? 'Save' : 'Add' }}</v-btn
           >
         </v-card-actions>
       </v-card>
@@ -343,12 +331,12 @@ const actualsByCategory = computed(() => {
 })
 
 // ── Budget rows & sections ────────────────────────────────────────────────────
-const SECTION_TYPES = [
-  { type: 'income', label: 'Income' },
-  { type: 'bills', label: 'Bills' },
-  { type: 'variable', label: 'Variable Expenses' },
-  { type: 'savings', label: 'Savings' }
-]
+const TYPE_LABELS = {
+  income: 'Income',
+  bills: 'Bills',
+  variable: 'Variable Expenses',
+  savings: 'Savings'
+}
 
 const budgetRows = computed(() =>
   categoriesStore.categories.map((cat) => {
@@ -372,10 +360,11 @@ const budgetRows = computed(() =>
 )
 
 const budgetSections = computed(() =>
-  SECTION_TYPES.map((s) => ({
-    ...s,
+  budgetsStore.types.map((type) => ({
+    type,
+    label: TYPE_LABELS[type] ?? type,
     rows: budgetRows.value
-      .filter((r) => r.type === s.type)
+      .filter((r) => r.type === type)
       .sort((a, b) => a.name.localeCompare(b.name))
   }))
 )
@@ -444,55 +433,59 @@ async function copyLastPeriod() {
   }
 }
 
-// ── Edit category ─────────────────────────────────────────────────────────────
-const editCategoryDialog = ref(false)
-const editCategoryId = ref(null)
-const editCategoryName = ref('')
+// ── Add type ──────────────────────────────────────────────────────────────────
+const addTypeDialog = ref(false)
+const newTypeName = ref('')
+
+function openAddTypeDialog() {
+  newTypeName.value = ''
+  addTypeDialog.value = true
+}
+
+async function saveNewType() {
+  const name = newTypeName.value.trim()
+  addTypeDialog.value = false
+  newTypeName.value = ''
+  if (!name) return
+  await budgetsStore.addType(name)
+}
+
+// ── Category dialog (add & edit) ──────────────────────────────────────────────
+const categoryDialog = ref(false)
+const categoryDialogMode = ref('add')
+const categoryDialogName = ref('')
+const categoryDialogType = ref(null)
+const categoryDialogId = ref(null)
+const categoryDialogTitle = computed(() =>
+  categoryDialogMode.value === 'edit'
+    ? `Edit category for ${TYPE_LABELS[categoryDialogType.value] ?? categoryDialogType.value}`
+    : `Add category for ${TYPE_LABELS[categoryDialogType.value] ?? categoryDialogType.value}`
+)
+
+function openAddCategoryDialog(type) {
+  categoryDialogMode.value = 'add'
+  categoryDialogType.value = type
+  categoryDialogName.value = ''
+  categoryDialog.value = true
+}
 
 function openEditCategory(row) {
-  editCategoryId.value = row.id
-  editCategoryName.value = row.name
-  editCategoryDialog.value = true
+  categoryDialogMode.value = 'edit'
+  categoryDialogId.value = row.id
+  categoryDialogName.value = row.name
+  categoryDialog.value = true
 }
 
-async function saveEditCategory() {
-  const name = editCategoryName.value.trim()
+async function saveCategoryDialog() {
+  const name = categoryDialogName.value.trim()
+  categoryDialog.value = false
+  categoryDialogName.value = ''
   if (!name) return
-  editCategoryDialog.value = false
-  await categoriesStore.updateCategory(editCategoryId.value, { name })
-}
-
-// ── Add category ──────────────────────────────────────────────────────────────
-const addingType = ref(null)
-const newCategoryName = ref('')
-const addCategoryDialog = ref(false)
-const addCategoryType = ref('variable')
-
-function openAddCategoryDialog() {
-  newCategoryName.value = ''
-  addCategoryType.value = 'variable'
-  addCategoryDialog.value = true
-}
-
-async function saveNewCategoryFromDialog() {
-  const name = newCategoryName.value.trim()
-  addCategoryDialog.value = false
-  newCategoryName.value = ''
-  if (!name) return
-  await categoriesStore.addCategory({ type: addCategoryType.value, name })
-}
-
-async function saveNewCategory(type) {
-  const name = newCategoryName.value.trim()
-  addingType.value = null
-  newCategoryName.value = ''
-  if (!name) return
-  await categoriesStore.addCategory({ type, name })
-}
-
-function cancelNewCategory() {
-  addingType.value = null
-  newCategoryName.value = ''
+  if (categoryDialogMode.value === 'edit') {
+    await categoriesStore.updateCategory(categoryDialogId.value, { name })
+  } else {
+    await categoriesStore.addCategory({ type: categoryDialogType.value, name })
+  }
 }
 
 // ── Init & watchers ───────────────────────────────────────────────────────────

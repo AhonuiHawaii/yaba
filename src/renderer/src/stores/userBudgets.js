@@ -4,13 +4,16 @@ import db from './dexie'
 
 export const useUserBudgetsStore = defineStore('userBudgets', () => {
   const budgets = ref([])
-  const rollovers = ref([])
   const loadingCount = ref(0)
   const loading = computed(() => loadingCount.value > 0)
   const error = ref(null)
 
   const monthlyBudgets = computed(() =>
     budgets.value.filter((budget) => !budget.period || budget.period === 'monthly')
+  )
+
+  const types = computed(() =>
+    [...new Set(budgets.value.map((b) => b.type).filter(Boolean))].sort()
   )
 
   function setError(err) {
@@ -26,55 +29,6 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
       setError(err)
     } finally {
       loadingCount.value--
-    }
-  }
-
-  async function fetchRollovers() {
-    rollovers.value = await db.budgetRollovers.toArray()
-  }
-
-  function getRolloverAmount(categoryId, month) {
-    return (
-      rollovers.value.find((r) => r.categoryId === categoryId && r.month === month)
-        ?.rolloverAmount || 0
-    )
-  }
-
-  function getEffectiveBudget(categoryId, month) {
-    const base = getBudget(categoryId, month)?.amount || 0
-    return base + getRolloverAmount(categoryId, month)
-  }
-
-  // Returns the unused budget amount for a category in a given month.
-  // Call with the actual spending for that month; persists nothing on its own.
-  function calculateRollover(categoryId, month, actual) {
-    const budget = getBudget(categoryId, month)
-    if (!budget?.rolloverEnabled) return 0
-    return Math.max((budget.amount || 0) - Math.abs(actual), 0)
-  }
-
-  async function upsertRollover(categoryId, month, rolloverAmount) {
-    const existing = rollovers.value.find((r) => r.categoryId === categoryId && r.month === month)
-    const now = new Date().toISOString()
-    if (existing) {
-      await db.budgetRollovers.update(existing.id, { rolloverAmount, updatedAt: now })
-    } else {
-      await db.budgetRollovers.add({
-        id: crypto.randomUUID(),
-        categoryId,
-        month,
-        rolloverAmount,
-        createdAt: now
-      })
-    }
-    await fetchRollovers()
-  }
-
-  async function toggleRolloverEnabled(categoryId, enabled) {
-    const budget = getBudget(categoryId)
-    if (budget) {
-      await db.budgets.update(budget.id, { rolloverEnabled: !!enabled })
-      await fetchBudgets()
     }
   }
 
@@ -126,29 +80,36 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
     }
   }
 
+  async function addType(name) {
+    const id = crypto.randomUUID()
+    await db.budgets.add({
+      id,
+      categoryId: id,
+      type: name,
+      amount: 0,
+      month: null,
+      createdAt: new Date().toISOString()
+    })
+    await fetchBudgets()
+  }
+
   function clearError() {
     error.value = null
   }
 
   // Initial load
   fetchBudgets()
-  fetchRollovers()
 
   return {
     budgets,
-    rollovers,
+    types,
     monthlyBudgets,
     loading,
     error,
     fetchBudgets,
-    fetchRollovers,
     getBudget,
-    getEffectiveBudget,
-    getRolloverAmount,
-    calculateRollover,
-    upsertRollover,
-    toggleRolloverEnabled,
     upsertBudget,
+    addType,
     deleteBudget,
     clearError
   }

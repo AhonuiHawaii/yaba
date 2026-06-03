@@ -355,7 +355,7 @@ const totalSpending = computed(() =>
 function sumBudgetByType(type, yyyymm) {
   return categoriesStore.categories
     .filter((c) => c.type === type)
-    .reduce((sum, c) => sum + budgetsStore.getEffectiveBudget(c.id, yyyymm), 0)
+    .reduce((sum, c) => sum + (budgetsStore.getBudget(c.id, yyyymm)?.amount || 0), 0)
 }
 
 const incomeBudget = computed(() =>
@@ -393,7 +393,7 @@ const topCategories = computed(() => {
     .map(([id, amount]) => {
       const cat = categoriesStore.categories.find((c) => c.id === id)
       const budget = periodMonths.value.reduce(
-        (sum, m) => sum + budgetsStore.getEffectiveBudget(id, m),
+        (sum, m) => sum + (budgetsStore.getBudget(id, m)?.amount || 0),
         0
       )
       return {
@@ -594,7 +594,6 @@ async function loadDashboard() {
     await Promise.all([
       accountsStore.fetchAccounts(),
       budgetsStore.fetchBudgets(),
-      budgetsStore.fetchRollovers(),
       categoriesStore.fetchCategories(),
       transactionsStore.fetchAccountSummary()
     ])

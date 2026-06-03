@@ -395,10 +395,12 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useUserRulesStore } from '../stores/userRules'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserTransactionsStore } from '../stores/userTransactions'
+import { useUserBudgetsStore } from '../stores/userBudgets'
 
 const store = useUserRulesStore()
 const categoriesStore = useUserCategoriesStore()
 const transactionsStore = useUserTransactionsStore()
+const budgetsStore = useUserBudgetsStore()
 
 function currentMonthValue() {
   const now = new Date()
@@ -455,13 +457,11 @@ const operatorOptions = [
   { label: '< (less than)', value: 'lt' }
 ]
 
-const typeOptions = [
-  { label: 'Income', value: 'income' },
-  { label: 'Expense', value: 'expense' },
-  { label: 'Bills', value: 'bills' },
-  { label: 'Variable', value: 'variable' },
-  { label: 'Savings', value: 'savings' }
-]
+const typeOptions = computed(() => {
+  const types = budgetsStore.types.map((t) => ({ label: t, value: t }))
+  if (!budgetsStore.types.includes('debt')) types.push({ label: 'Debt', value: 'debt' })
+  return types
+})
 
 const operatorHint = computed(
   () =>

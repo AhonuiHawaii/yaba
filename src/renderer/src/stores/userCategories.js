@@ -12,7 +12,10 @@ export const useUserCategoriesStore = defineStore('userCategories', () => {
   })
 
   async function fetchCategories() {
-    categories.value = await db.categories.orderBy('name').toArray()
+    const all = await db.budgets.toArray()
+    categories.value = all
+      .filter((b) => b.categoryId === b.id)
+      .sort((a, b) => a.name.localeCompare(b.name))
   }
 
   function getCategoriesByType(type) {
@@ -20,27 +23,28 @@ export const useUserCategoriesStore = defineStore('userCategories', () => {
   }
 
   async function addCategory(category) {
+    const id = crypto.randomUUID()
     const newCategory = {
-      id: crypto.randomUUID(),
+      id,
+      categoryId: id,
       name: category.name,
       type: category.type,
+      amount: 0,
+      month: null,
       createdAt: new Date().toISOString()
     }
-    await db.categories.add(newCategory)
+    await db.budgets.add(newCategory)
     await fetchCategories()
     return newCategory
   }
 
   async function updateCategory(id, updates) {
-    await db.categories.update(id, updates)
+    await db.budgets.update(id, updates)
     await fetchCategories()
   }
 
   async function deleteCategory(id) {
-    await Promise.all([
-      db.categories.delete(id),
-      db.budgets.where('categoryId').equals(id).delete()
-    ])
+    await db.budgets.where('categoryId').equals(id).delete()
     await fetchCategories()
   }
 

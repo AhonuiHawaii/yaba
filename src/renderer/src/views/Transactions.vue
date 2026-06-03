@@ -886,6 +886,7 @@ const emit = defineEmits(['navigate'])
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserAccountsStore } from '../stores/userAccounts'
 import { useUserCategoriesStore } from '../stores/userCategories'
+import { useUserBudgetsStore } from '../stores/userBudgets'
 import { useUserSettingsStore } from '../stores/userSettings'
 import { useUserRulesStore } from '../stores/userRules'
 import { storeToRefs } from 'pinia'
@@ -894,6 +895,7 @@ import RulesView from '@components/Rules.vue'
 const store = useUserTransactionsStore()
 const accountsStore = useUserAccountsStore()
 const categoriesStore = useUserCategoriesStore()
+const budgetsStore = useUserBudgetsStore()
 const userSettings = useUserSettingsStore()
 const rulesStore = useUserRulesStore()
 const { formatCurrency, formatDate } = userSettings
@@ -1254,13 +1256,9 @@ const ruleOperatorOptions = [
   { label: '< (less than)', value: 'lt' }
 ]
 
-const ruleTypeOptions = [
-  { label: 'Income', value: 'income' },
-  { label: 'Expense', value: 'expense' },
-  { label: 'Bills', value: 'bills' },
-  { label: 'Variable', value: 'variable' },
-  { label: 'Savings', value: 'savings' }
-]
+const ruleTypeOptions = computed(() =>
+  budgetsStore.types.map((t) => ({ label: t.charAt(0).toUpperCase() + t.slice(1), value: t }))
+)
 
 const ruleOperatorHint = computed(
   () =>
