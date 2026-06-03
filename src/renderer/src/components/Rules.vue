@@ -129,6 +129,13 @@
           }}</v-chip>
         </template>
 
+        <template #item.rename="{ item }">
+          <span v-if="item.rename" class="text-body-2 text-medium-emphasis font-italic">{{
+            item.rename
+          }}</span>
+          <span v-else class="text-body-2 text-disabled">—</span>
+        </template>
+
         <template #item.matches="{ item }">
           <span class="text-body-2">{{ item.matchCount ?? '—' }}</span>
         </template>
@@ -277,6 +284,20 @@
                     color="primary"
                   />
                 </v-col>
+                <v-col cols="12" class="mt-3">
+                  <v-text-field
+                    v-model="form.rename"
+                    label="Rename payee to (optional)"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    clearable
+                    hint="Overwrites the transaction's Name field when this rule matches"
+                    persistent-hint
+                    color="primary"
+                  />
+                </v-col>
               </v-row>
             </v-card-text>
           </div>
@@ -412,6 +433,7 @@ const headers = [
   { title: 'When', key: 'field', width: '130px', sortable: false },
   { title: 'Condition', key: 'condition', sortable: false },
   { title: 'Set category', key: 'category', width: '170px', sortable: false },
+  { title: 'Rename to', key: 'rename', width: '150px', sortable: false },
   { title: 'Matches', key: 'matches', width: '110px', sortable: false, align: 'end' },
   { title: '', key: 'actions', width: '90px', sortable: false, align: 'end' }
 ]
@@ -446,10 +468,8 @@ const operatorHint = computed(
     ({
       contains:
         'Substring match. Bank separators (*, #, etc.) are ignored. "Uber Eats" matches "UBER *EATS"',
-      equals:
-        'Full-field match. Bank separators (*, #, etc.) are ignored.',
-      startsWith:
-        'Prefix match. Bank separators (*, #, etc.) are ignored.',
+      equals: 'Full-field match. Bank separators (*, #, etc.) are ignored.',
+      startsWith: 'Prefix match. Bank separators (*, #, etc.) are ignored.',
       wildcard: 'Anchored wildcard — must match the whole field. e.g. WAL*MART*',
       wholeWord:
         'Whole-word match. Use * inside a word — e.g. gas* matches "gasoline" but not "natural gases"',
@@ -467,7 +487,8 @@ const blankForm = () => ({
   value: '',
   category: '',
   type: null,
-  priority: 0
+  priority: 0,
+  rename: ''
 })
 const form = ref(blankForm())
 
@@ -485,7 +506,8 @@ function openEditDialog(item) {
     value: item.value,
     category: item.category,
     type: item.type ?? null,
-    priority: item.priority ?? 0
+    priority: item.priority ?? 0,
+    rename: item.rename ?? ''
   }
   ruleDialog.value = true
 }
@@ -503,7 +525,8 @@ async function saveRule() {
     value: form.value.value,
     category: form.value.category,
     type: form.value.type || null,
-    priority: form.value.priority ?? 0
+    priority: form.value.priority ?? 0,
+    rename: form.value.rename || null
   }
   if (editTarget.value) {
     await store.editRule(editTarget.value.id, payload)
@@ -551,8 +574,6 @@ function matchedFieldText(tx) {
   if (v != null && String(v).trim() !== '') return String(v)
   return tx.NAME || tx.MEMO || '—'
 }
-
-
 
 const applyResult = ref(null)
 

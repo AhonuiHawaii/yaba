@@ -36,24 +36,29 @@ db.pragma('foreign_keys = ON')
 
 // ── Schema initialization ─────────────────────────────────────────────────────
 
+// Linked bank accounts. accountCategory lets the user override whether an
+// account is treated as an asset or liability in net worth calculations.
 db.exec(`
   CREATE TABLE IF NOT EXISTS Accounts (
-    ACCTID      TEXT PRIMARY KEY,
-    ACCTTYPE    TEXT,
-    ORG         TEXT,
-    INTU_BID    TEXT,
-    displayName TEXT,
-    interestRate REAL,
-    dueDate INTEGER,
+    ACCTID          TEXT PRIMARY KEY,
+    ACCTTYPE        TEXT,
+    ORG             TEXT,
+    INTU_BID        TEXT,
+    displayName     TEXT,
+    interestRate    REAL,
+    dueDate         INTEGER,
     paymentFrequency TEXT,
     paymentStartDate TEXT,
-    paymentCount     INTEGER,
-    startingBalance  REAL,
-    createdAt   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    lastImport  TEXT
+    paymentCount    INTEGER,
+    startingBalance REAL,
+    accountCategory TEXT DEFAULT NULL,
+    createdAt       TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    lastImport      TEXT
   )
 `)
 
+// One row per OFX transaction. OFX fields come from the bank; app fields
+// (transactionType, category, split*, notes, recurring) are set by the user.
 db.exec(`
   CREATE TABLE IF NOT EXISTS Transactions (
     FITID           TEXT PRIMARY KEY,
@@ -85,17 +90,9 @@ db.exec(`
   )
 `)
 
-// 1.1: Indexes on hot columns (recreated after any migration, IF NOT EXISTS is idempotent)
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_dtposted ON Transactions(DTPOSTED)`)
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_acctid   ON Transactions(ACCTID)`)
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_category ON Transactions(category)`)
-
-// 1.2: Add accountCategory column for user-defined asset/liability override (safe on existing DBs)
-try {
-  db.exec(`ALTER TABLE Accounts ADD COLUMN accountCategory TEXT DEFAULT NULL`)
-} catch {
-  /* column already exists */
-}
 
 // ── Column sets ──────────────────────────────────────────────────────────────
 
@@ -411,6 +408,8 @@ function deleteAccount(acctid) {
 
 // ── Category Rules ───────────────────────────────────────────────────────────
 
+// Rules are evaluated top-to-bottom (priority DESC) on import; first match wins.
+// rename optionally overwrites the transaction's NAME (payee) field on match.
 db.exec(`
   CREATE TABLE IF NOT EXISTS CategoryRules (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -419,6 +418,7 @@ db.exec(`
     value     TEXT NOT NULL,
     category  TEXT NOT NULL,
     type      TEXT,
+    rename    TEXT,
     priority  INTEGER DEFAULT 0,
     createdAt TEXT DEFAULT CURRENT_TIMESTAMP
   )
@@ -430,8 +430,8 @@ function getRules() {
 
 function createRule(rule) {
   const stmt = db.prepare(`
-    INSERT INTO CategoryRules (field, operator, value, category, type, priority)
-    VALUES (@field, @operator, @value, @category, @type, @priority)
+    INSERT INTO CategoryRules (field, operator, value, category, type, priority, rename)
+    VALUES (@field, @operator, @value, @category, @type, @priority, @rename)
   `)
   const info = stmt.run({
     field: rule.field,
@@ -439,13 +439,14 @@ function createRule(rule) {
     value: rule.value,
     category: rule.category,
     type: rule.type ?? null,
-    priority: rule.priority ?? 0
+    priority: rule.priority ?? 0,
+    rename: rule.rename ?? null
   })
   return db.prepare('SELECT * FROM CategoryRules WHERE id = ?').get(info.lastInsertRowid)
 }
 
 function updateRule(id, updates) {
-  const ALLOWED = new Set(['field', 'operator', 'value', 'category', 'type', 'priority'])
+  const ALLOWED = new Set(['field', 'operator', 'value', 'category', 'type', 'priority', 'rename'])
   const entries = Object.entries(updates).filter(([col]) => ALLOWED.has(col))
   if (entries.length === 0) return 0
   const setClause = entries.map(([col]) => `${col} = ?`).join(', ')
@@ -530,6 +531,7 @@ function applyRules(transactions) {
       if (matches) {
         const patch = { FITID: txn.FITID, category: rule.category }
         if (rule.type) patch.transactionType = rule.type
+        if (rule.rename) patch.rename = rule.rename
         patches.push(patch)
         break
       }
@@ -592,8 +594,7 @@ function previewKeywords(keywords) {
     clean.some((kw) => {
       const needle = normalizeBankText(kw)
       return (
-        normalizeBankText(tx.NAME).includes(needle) ||
-        normalizeBankText(tx.MEMO).includes(needle)
+        normalizeBankText(tx.NAME).includes(needle) || normalizeBankText(tx.MEMO).includes(needle)
       )
     })
   )
@@ -602,6 +603,7 @@ function previewKeywords(keywords) {
 
 // ── Custom Recurring ─────────────────────────────────────────────────────────
 
+// User-defined recurring transaction patterns matched against MEMO on import.
 db.exec(`
   CREATE TABLE IF NOT EXISTS CustomRecurring (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -610,12 +612,6 @@ db.exec(`
     createdAt   TEXT DEFAULT CURRENT_TIMESTAMP
   )
 `)
-try {
-  db.exec(`ALTER TABLE CustomRecurring ADD COLUMN operator TEXT NOT NULL DEFAULT 'contains'`)
-} catch {
-  /* column already exists */
-}
-
 function matchesCustomEntry(memo, entry) {
   const haystack = (memo || '').toLowerCase()
   const needle = (entry.name || '').toLowerCase()

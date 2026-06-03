@@ -451,8 +451,6 @@ watch(
   }
 )
 
-
-
 onMounted(() => store.fetchGroups())
 </script>
 

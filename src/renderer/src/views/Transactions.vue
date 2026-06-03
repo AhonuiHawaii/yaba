@@ -293,15 +293,41 @@
               <div class="d-flex align-center justify-end">
                 <v-menu>
                   <template #activator="{ props }">
-                    <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" density="comfortable" size="small" />
+                    <v-btn
+                      v-bind="props"
+                      icon="mdi-dots-vertical"
+                      variant="text"
+                      density="comfortable"
+                      size="small"
+                    />
                   </template>
                   <v-list density="compact">
-                    <v-list-item prepend-icon="mdi-account-edit-outline" title="Edit payee"  @click="openEditPayee(item)" />
-                    <v-list-item prepend-icon="mdi-note-edit-outline"    title="Edit notes"  @click="openNotesDialog(item)" />
-                    <v-list-item prepend-icon="mdi-auto-fix"             title="Create rule" @click="activeTab = 'category-rules'" />
+                    <v-list-item
+                      prepend-icon="mdi-account-edit-outline"
+                      title="Edit payee"
+                      @click="openEditPayee(item)"
+                    />
+                    <v-list-item
+                      prepend-icon="mdi-note-edit-outline"
+                      title="Edit notes"
+                      @click="openNotesDialog(item)"
+                    />
+                    <v-list-item
+                      prepend-icon="mdi-auto-fix"
+                      title="Create rule"
+                      @click="activeTab = 'category-rules'"
+                    />
                   </v-list>
                 </v-menu>
-                <v-btn icon="mdi-delete-outline" variant="text" color="error" density="comfortable" size="small" @click="confirmDelete(item)" class="ml-1" />
+                <v-btn
+                  icon="mdi-delete-outline"
+                  variant="text"
+                  color="error"
+                  density="comfortable"
+                  size="small"
+                  @click="confirmDelete(item)"
+                  class="ml-1"
+                />
               </div>
             </template>
 
@@ -848,12 +874,12 @@
 
       <!-- ── Category Rules Tab ───────────────────────────────────────────── -->
       <v-tabs-window-item value="category-rules">
-        <PayeeRules />
+        <RulesView />
       </v-tabs-window-item>
 
       <!-- ── Payee Rules Tab ───────────────────────────────────────────────── -->
       <v-tabs-window-item value="payee-rules">
-        <RulesView />
+        <PayeeRules />
       </v-tabs-window-item>
     </v-tabs-window>
   </v-container>
@@ -1031,7 +1057,6 @@ const accountOptions = computed(() =>
   }))
 )
 
-
 // ── Table headers ─────────────────────────────────────────────────────────────
 const headers = [
   { title: 'Date', key: 'DTPOSTED', width: '120px', sortable: true },
@@ -1075,7 +1100,6 @@ const filteredTransactions = computed(() => {
 })
 
 // ── Formatters ────────────────────────────────────────────────────────────────
-
 
 // ── Edit Category ─────────────────────────────────────────────────────────────
 const editCategoryDialog = ref(false)

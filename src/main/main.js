@@ -101,6 +101,7 @@ export const importTransactions = async (ofxData) => {
     for (const patch of patches) {
       const updates = { category: patch.category }
       if (patch.transactionType) updates.transactionType = patch.transactionType
+      if (patch.rename) updates.NAME = patch.rename
       updateTransaction(patch.FITID, updates)
     }
 
@@ -380,8 +381,11 @@ export const applyRulesToMonth = (yyyymm, categoryNames = {}) => {
     for (const patch of patches) {
       const updates = { category: patch.category }
       if (patch.transactionType) updates.transactionType = patch.transactionType
-      const name = categoryNames[patch.category]
-      if (name) updates.NAME = name
+      if (patch.rename) updates.NAME = patch.rename
+      else {
+        const name = categoryNames[patch.category]
+        if (name) updates.NAME = name
+      }
       updateTransaction(patch.FITID, updates)
     }
     return ok({ applied: patches.length })
@@ -461,6 +465,7 @@ export const importBatch = async (items) => {
       for (const patch of patches) {
         const upd = { category: patch.category }
         if (patch.transactionType) upd.transactionType = patch.transactionType
+        if (patch.rename) upd.NAME = patch.rename
         updateTransaction(patch.FITID, upd)
       }
 
@@ -479,8 +484,11 @@ export const applyRulesToAll = (categoryNames = {}) => {
     for (const patch of patches) {
       const updates = { category: patch.category }
       if (patch.transactionType) updates.transactionType = patch.transactionType
-      const name = categoryNames[patch.category]
-      if (name) updates.NAME = name
+      if (patch.rename) updates.NAME = patch.rename
+      else {
+        const name = categoryNames[patch.category]
+        if (name) updates.NAME = name
+      }
       updateTransaction(patch.FITID, updates)
     }
     return ok({ applied: patches.length })

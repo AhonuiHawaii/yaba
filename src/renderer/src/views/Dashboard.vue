@@ -311,8 +311,7 @@ const recurringTransactions = ref([])
 
 // ── Period navigation ─────────────────────────────────────────────────────────
 const _pf = usePeriodFilter()
-const { period, periodStart, periodMonths, periodLabel, isNextPeriodFuture } =
-  storeToRefs(_pf)
+const { period, periodStart, periodMonths, periodLabel, isNextPeriodFuture } = storeToRefs(_pf)
 const { prevPeriod, nextPeriod, currentMonthValue, offsetMonth } = _pf
 
 // ── Period bounds ─────────────────────────────────────────────────────────────
@@ -421,7 +420,6 @@ const needsReview = computed(() =>
 
 // ── Spending vs budget chart (last 6 monthly totals) ─────────────────────────
 const last6MonthlyTotals = ref([])
-
 
 const hexToRgba = (hex, alpha) => {
   if (!hex) return `rgba(0, 0, 0, ${alpha})`

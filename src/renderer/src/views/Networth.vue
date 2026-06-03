@@ -165,8 +165,7 @@ const theme = useTheme()
 const reportError = ref(null)
 
 const _pf = usePeriodFilter()
-const { period, periodStart, periodMonths, periodLabel, isNextPeriodFuture } =
-  storeToRefs(_pf)
+const { period, periodStart, periodMonths, periodLabel, isNextPeriodFuture } = storeToRefs(_pf)
 const { prevPeriod, nextPeriod, offsetMonth } = _pf
 
 const netWorthHistory = computed(() => transactionsStore.netWorthHistory)

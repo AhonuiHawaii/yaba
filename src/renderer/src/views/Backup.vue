@@ -43,7 +43,11 @@
           <div class="text-body-2 text-medium-emphasis mt-1">
             {{ totalTransactions.toLocaleString() }} transactions
           </div>
-          <code v-if="dbPath" class="d-inline-block text-truncate text-caption mt-2" :title="dbPath">
+          <code
+            v-if="dbPath"
+            class="d-inline-block text-truncate text-caption mt-2"
+            :title="dbPath"
+          >
             {{ dbPath }}
           </code>
         </v-card>
@@ -276,8 +280,6 @@ const dbPath = computed(() => {
     return `~/.config/${productName}/data`
   }
 })
-
-
 
 const isValid = computed(() => {
   if (!encryptWithPassword.value) return true
