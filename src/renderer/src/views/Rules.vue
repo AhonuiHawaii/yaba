@@ -266,7 +266,7 @@
                 :key="tx.FITID"
                 class="d-flex align-center justify-space-between text-caption live-match-row px-2 py-1 rounded"
               >
-                <span class="text-truncate mr-2">{{ tx.NAME || tx.MEMO || '—' }}</span>
+                <span class="text-truncate mr-2">{{ matchedFieldText(tx) }}</span>
                 <span class="text-medium-emphasis text-no-wrap">{{ tx.TRNAMT != null ? (tx.TRNAMT < 0 ? '-' : '+') + '$' + Math.abs(tx.TRNAMT).toFixed(2) : '—' }}</span>
               </div>
             </div>
