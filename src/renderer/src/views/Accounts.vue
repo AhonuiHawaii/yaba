@@ -10,7 +10,7 @@
         color="primary"
         variant="flat"
         rounded="sm"
-        prepend-icon="mdi-download-outline"
+        prepend-icon="mdi-upload"
         @click="emit('navigate', 'Import')"
       >
         Update via OFX
@@ -48,12 +48,18 @@
                 :color="accountTypeColor(account.ACCTTYPE)"
                 variant="tonal"
                 size="40"
-                rounded="sm"
+                rounded="lg"
               >
                 <v-icon :icon="accountTypeIcon(account.ACCTTYPE)" size="20" />
               </v-avatar>
               <div class="d-flex align-center gap-1">
-                <v-chip size="small" variant="outlined">
+                <v-chip
+                  size="small"
+                  variant="flat"
+                  rounded
+                  class="text-uppercase"
+                  :color="accountTypeColor(account.ACCTTYPE)"
+                >
                   {{ shortTypeLabel(account.ACCTTYPE) }}
                 </v-chip>
                 <v-menu location="bottom end">

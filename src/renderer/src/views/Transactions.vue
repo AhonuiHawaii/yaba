@@ -105,7 +105,7 @@
                 label="Choose OFX / QFX file"
                 prepend-icon=""
                 prepend-inner-icon="mdi-folder-open-outline"
-                variant="solo"
+                variant="outlined"
                 density="comfortable"
                 rounded="sm"
                 hide-details="auto"
@@ -132,20 +132,14 @@
         </v-dialog>
 
         <!-- Filter bar -->
-        <v-sheet
-          rounded="lg"
-          color="primary-container"
-          border
-          class="d-flex align-center ga-3 px-4 py-3 mb-4"
-        >
+        <v-sheet color="primary-container" border class="d-flex align-center ga-3 px-4 py-3 mb-4">
           <v-text-field
             v-model="search"
             prepend-inner-icon="mdi-magnify"
             placeholder="Search payee or note"
-            variant="solo"
+            variant="outlined"
             density="compact"
             hide-details
-            rounded="pill"
             color="primary"
           />
 
@@ -171,8 +165,8 @@
             :items="[{ label: 'All accounts', value: null }, ...accountOptions]"
             item-title="label"
             item-value="value"
-            label="Account"
-            variant="solo"
+            placeholder="Account"
+            variant="outlined"
             density="compact"
             hide-details
             rounded="lg"
@@ -335,7 +329,7 @@
                 v-model="editCategoryValue"
                 :items="categoriesForTransaction(editTarget)"
                 label="Category"
-                variant="solo"
+                variant="outlined"
                 inset
                 density="comfortable"
                 color="primary"
@@ -383,7 +377,7 @@
               <v-text-field
                 v-model="editPayeeValue"
                 label="Payee"
-                variant="solo"
+                variant="outlined"
                 inset
                 density="comfortable"
                 color="primary"
@@ -457,7 +451,7 @@
                   v-model="splitState.category1"
                   :items="categoriesForTransaction(splitTarget)"
                   label="Category"
-                  variant="solo"
+                  variant="outlined"
                   inset
                   density="compact"
                   hide-details
@@ -469,7 +463,7 @@
                   v-model.number="splitState.amount1"
                   label="Amount"
                   type="number"
-                  variant="solo"
+                  variant="outlined"
                   inset
                   density="compact"
                   hide-details
@@ -484,7 +478,7 @@
                   v-model="splitState.category2"
                   :items="categoriesForTransaction(splitTarget)"
                   label="Category"
-                  variant="solo"
+                  variant="outlined"
                   inset
                   density="compact"
                   hide-details
@@ -496,7 +490,7 @@
                   v-model.number="splitState.amount2"
                   label="Amount"
                   type="number"
-                  variant="solo"
+                  variant="outlined"
                   inset
                   density="compact"
                   hide-details
@@ -549,7 +543,7 @@
               <v-textarea
                 v-model="notesValue"
                 label="Add a note…"
-                variant="solo"
+                variant="outlined"
                 inset
                 rows="4"
                 hide-details
@@ -599,7 +593,7 @@
                 v-model="bulkCategoryValue"
                 :items="bulkCategoryItems"
                 label="Category"
-                variant="solo"
+                variant="outlined"
                 inset
                 density="comfortable"
                 hide-details
@@ -659,7 +653,7 @@
               <v-text-field
                 v-model="bulkPayeeValue"
                 label="Payee"
-                variant="solo"
+                variant="outlined"
                 inset
                 density="comfortable"
                 color="primary"
@@ -709,7 +703,7 @@
                     item-title="label"
                     item-value="value"
                     label="Field"
-                    variant="solo"
+                    variant="outlined"
                     inset
                     density="comfortable"
                     rounded="sm"
@@ -724,7 +718,7 @@
                     item-title="label"
                     item-value="value"
                     label="Operator"
-                    variant="solo"
+                    variant="outlined"
                     inset
                     density="comfortable"
                     rounded="sm"
@@ -736,7 +730,7 @@
                   <v-text-field
                     v-model="ruleForm.value"
                     label="Match value"
-                    variant="solo"
+                    variant="outlined"
                     inset
                     density="comfortable"
                     rounded="sm"
@@ -750,7 +744,7 @@
                     v-model="ruleForm.category"
                     :items="allCategoryItems"
                     label="Assign category"
-                    variant="solo"
+                    variant="outlined"
                     inset
                     density="comfortable"
                     rounded="sm"
@@ -764,7 +758,7 @@
                     v-model.number="ruleForm.priority"
                     label="Priority"
                     type="number"
-                    variant="solo"
+                    variant="outlined"
                     inset
                     density="comfortable"
                     rounded="sm"
@@ -779,7 +773,7 @@
                     item-title="label"
                     item-value="value"
                     label="Assign transaction type (optional)"
-                    variant="solo"
+                    variant="outlined"
                     inset
                     density="comfortable"
                     rounded="sm"
@@ -838,7 +832,7 @@
 
       <!-- ── Category Rules Tab ───────────────────────────────────────────── -->
       <v-tabs-window-item value="category-rules">
-        <BudgetsView />
+        <PayeeRules />
       </v-tabs-window-item>
 
       <!-- ── Payee Rules Tab ───────────────────────────────────────────────── -->
@@ -860,9 +854,8 @@ import { useUserSettingsStore } from '../stores/userSettings'
 import { useUserRulesStore } from '../stores/userRules'
 import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
-import RulesView from './Rules.vue'
-import BudgetsView from './Budgets.vue'
-
+import RulesView from '@components/Rules.vue'
+import PayeeRules from '@components/PayeeRules.vue'
 const store = useUserTransactionsStore()
 const accountsStore = useUserAccountsStore()
 const categoriesStore = useUserCategoriesStore()

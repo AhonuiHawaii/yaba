@@ -348,12 +348,12 @@ const { formatCurrency } = useUserSettingsStore()
 const activeTab = ref('list')
 const loading = ref(false)
 
-// ── Recurring transactions (bills-categorized only) ───────────────────────────
+// ── All transactions (we filter by bills category client-side) ────────────────
 
 const recurringTransactions = ref([])
 
 async function fetchRecurring() {
-  const result = await window.electron.ipcRenderer.invoke('transactions:fetch', { recurring: 1 })
+  const result = await window.electron.ipcRenderer.invoke('transactions:fetchAll')
   if (result.success) recurringTransactions.value = result.data
 }
 
@@ -374,18 +374,21 @@ function daysUntil(dayOfMonth) {
   return Math.round((target - now) / 86400000)
 }
 
-// ── Bill groups (recurring txns whose category is a bills category) ───────────
+// ── Bill groups (txns whose category is a bills-type category) ────────────────
 
-const billCategoryNames = computed(
-  () => new Set(categoriesStore.getCategoriesByType('bills').map((c) => c.name))
-)
+const billCategories = computed(() => categoriesStore.getCategoriesByType('bills'))
+
+// Match by UUID (new) or plain name (legacy)
+const isBillsCategory = (categoryValue) => {
+  if (!categoryValue) return false
+  return billCategories.value.some((c) => c.id === categoryValue || c.name === categoryValue)
+}
 
 const billGroups = computed(() => {
   const map = new Map()
 
   for (const tx of recurringTransactions.value) {
-    // Only include transactions categorized as a bills category
-    if (!tx.category || !billCategoryNames.value.has(tx.category)) continue
+    if (!tx.category || !isBillsCategory(tx.category)) continue
 
     const key = tx.NAME || 'Unknown'
     if (!map.has(key)) {

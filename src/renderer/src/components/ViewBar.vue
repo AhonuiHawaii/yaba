@@ -74,7 +74,7 @@ const toggleTheme = () => {
     <v-text-field
       placeholder="Search transactions"
       prepend-inner-icon="mdi-magnify"
-      variant="solo"
+      variant="outlined"
       density="compact"
       hide-details
       rounded="lg"

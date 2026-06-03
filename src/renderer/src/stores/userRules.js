@@ -72,11 +72,11 @@ export const useUserRulesStore = defineStore('userRules', () => {
     }
   }
 
-  async function applyToMonth(yyyymm) {
+  async function applyToMonth(yyyymm, categoryNames = {}) {
     loadingCount.value++
     error.value = null
     try {
-      const result = await ipc.invoke('rules:applyToMonth', yyyymm)
+      const result = await ipc.invoke('rules:applyToMonth', yyyymm, categoryNames)
       if (!result.success) throw new Error(result.error)
       return result
     } catch (e) {
@@ -135,11 +135,11 @@ export const useUserRulesStore = defineStore('userRules', () => {
     }
   }
 
-  async function applyToAll() {
+  async function applyToAll(categoryNames = {}) {
     loadingCount.value++
     error.value = null
     try {
-      const result = await ipc.invoke('rules:applyToAll')
+      const result = await ipc.invoke('rules:applyToAll', categoryNames)
       if (!result.success) throw new Error(result.error)
       return result
     } catch (e) {

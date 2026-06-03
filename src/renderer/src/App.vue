@@ -8,13 +8,11 @@ import Accounts from './views/Accounts.vue'
 import Transactions from './views/Transactions.vue'
 import Spending from './views/Spending.vue'
 import Debts from './views/Debt.vue'
-import Budgets from './views/Budgets.vue'
 import Import from './views/Import.vue'
 import MonthlyBudgets from './views/MonthlyBudgets.vue'
 import Income from './views/Income.vue'
 import NetWorth from './views/NetWorth.vue'
-import Rules from './views/Rules.vue'
-import Recurring from './views/Recurring.vue'
+import Subscriptions from './views/Subscriptions.vue'
 import AppBar from './components/AppBar.vue'
 import AppFooter from './components/AppFooter.vue'
 import Privacy from './views/Privacy.vue'
@@ -28,12 +26,10 @@ const views = {
   Transactions,
   Spending,
   Debts,
-  Budgets,
   MonthlyBudgets,
   Income,
   NetWorth,
-  Rules,
-  Recurring,
+  Subscriptions,
   Backup,
   Privacy,
   Import,

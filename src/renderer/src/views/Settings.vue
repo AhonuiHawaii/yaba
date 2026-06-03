@@ -69,7 +69,7 @@
                     :items="currencies"
                     item-title="label"
                     item-value="code"
-                    variant="solo-filled"
+                    variant="outlined"
                     density="compact"
                     color="primary"
                     hide-details

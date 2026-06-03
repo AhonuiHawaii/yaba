@@ -598,11 +598,17 @@ function previewKeywords(keywords) {
     )
     .all()
   const matches = txs.filter((tx) =>
-    clean.some((kw) =>
-      String(tx.NAME ?? '')
-        .toLowerCase()
-        .includes(kw.toLowerCase())
-    )
+    clean.some((kw) => {
+      const lc = kw.toLowerCase()
+      return (
+        String(tx.NAME ?? '')
+          .toLowerCase()
+          .includes(lc) ||
+        String(tx.MEMO ?? '')
+          .toLowerCase()
+          .includes(lc)
+      )
+    })
   )
   return { count: matches.length, samples: matches }
 }

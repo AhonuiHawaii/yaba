@@ -11,6 +11,17 @@
       <v-spacer />
       <v-btn
         size="small"
+        variant="tonal"
+        color="primary"
+        rounded="sm"
+        prepend-icon="mdi-import"
+        class="mr-2"
+        @click="openImport"
+      >
+        Import from rules
+      </v-btn>
+      <v-btn
+        size="small"
         variant="flat"
         color="primary"
         rounded="sm"
@@ -128,6 +139,85 @@
       </v-card>
     </v-dialog>
 
+    <!-- Import from category rules dialog -->
+    <v-dialog v-model="importDialog" max-width="560" :persistent="importing">
+      <v-card rounded="sm">
+        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">
+          Import from category rules
+        </v-card-title>
+        <v-divider />
+        <v-card-text class="pa-5">
+          <v-select
+            v-model="importFilterCategory"
+            :items="categoryOptions"
+            label="Filter by category"
+            variant="outlined"
+            density="compact"
+            rounded="sm"
+            clearable
+            hide-details
+            color="primary"
+            class="mb-4"
+          />
+
+          <div v-if="importableRules.length === 0" class="text-body-2 text-medium-emphasis">
+            No compatible rules found{{ importFilterCategory ? ' for that category' : '' }}.
+          </div>
+          <template v-else>
+            <div class="d-flex align-center justify-space-between mb-2">
+              <span class="text-caption text-medium-emphasis"
+                >Select rules to import as subscription detection rules.</span
+              >
+              <v-btn size="x-small" variant="text" color="primary" @click="toggleSelectAll">
+                {{
+                  importSelection.length === selectableRules.length ? 'Deselect all' : 'Select all'
+                }}
+              </v-btn>
+            </div>
+            <v-list density="compact" class="py-0">
+              <v-list-item
+                v-for="r in importableRules"
+                :key="r.id"
+                :disabled="isAlreadyImported(r)"
+                @click="toggleImportSelection(r.id)"
+              >
+                <template #prepend>
+                  <v-checkbox-btn
+                    :model-value="importSelection.includes(r.id)"
+                    :disabled="isAlreadyImported(r)"
+                    color="primary"
+                  />
+                </template>
+                <v-list-item-title class="text-body-2">
+                  <span class="font-weight-medium">{{ r.value }}</span>
+                  <span class="text-medium-emphasis ml-2">({{ r.operator }})</span>
+                </v-list-item-title>
+                <v-list-item-subtitle v-if="isAlreadyImported(r)" class="text-caption">
+                  Already imported
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </template>
+        </v-card-text>
+        <v-card-actions class="pa-5 pt-0">
+          <v-spacer />
+          <v-btn variant="text" rounded="sm" :disabled="importing" @click="importDialog = false">
+            Cancel
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            rounded="sm"
+            :disabled="importSelection.length === 0"
+            :loading="importing"
+            @click="executeImport"
+          >
+            Import {{ importSelection.length || '' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Delete confirm dialog -->
     <v-dialog v-model="deleteDialog" max-width="360">
       <v-card rounded="sm">
@@ -156,8 +246,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { useUserRulesStore } from '../stores/userRules'
+import { useUserCategoriesStore } from '../stores/userCategories'
 
 const props = defineProps({
   rules: { type: Array, default: () => [] },
@@ -166,13 +258,88 @@ const props = defineProps({
 const emit = defineEmits(['updated'])
 
 const { formatCurrency } = useUserSettingsStore()
+const rulesStore = useUserRulesStore()
+const categoriesStore = useUserCategoriesStore()
 
 const addDialog = ref(false)
 const deleteDialog = ref(false)
+const importDialog = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
+const importing = ref(false)
 const pendingDelete = ref(null)
 const form = ref({ name: '', operator: 'contains' })
+const importSelection = ref([])
+const importFilterCategory = ref(null)
+
+// Only these operators have a direct equivalent in subscription rules
+const COMPATIBLE_OPERATORS = new Set(['contains', 'startsWith', 'equals', 'wholeWord'])
+
+const categoryOptions = computed(() =>
+  categoriesStore.categories.map((c) => ({ title: c.name, value: c.id }))
+)
+
+const importableRules = computed(() => {
+  const all = (rulesStore.rules || []).filter(
+    (r) => COMPATIBLE_OPERATORS.has(r.operator) && r.value
+  )
+  if (!importFilterCategory.value) return all
+  // Match by UUID (new rules) or by plain category name (legacy rules)
+  const selectedCat = categoriesStore.categories.find((c) => c.id === importFilterCategory.value)
+  return all.filter(
+    (r) =>
+      r.category === importFilterCategory.value || (selectedCat && r.category === selectedCat.name)
+  )
+})
+
+function isAlreadyImported(rule) {
+  const key = `${(rule.value || '').toLowerCase()}|${rule.operator}`
+  return props.rules.some(
+    (existing) => `${(existing.name || '').toLowerCase()}|${existing.operator}` === key
+  )
+}
+
+const selectableRules = computed(() => importableRules.value.filter((r) => !isAlreadyImported(r)))
+
+function toggleImportSelection(id) {
+  const i = importSelection.value.indexOf(id)
+  if (i === -1) importSelection.value.push(id)
+  else importSelection.value.splice(i, 1)
+}
+
+function toggleSelectAll() {
+  if (importSelection.value.length === selectableRules.value.length) {
+    importSelection.value = []
+  } else {
+    importSelection.value = selectableRules.value.map((r) => r.id)
+  }
+}
+
+async function openImport() {
+  importFilterCategory.value = null
+  await rulesStore.fetchRules()
+  importSelection.value = selectableRules.value.map((r) => r.id)
+  importDialog.value = true
+}
+
+async function executeImport() {
+  if (importSelection.value.length === 0) return
+  importing.value = true
+  try {
+    const selected = importableRules.value.filter((r) => importSelection.value.includes(r.id))
+    for (const r of selected) {
+      if (isAlreadyImported(r)) continue
+      await window.electron.ipcRenderer.invoke('customRecurring:create', {
+        name: r.value,
+        operator: r.operator
+      })
+    }
+    importDialog.value = false
+    emit('updated')
+  } finally {
+    importing.value = false
+  }
+}
 
 const operatorOptions = [
   { title: 'Contains', value: 'contains' },

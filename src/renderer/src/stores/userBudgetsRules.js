@@ -4,10 +4,8 @@ import db from './dexie'
 
 const ipc = window.electron?.ipcRenderer
 
-// Map category type → Dexie table name
-function catTable(type) {
-  return db[`${type}Categories`]
-}
+// All categories now live in the unified `categories` table (db v2)
+const catTable = () => db.categories
 
 function stripQuotes(rule) {
   return rule.replace(/^["']|["']$/g, '').trim()
@@ -19,15 +17,18 @@ async function createSQLiteRules(categoryId, rules) {
   for (const rule of rules) {
     const keyword = stripQuotes(rule)
     if (!keyword) continue
-    const created = await ipc.invoke('rules:create', {
-      field: 'NAME',
-      operator: 'contains',
-      value: keyword,
-      category: categoryId,
-      type: null,
-      priority: 0
-    })
-    ids.push(created.id)
+    for (const field of ['NAME', 'MEMO']) {
+      const result = await ipc.invoke('rules:create', {
+        field,
+        operator: 'contains',
+        value: keyword,
+        category: categoryId,
+        type: null,
+        priority: 0
+      })
+      const id = result?.data?.id
+      if (id != null) ids.push(id)
+    }
   }
   return ids
 }
@@ -35,6 +36,7 @@ async function createSQLiteRules(categoryId, rules) {
 async function deleteSQLiteRules(ruleIds = []) {
   if (!ipc) return
   for (const id of ruleIds) {
+    if (id == null) continue
     await ipc.invoke('rules:delete', id)
   }
 }
@@ -60,7 +62,7 @@ export const useUserBudgetsRulesStore = defineStore('userBudgetsRules', () => {
 
     // Only create a new category row if not linking to an existing one
     if (!group.categoryId) {
-      await catTable(group.type).add({ id: categoryId, name: group.label, createdAt: now })
+      await catTable().add({ id: categoryId, name: group.label, type: group.type, createdAt: now })
     }
 
     // Upsert the budget amount into the shared budgets table
@@ -92,7 +94,7 @@ export const useUserBudgetsRulesStore = defineStore('userBudgetsRules', () => {
 
     // Sync label → category name
     if (updates.label !== undefined && existing.categoryId) {
-      await catTable(existing.type).update(existing.categoryId, { name: updates.label })
+      await catTable().update(existing.categoryId, { name: updates.label })
     }
 
     // Sync amount → budgets table
@@ -127,7 +129,7 @@ export const useUserBudgetsRulesStore = defineStore('userBudgetsRules', () => {
     if (!existing) return
 
     if (existing.categoryId) {
-      await catTable(existing.type).delete(existing.categoryId)
+      await catTable().delete(existing.categoryId)
       await db.budgets.where('categoryId').equals(existing.categoryId).delete()
     }
 

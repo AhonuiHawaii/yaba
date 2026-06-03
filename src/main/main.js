@@ -121,6 +121,15 @@ export const fetchTransactions = (filters) => {
   }
 }
 
+export const fetchAllTransactions = () => {
+  try {
+    const txs = getAllTransactions()
+    return ok(txs.map((t) => ({ ...t, ACCTID: maskAcctid(t.ACCTID) })))
+  } catch (e) {
+    return fail(e)
+  }
+}
+
 export const editTransaction = (fitid, updates) => {
   try {
     const changes = updateTransaction(fitid, updates)
@@ -364,13 +373,15 @@ export const removeCustomRecurring = (id) => {
   }
 }
 
-export const applyRulesToMonth = (yyyymm) => {
+export const applyRulesToMonth = (yyyymm, categoryNames = {}) => {
   try {
     const transactions = getTransactions({ DTPOSTED: yyyymm })
     const patches = applyRules(transactions)
     for (const patch of patches) {
       const updates = { category: patch.category }
       if (patch.transactionType) updates.transactionType = patch.transactionType
+      const name = categoryNames[patch.category]
+      if (name) updates.NAME = name
       updateTransaction(patch.FITID, updates)
     }
     return ok({ applied: patches.length })
@@ -461,13 +472,15 @@ export const importBatch = async (items) => {
   }
 }
 
-export const applyRulesToAll = () => {
+export const applyRulesToAll = (categoryNames = {}) => {
   try {
     const transactions = getAllTransactions()
     const patches = applyRules(transactions)
     for (const patch of patches) {
       const updates = { category: patch.category }
       if (patch.transactionType) updates.transactionType = patch.transactionType
+      const name = categoryNames[patch.category]
+      if (name) updates.NAME = name
       updateTransaction(patch.FITID, updates)
     }
     return ok({ applied: patches.length })

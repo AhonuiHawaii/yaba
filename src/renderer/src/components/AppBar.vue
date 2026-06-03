@@ -57,7 +57,8 @@ const handleClose = () => window.api.window.close()
 
 .custom-title-bar :deep(.v-toolbar__content) {
   padding-left: 12px;
-  background-color: rgba(var(--v-theme-primary-container), 0);
+  background-color: rgba(var(--v-theme-primary-container));
+  border: 1px solid rgba(var(--v-theme-primary), 0) !important;
 }
 
 .title-text {

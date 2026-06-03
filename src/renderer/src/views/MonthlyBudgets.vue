@@ -150,10 +150,9 @@
                   :model-value="row.periodBudget > 0 ? row.periodBudget : ''"
                   type="number"
                   :prefix="userSettings.currencySymbol"
-                  variant="solo"
+                  variant="outlined"
                   density="compact"
                   hide-details
-                  rounded
                   @update:model-value="(v) => updateBudget(row.id, v)"
                 />
               </td>
@@ -200,7 +199,7 @@
                 <v-text-field
                   v-model="newCategoryName"
                   placeholder="Category name"
-                  variant="solo"
+                  variant="outlined"
                   density="compact"
                   hide-details
                   autofocus
@@ -231,14 +230,14 @@
             item-title="label"
             item-value="type"
             label="Section"
-            variant="solo"
+            variant="outlined"
             density="compact"
             hide-details
           />
           <v-text-field
             v-model="newCategoryName"
             label="Name"
-            variant="solo"
+            variant="outlined"
             density="compact"
             hide-details
             autofocus
@@ -261,7 +260,7 @@
           <v-text-field
             v-model="editCategoryName"
             label="Name"
-            variant="solo"
+            variant="outlined"
             density="compact"
             hide-details
             autofocus

@@ -7,6 +7,7 @@ import {
   checkDuplicates,
   importBatch,
   fetchTransactions,
+  fetchAllTransactions,
   editTransaction,
   removeTransaction,
   removeAccountTransactions,
@@ -75,6 +76,7 @@ export const setupIpcHandlers = () => {
     if (filters !== undefined && !isObject(filters)) throw new Error('Invalid filters')
     return fetchTransactions(filters)
   })
+  ipcMain.handle('transactions:fetchAll', () => fetchAllTransactions())
   ipcMain.handle('transactions:edit', (_, fitid, updates) => {
     if (!isNonEmptyString(fitid)) throw new Error('Invalid FITID')
     if (!isObject(updates)) throw new Error('Invalid updates')
@@ -140,11 +142,11 @@ export const setupIpcHandlers = () => {
     if (!isFiniteNumber(id)) throw new Error('Invalid rule ID')
     return removeRule(id)
   })
-  ipcMain.handle('rules:applyToMonth', (_, yyyymm) => {
+  ipcMain.handle('rules:applyToMonth', (_, yyyymm, categoryNames = {}) => {
     if (!isYyyymm(yyyymm)) throw new Error('Invalid month format')
-    return applyRulesToMonth(yyyymm)
+    return applyRulesToMonth(yyyymm, categoryNames)
   })
-  ipcMain.handle('rules:applyToAll', () => applyRulesToAll())
+  ipcMain.handle('rules:applyToAll', (_, categoryNames = {}) => applyRulesToAll(categoryNames))
   ipcMain.handle('rules:preview', (_, rule) => {
     if (!isObject(rule)) throw new Error('Invalid rule')
     return previewRuleMatch(rule)

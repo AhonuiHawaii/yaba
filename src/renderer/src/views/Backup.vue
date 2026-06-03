@@ -1,11 +1,12 @@
 <template>
-  <div class="backup-page-wrapper">
+  <v-container fluid class="pa-6">
     <v-alert
       v-if="error"
       type="error"
       variant="flat"
       closable
-      class="mb-4 rounded-lg"
+      rounded="lg"
+      class="mb-4"
       @click:close="error = ''"
     >
       {{ error }}
@@ -16,187 +17,211 @@
       type="success"
       variant="flat"
       closable
-      class="mb-4 rounded-lg"
+      rounded="lg"
+      class="mb-4"
       @click:close="success = ''"
     >
       {{ success }}
     </v-alert>
 
-    <!-- Header Section -->
-    <div class="backup-header-section">
-      <h1 class="backup-title">Backup & Restore</h1>
-      <p class="backup-subtitle">
+    <!-- Header -->
+    <div class="mb-6">
+      <div class="text-h5 font-weight-bold">Backup & Restore</div>
+      <div class="text-body-2 text-medium-emphasis mt-1">
         Your data lives in a single local file — keep copies somewhere safe
-      </p>
+      </div>
     </div>
 
-    <!-- 3 Metrics Cards -->
-    <div class="stats-row">
-      <v-card class="stat-card" elevation="1">
-        <div class="stat-label">Database Size</div>
-        <div class="stat-value">{{ formattedDbSize }}</div>
-        <div class="stat-subtext">
-          <div>{{ totalTransactions.toLocaleString() }} transactions</div>
-          <div v-if="dbPath" class="db-path-short" :title="formattedDbPath">
-            {{ shortenedPath }}
+    <!-- Stats -->
+    <v-row class="mb-2">
+      <v-col cols="12" md="4">
+        <v-card elevation="1" rounded="lg" class="pa-5 h-100">
+          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
+            Database Size
           </div>
-        </div>
-      </v-card>
+          <div class="text-h4 font-weight-bold">{{ formattedDbSize }}</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">
+            {{ totalTransactions.toLocaleString() }} transactions
+          </div>
+          <code v-if="dbPath" class="d-inline-block text-truncate text-caption mt-2" :title="dbPath">
+            {{ dbPath }}
+          </code>
+        </v-card>
+      </v-col>
 
-      <v-card class="stat-card" elevation="1">
-        <div class="stat-label">Accounts</div>
-        <div class="stat-value">{{ totalAccounts }}</div>
-        <div class="stat-subtext">{{ linkedAccountsCount }} linked via OFX/QFX</div>
-      </v-card>
-
-      <v-card class="stat-card" elevation="1">
-        <div class="stat-label">Encryption</div>
-        <div class="stat-value encryption-active">On</div>
-        <div class="stat-subtext">AES-256</div>
-      </v-card>
-    </div>
-
-    <!-- 2 Action Cards -->
-    <div class="actions-row">
-      <!-- Export Card -->
-      <v-card class="action-card" elevation="1">
-        <div class="card-title-row">
-          <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
-            <v-icon size="18">mdi-export</v-icon>
-          </v-avatar>
-          <h2 class="card-header-title">Export a backup</h2>
-        </div>
-
-        <p class="card-description-text">
-          Save a snapshot of your transactions, accounts and budgets to a single encrypted
-          `.ledgerbak` file.
-        </p>
-
-        <div class="included-header">Included in backup</div>
-        <div class="tags-container">
-          <span class="content-tag">
-            <v-icon size="14" class="mr-1" color="primary">mdi-swap-vertical</v-icon>
-            Transactions
-          </span>
-          <span class="content-tag">
-            <v-icon size="14" class="mr-1" color="primary">mdi-bank-outline</v-icon>
+      <v-col cols="12" md="4">
+        <v-card elevation="1" rounded="lg" class="pa-5 h-100">
+          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
             Accounts
-          </span>
-          <span class="content-tag">
-            <v-icon size="14" class="mr-1" color="primary">mdi-sitemap-outline</v-icon>
-            Budgets & rules
-          </span>
-        </div>
-
-        <div class="toggle-control-row">
-          <span class="toggle-label">Encrypt with password</span>
-          <v-switch
-            v-model="encryptWithPassword"
-            color="primary"
-            hide-details
-            inset
-            density="compact"
-          />
-        </div>
-
-        <!-- Password input (smooth transition) -->
-        <v-expand-transition>
-          <div v-if="encryptWithPassword" class="passphrase-input-container">
-            <label class="passphrase-label">Encryption Passphrase</label>
-            <input
-              v-model="passphrase"
-              type="password"
-              placeholder="Enter passphrase (minimum 8 characters)"
-              class="passphrase-input-field"
-            />
-            <span class="passphrase-hint"
-              >Must be at least 8 characters. Do not lose this passphrase.</span
-            >
           </div>
-        </v-expand-transition>
+          <div class="text-h4 font-weight-bold">{{ totalAccounts }}</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">
+            {{ linkedAccountsCount }} linked via OFX/QFX
+          </div>
+        </v-card>
+      </v-col>
 
-        <div class="action-buttons-row">
-          <button
-            class="btn-export-primary"
-            :disabled="isExporting || !isValid"
-            @click="handleExport"
+      <v-col cols="12" md="4">
+        <v-card elevation="1" rounded="lg" class="pa-5 h-100">
+          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
+            Encryption
+          </div>
+          <div class="text-h4 font-weight-bold text-success">On</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">AES-256</div>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Actions -->
+    <v-row>
+      <!-- Export -->
+      <v-col cols="12" md="6">
+        <v-card elevation="1" rounded="lg" class="pa-6 d-flex flex-column h-100">
+          <div class="d-flex align-center ga-3 mb-3">
+            <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
+              <v-icon size="18">mdi-export</v-icon>
+            </v-avatar>
+            <div class="text-subtitle-1 font-weight-bold">Export a backup</div>
+          </div>
+
+          <div class="text-body-2 text-medium-emphasis mb-5">
+            Save a snapshot of your transactions, accounts and budgets to a single encrypted
+            `.ledgerbak` file.
+          </div>
+
+          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
+            Included in backup
+          </div>
+          <div class="d-flex flex-wrap ga-2 mb-5">
+            <v-chip size="small" variant="tonal" color="primary" prepend-icon="mdi-swap-vertical">
+              Transactions
+            </v-chip>
+            <v-chip size="small" variant="tonal" color="primary" prepend-icon="mdi-bank-outline">
+              Accounts
+            </v-chip>
+            <v-chip size="small" variant="tonal" color="primary" prepend-icon="mdi-sitemap-outline">
+              Budgets & rules
+            </v-chip>
+          </div>
+
+          <div class="d-flex align-center justify-space-between mb-3">
+            <span class="text-body-2">Encrypt with password</span>
+            <v-switch
+              v-model="encryptWithPassword"
+              color="primary"
+              hide-details
+              density="compact"
+            />
+          </div>
+
+          <v-expand-transition>
+            <div v-if="encryptWithPassword" class="mb-3">
+              <v-text-field
+                v-model="passphrase"
+                type="password"
+                label="Encryption passphrase"
+                placeholder="Enter passphrase (minimum 8 characters)"
+                variant="outlined"
+                density="compact"
+                rounded="sm"
+                hint="Must be at least 8 characters. Do not lose this passphrase."
+                persistent-hint
+              />
+            </div>
+          </v-expand-transition>
+
+          <v-spacer />
+
+          <div class="d-flex ga-3 mt-4">
+            <v-btn
+              color="primary"
+              variant="flat"
+              rounded="sm"
+              prepend-icon="mdi-download"
+              :loading="isExporting"
+              :disabled="!isValid"
+              @click="handleExport"
+            >
+              Export now
+            </v-btn>
+            <v-btn
+              variant="outlined"
+              rounded="sm"
+              prepend-icon="mdi-folder-open-outline"
+              :disabled="isExporting || !isValid"
+              @click="handleExport"
+            >
+              Choose folder
+            </v-btn>
+          </div>
+        </v-card>
+      </v-col>
+
+      <!-- Restore -->
+      <v-col cols="12" md="6">
+        <v-card elevation="1" rounded="lg" class="pa-6 d-flex flex-column h-100">
+          <div class="d-flex align-center ga-3 mb-3">
+            <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
+              <v-icon size="18">mdi-import</v-icon>
+            </v-avatar>
+            <div class="text-subtitle-1 font-weight-bold">Restore from a backup</div>
+          </div>
+
+          <div class="text-body-2 text-medium-emphasis mb-5">
+            Replace the current data with a saved backup file. This cannot be undone.
+          </div>
+
+          <v-sheet
+            color="primary-container"
+            rounded="lg"
+            border="solid 1px"
+            class="d-flex flex-column align-center justify-center pa-8 mb-5"
+            @click="handleImport"
           >
-            <v-icon size="16" class="mr-1">mdi-download</v-icon>
-            Export now
-          </button>
-          <button
-            class="btn-export-secondary"
-            :disabled="isExporting || !isValid"
-            @click="handleExport"
-          >
-            <v-icon size="16" class="mr-1">mdi-folder-open-outline</v-icon>
-            Choose folder
-          </button>
-        </div>
-      </v-card>
+            <v-icon size="28" color="primary">mdi-upload</v-icon>
+            <span class="text-body-2 text-medium-emphasis mt-2">or click to browse</span>
+          </v-sheet>
 
-      <!-- Restore Card -->
-      <v-card class="action-card" elevation="1">
-        <div class="card-title-row">
-          <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
-            <v-icon size="18">mdi-import</v-icon>
-          </v-avatar>
-          <h2 class="card-header-title">Restore from a backup</h2>
-        </div>
+          <v-spacer />
 
-        <p class="card-description-text">
-          Replace the current data with a saved backup file. This cannot be undone.
-        </p>
-
-        <div class="drag-drop-area" @click="handleImport">
-          <v-icon size="28" color="primary">mdi-upload</v-icon>
-          <span class="drag-drop-label">or click to browse</span>
-        </div>
-
-        <div class="toggle-control-row mt-auto">
-          <span class="toggle-label">Merge instead of replace (keep newer records)</span>
-          <v-switch
-            v-model="mergeInsteadOfReplace"
-            color="primary"
-            hide-details
-            inset
-            density="compact"
-            :disabled="true"
-          />
-        </div>
-      </v-card>
-    </div>
+          <div class="d-flex align-center justify-space-between">
+            <span class="text-body-2">Merge instead of replace (keep newer records)</span>
+            <v-switch
+              v-model="mergeInsteadOfReplace"
+              color="primary"
+              hide-details
+              inset
+              density="compact"
+              :disabled="true"
+            />
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- Confirm Dialog -->
     <v-dialog v-model="showConfirmDialog" max-width="400" persistent>
-      <v-card rounded="xl" class="pa-5">
+      <v-card rounded="lg" class="pa-5">
         <v-card-title class="text-h6 font-weight-bold pb-2 px-0">Confirm Restore</v-card-title>
-        <v-card-text class="text-body-1 text-medium-emphasis pb-4 px-0">
+        <v-card-text class="text-body-2 text-medium-emphasis pb-4 px-0">
           Restoring a backup will overwrite your current database. Are you sure you want to proceed?
         </v-card-text>
         <v-card-actions class="px-0 pb-0">
           <v-spacer />
-          <v-btn
-            variant="text"
-            rounded="lg"
-            class="text-capitalize"
-            @click="showConfirmDialog = false"
-            >Cancel</v-btn
-          >
+          <v-btn variant="text" rounded="sm" @click="showConfirmDialog = false">Cancel</v-btn>
           <v-btn
             color="primary"
             variant="flat"
-            rounded="lg"
-            class="text-capitalize text-white"
+            rounded="sm"
             :loading="isImporting"
             @click="confirmImport"
           >
-            Yes, Overwrite
+            Yes, overwrite
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </v-container>
 </template>
 
 <script setup>
@@ -345,321 +370,3 @@ onMounted(() => {
   loadStats()
 })
 </script>
-
-<style scoped>
-.backup-page-wrapper {
-  padding: 24px;
-  background-color: var(--color-background);
-  min-height: 100vh;
-  font-family: var(--font-family);
-  color: var(--color-text-primary);
-}
-
-.backup-header-section {
-  margin-bottom: 24px;
-}
-
-.backup-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 4px;
-}
-
-.backup-subtitle {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.db-path-text {
-  font-family: monospace;
-  background-color: var(--color-surface-light);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
-  font-size: 12px;
-}
-
-/* Stats Row */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 900px) {
-  .stats-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-.stat-card {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-xl) !important;
-  padding: 20px 24px;
-  border: 1px solid var(--color-border);
-  transition:
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md) !important;
-}
-
-.stat-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
-  margin-bottom: 6px;
-}
-
-.stat-value {
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--color-text-primary);
-  line-height: 1.1;
-}
-
-.stat-value.encryption-active {
-  color: var(--color-success);
-}
-
-.stat-subtext {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-}
-
-/* Actions Row */
-.actions-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-@media (max-width: 960px) {
-  .actions-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-.action-card {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-xl) !important;
-  padding: 24px;
-  border: 1px solid var(--color-border);
-  display: flex;
-  flex-direction: column;
-  min-height: 380px;
-}
-
-.card-title-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.card-header-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.card-description-text {
-  font-size: 13.5px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin-bottom: 20px;
-}
-
-.included-header {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
-  margin-bottom: 8px;
-}
-
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.content-tag {
-  display: inline-flex;
-  align-items: center;
-  background-color: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
-  color: var(--color-primary);
-  padding: 4px 12px;
-  border-radius: var(--radius-lg);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.toggle-control-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.toggle-label {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-}
-
-.passphrase-input-container {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 16px;
-}
-
-.passphrase-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin-bottom: 6px;
-}
-
-.passphrase-input-field {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  font-size: 13.5px;
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-  outline: none;
-}
-
-.passphrase-input-field:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
-}
-
-.passphrase-hint {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-}
-
-.action-buttons-row {
-  display: flex;
-  gap: 12px;
-  margin-top: auto;
-}
-
-.btn-export-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-primary);
-  color: var(--color-on-primary);
-  padding: 10px 16px;
-  border-radius: var(--radius-md);
-  font-size: 13.5px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    transform 100ms;
-}
-
-.btn-export-primary:hover:not(:disabled) {
-  background-color: var(--color-primary-darken);
-}
-
-.btn-export-primary:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.btn-export-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-export-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
-  padding: 10px 16px;
-  border-radius: var(--radius-md);
-  font-size: 13.5px;
-  font-weight: 600;
-  border: 1px solid var(--color-border);
-  cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    border-color var(--transition-fast);
-}
-
-.btn-export-secondary:hover:not(:disabled) {
-  background-color: var(--color-background);
-  border-color: var(--color-border-strong);
-}
-
-.btn-export-secondary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Drag Drop Zone */
-.drag-drop-area {
-  border: 1.5px dashed var(--color-border-strong);
-  border-radius: var(--radius-lg);
-  padding: 32px 16px;
-  text-align: center;
-  cursor: pointer;
-  transition:
-    border-color var(--transition-fast),
-    background-color var(--transition-fast);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.drag-drop-area:hover {
-  border-color: var(--color-primary);
-  background-color: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface));
-}
-
-.drag-drop-label {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.mt-auto {
-  margin-top: auto;
-}
-
-.db-path-short {
-  font-family: monospace;
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  opacity: 0.85;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 4px;
-  max-width: 100%;
-}
-</style>

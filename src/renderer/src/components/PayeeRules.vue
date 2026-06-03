@@ -3,12 +3,41 @@
     <div class="d-flex align-center justify-space-between mb-4">
       <div>
         <div class="text-h6 font-weight-bold">Payee Rules</div>
-        <div class="text-body-2 text-medium-emphasis">Group spending &amp; set auto-rules</div>
+        <div class="text-body-2 text-medium-emphasis">
+          Payee Rules for auto-categorizing transactions
+        </div>
       </div>
-      <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAdd"
-        >New category</v-btn
-      >
+      <div class="d-flex align-center gap-3">
+        <v-btn-group variant="outlined" color="primary" rounded="lg" density="comfortable">
+          <v-btn prepend-icon="mdi-play-outline" @click="applyRules(false)"
+            >Apply to this month</v-btn
+          >
+          <v-btn prepend-icon="mdi-play-circle-outline" @click="applyRules(true)"
+            >Apply to all</v-btn
+          >
+          <v-btn prepend-icon="mdi-import" :loading="importing" @click="importAll"
+            >Import from rules</v-btn
+          >
+        </v-btn-group>
+        <v-btn variant="flat" color="primary" prepend-icon="mdi-plus" @click="openAdd" class="ml-6"
+          >New category</v-btn
+        >
+      </div>
     </div>
+
+    <!-- Apply result banner -->
+    <v-slide-y-transition>
+      <v-alert
+        v-if="applyResult !== null"
+        :type="applyResult.applied > 0 ? 'success' : 'info'"
+        variant="flat"
+        closable
+        class="mb-4"
+        @click:close="applyResult = null"
+      >
+        {{ applyResult.applied }} transaction{{ applyResult.applied === 1 ? '' : 's' }} categorized.
+      </v-alert>
+    </v-slide-y-transition>
 
     <!-- Empty State -->
     <v-card v-if="store.groups.length === 0" rounded="lg" elevation="0" border>
@@ -256,10 +285,18 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useUserBudgetsRulesStore } from '../stores/userBudgetsRules'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserRulesStore } from '../stores/userRules'
+import { useUserTransactionsStore } from '../stores/userTransactions'
 
 const store = useUserBudgetsRulesStore()
 const categoriesStore = useUserCategoriesStore()
 const rulesStore = useUserRulesStore()
+const transactionsStore = useUserTransactionsStore()
+
+function currentMonthValue() {
+  const now = new Date()
+  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+const currentMonth = currentMonthValue()
 
 const categoryItems = computed(() => categoriesStore.categories)
 
@@ -302,6 +339,55 @@ const typeItems = [
 const addDialog = ref(false)
 const editingId = ref(null)
 const form = ref({ label: '', type: 'variable', amount: 0, rulesRaw: '', categoryId: null })
+
+// ── Apply rules ───────────────────────────────────────────────────────────────
+const applyResult = ref(null)
+
+async function applyRules(applyAll = false) {
+  applyResult.value = null
+  const catNames = categoryById.value
+  const result = applyAll
+    ? await rulesStore.applyToAll(catNames)
+    : await rulesStore.applyToMonth(currentMonth, catNames)
+  if (result?.success) {
+    applyResult.value = result.data
+    if (!applyAll) await transactionsStore.fetchTransactionsByMonth(currentMonth)
+  }
+}
+
+// ── Import from Rules ─────────────────────────────────────────────────────────
+const importing = ref(false)
+const COMPATIBLE_OPERATORS = new Set(['contains', 'startsWith', 'equals', 'wholeWord'])
+
+function isAlreadyImported(rule) {
+  return store.groups.some((g) =>
+    g.rules.some((kw) => kw.toLowerCase() === (rule.value || '').toLowerCase())
+  )
+}
+
+async function importAll() {
+  importing.value = true
+  try {
+    await rulesStore.fetchRules()
+    const toImport = (rulesStore.rules || []).filter(
+      (r) => COMPATIBLE_OPERATORS.has(r.operator) && r.value && !isAlreadyImported(r)
+    )
+    for (const r of toImport) {
+      const cat = categoriesStore.categories.find(
+        (c) => c.id === r.category || c.name === r.category
+      )
+      await store.addGroup({
+        label: r.value,
+        type: cat?.type ?? 'variable',
+        rules: [r.value],
+        amount: 0,
+        categoryId: cat?.id ?? null
+      })
+    }
+  } finally {
+    importing.value = false
+  }
+}
 
 function openAdd() {
   editingId.value = null
