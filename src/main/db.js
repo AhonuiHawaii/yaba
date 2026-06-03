@@ -81,7 +81,6 @@ db.exec(`
     createdAt       TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     transactionType TEXT,
     category        TEXT,
-    splitCategory1  TEXT,
     splitAmount1    REAL,
     splitCategory2  TEXT,
     splitAmount2    REAL,
@@ -103,8 +102,7 @@ db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_category ON Transactions(ca
 
   App fields (set by user in the app):
     transactionType = income, expense, bills, variable (expenses)
-    category        = main app category
-    splitCategory1  = first split category
+    category        = first split category (or regular category)
     splitAmount1    = first split amount
     splitCategory2  = second split category
     splitAmount2    = second split amount
@@ -133,7 +131,6 @@ const VALID_COLUMNS = new Set([
   'createdAt',
   'transactionType',
   'category',
-  'splitCategory1',
   'splitAmount1',
   'splitCategory2',
   'splitAmount2',
