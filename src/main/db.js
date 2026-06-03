@@ -476,9 +476,17 @@ function applyRules(transactions) {
       let matches = false
 
       switch (rule.operator) {
-        case 'contains':
-          matches = fieldStr.toLowerCase().includes(ruleVal.toLowerCase())
+        case 'contains': {
+          if (ruleVal.includes('*')) {
+            const pattern = ruleVal
+              .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+              .replace(/\*/g, '.*')
+            matches = new RegExp(pattern, 'i').test(fieldStr)
+          } else {
+            matches = fieldStr.toLowerCase().includes(ruleVal.toLowerCase())
+          }
           break
+        }
         case 'equals':
           matches = fieldStr.toLowerCase() === ruleVal.toLowerCase()
           break
@@ -518,7 +526,15 @@ function matchesOneRule(tx, { field, operator, value }) {
   const raw = tx[field]
   const fieldStr = String(raw ?? '')
   switch (operator) {
-    case 'contains': return fieldStr.toLowerCase().includes(value.toLowerCase())
+    case 'contains': {
+      if (value.includes('*')) {
+        const pattern = value
+          .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+          .replace(/\*/g, '.*')
+        return new RegExp(pattern, 'i').test(fieldStr)
+      }
+      return fieldStr.toLowerCase().includes(value.toLowerCase())
+    }
     case 'equals': return fieldStr.toLowerCase() === value.toLowerCase()
     case 'startsWith': return fieldStr.toLowerCase().startsWith(value.toLowerCase())
     case 'gt': return Number(raw) > Number(value)
