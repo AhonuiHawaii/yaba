@@ -514,6 +514,44 @@ function applyRules(transactions) {
   return patches
 }
 
+function matchesOneRule(tx, { field, operator, value }) {
+  const raw = tx[field]
+  const fieldStr = String(raw ?? '')
+  switch (operator) {
+    case 'contains': return fieldStr.toLowerCase().includes(value.toLowerCase())
+    case 'equals': return fieldStr.toLowerCase() === value.toLowerCase()
+    case 'startsWith': return fieldStr.toLowerCase().startsWith(value.toLowerCase())
+    case 'gt': return Number(raw) > Number(value)
+    case 'lt': return Number(raw) < Number(value)
+    case 'wildcard': {
+      const pattern = value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
+      return new RegExp(`^${pattern}$`, 'i').test(fieldStr)
+    }
+    case 'wholeWord': {
+      const pattern = value.replace(/[.*+^${}()|[\]\\]/g, '\\$&')
+      return new RegExp(`\\b${pattern}\\b`, 'i').test(fieldStr)
+    }
+    default: return false
+  }
+}
+
+function previewRule({ field, operator, value }) {
+  if (!field || !operator || !value) return { count: 0, samples: [] }
+  const txs = db.prepare('SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC').all()
+  const matches = txs.filter((tx) => matchesOneRule(tx, { field, operator, value }))
+  return { count: matches.length, samples: matches }
+}
+
+function previewKeywords(keywords) {
+  const clean = (keywords || []).map((k) => k.trim()).filter(Boolean)
+  if (!clean.length) return { count: 0, samples: [] }
+  const txs = db.prepare('SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC').all()
+  const matches = txs.filter((tx) =>
+    clean.some((kw) => String(tx.NAME ?? '').toLowerCase().includes(kw.toLowerCase()))
+  )
+  return { count: matches.length, samples: matches }
+}
+
 // ── Custom Recurring ─────────────────────────────────────────────────────────
 
 db.exec(`
@@ -806,6 +844,8 @@ export {
   updateRule,
   deleteRule,
   applyRules,
+  previewRule,
+  previewKeywords,
   runRescanRecurring,
   // Custom Recurring
   getCustomRecurring,

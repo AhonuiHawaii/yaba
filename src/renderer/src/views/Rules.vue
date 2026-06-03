@@ -144,8 +144,8 @@
     </v-alert>
 
     <!-- Add / Edit Rule Dialog -->
-    <v-dialog v-model="ruleDialog" max-width="520" persistent>
-      <v-card rounded="lg">
+    <v-dialog v-model="ruleDialog" max-width="1100" persistent>
+      <v-card rounded="lg" class="dialog-card">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center gap-3">
@@ -158,92 +158,126 @@
           </div>
         </v-card-title>
         <v-divider />
-        <v-card-text class="pa-6">
-          <v-row>
-            <v-col cols="6">
-              <v-select
-                v-model="form.field"
-                :items="fieldOptions"
-                item-title="label"
-                item-value="value"
-                label="Field"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-               color="primary" />
-            </v-col>
-            <v-col cols="6">
-              <v-select
-                v-model="form.operator"
-                :items="operatorOptions"
-                item-title="label"
-                item-value="value"
-                label="Operator"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-               color="primary" />
-            </v-col>
-            <v-col cols="12" class="mt-3">
-              <v-text-field
-                v-model="form.value"
-                label="Match value"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                persistent-hint
-                :hint="operatorHint"
-                autofocus
-               color="primary" />
-            </v-col>
-            <v-col cols="8" class="mt-3">
-              <v-combobox
-                v-model="form.category"
-                :items="allCategoryNames"
-                label="Assign category"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-                clearable
-               color="primary" />
-            </v-col>
-            <v-col cols="4" class="mt-3">
-              <v-text-field
-                v-model.number="form.priority"
-                label="Priority"
-                type="number"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-               color="primary" />
-            </v-col>
-            <v-col cols="12" class="mt-3">
-              <v-select
-                v-model="form.type"
-                :items="typeOptions"
-                item-title="label"
-                item-value="value"
-                label="Assign transaction type (optional)"
-                variant="solo"
-                inset
-                density="comfortable"
-                rounded="sm"
-                hide-details
-                clearable
-               color="primary" />
-            </v-col>
-          </v-row>
-        </v-card-text>
-        <v-card-actions class="pa-6 pt-0">
+        <div class="d-flex dialog-body">
+          <!-- Left: form -->
+          <div style="flex: 1; min-width: 0">
+            <v-card-text class="pa-6">
+              <v-row>
+                <v-col cols="6">
+                  <v-select
+                    v-model="form.field"
+                    :items="fieldOptions"
+                    item-title="label"
+                    item-value="value"
+                    label="Field"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    hide-details
+                   color="primary" />
+                </v-col>
+                <v-col cols="6">
+                  <v-select
+                    v-model="form.operator"
+                    :items="operatorOptions"
+                    item-title="label"
+                    item-value="value"
+                    label="Operator"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    hide-details
+                   color="primary" />
+                </v-col>
+                <v-col cols="12" class="mt-3">
+                  <v-text-field
+                    v-model="form.value"
+                    label="Match value"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    persistent-hint
+                    :hint="operatorHint"
+                    autofocus
+                   color="primary" />
+                </v-col>
+                <v-col cols="8" class="mt-3">
+                  <v-combobox
+                    v-model="form.category"
+                    :items="allCategoryNames"
+                    label="Assign category"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    hide-details
+                    clearable
+                   color="primary" />
+                </v-col>
+                <v-col cols="4" class="mt-3">
+                  <v-text-field
+                    v-model.number="form.priority"
+                    label="Priority"
+                    type="number"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    hide-details
+                   color="primary" />
+                </v-col>
+                <v-col cols="12" class="mt-3">
+                  <v-select
+                    v-model="form.type"
+                    :items="typeOptions"
+                    item-title="label"
+                    item-value="value"
+                    label="Assign transaction type (optional)"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    hide-details
+                    clearable
+                   color="primary" />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </div>
+
+          <!-- Divider -->
+          <v-divider vertical />
+
+          <!-- Right: live match -->
+          <div class="live-match-panel pa-4 d-flex flex-column">
+            <div class="d-flex align-center ga-2 mb-3">
+              <v-icon size="14" color="primary">mdi-lightning-bolt</v-icon>
+              <span class="text-caption font-weight-medium text-medium-emphasis text-uppercase">Live match</span>
+              <v-chip v-if="liveMatch" size="x-small" :color="liveMatch.count > 0 ? 'primary' : 'default'" variant="tonal" rounded="pill">
+                {{ liveMatch.count }} transaction{{ liveMatch.count === 1 ? '' : 's' }}
+              </v-chip>
+            </div>
+            <div v-if="liveMatch && liveMatch.samples.length" class="d-flex flex-column ga-1 live-match-list flex-grow-1">
+              <div
+                v-for="tx in liveMatch.samples"
+                :key="tx.FITID"
+                class="d-flex align-center justify-space-between text-caption live-match-row px-2 py-1 rounded"
+              >
+                <span class="text-truncate mr-2">{{ tx.NAME || tx.MEMO || '—' }}</span>
+                <span class="text-medium-emphasis text-no-wrap">{{ tx.TRNAMT != null ? (tx.TRNAMT < 0 ? '-' : '+') + '$' + Math.abs(tx.TRNAMT).toFixed(2) : '—' }}</span>
+              </div>
+            </div>
+            <div v-else class="text-caption text-medium-emphasis flex-grow-1 d-flex align-center justify-center text-center" style="opacity:0.5">
+              {{ liveMatch ? 'No transactions match.' : 'Type a match value\nto preview results.' }}
+            </div>
+          </div>
+        </div>
+
+        <v-divider />
+        <v-card-actions class="pa-6 py-4">
           <v-spacer />
           <v-btn variant="text" @click="closeRuleDialog">Cancel</v-btn>
           <v-btn
@@ -284,7 +318,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useUserRulesStore } from '../stores/userRules'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserTransactionsStore } from '../stores/userTransactions'
@@ -398,6 +432,7 @@ function openEditDialog(item) {
 function closeRuleDialog() {
   ruleDialog.value = false
   editTarget.value = null
+  liveMatch.value = null
 }
 
 async function saveRule() {
@@ -432,6 +467,27 @@ async function doDelete() {
   deleteTarget.value = null
 }
 
+// Live matching
+const liveMatch = ref(null)
+let liveMatchTimer = null
+
+watch(
+  () => [form.value.field, form.value.operator, form.value.value],
+  ([field, operator, value]) => {
+    clearTimeout(liveMatchTimer)
+    if (!value) { liveMatch.value = null; return }
+    liveMatchTimer = setTimeout(async () => {
+      liveMatch.value = await store.previewRule({ field, operator, value })
+    }, 350)
+  }
+)
+
+function formatDate(dtposted) {
+  if (!dtposted) return ''
+  const s = String(dtposted)
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`
+}
+
 const applyResult = ref(null)
 
 async function applyRules(applyAll = false) {
@@ -443,3 +499,32 @@ async function applyRules(applyAll = false) {
   }
 }
 </script>
+
+<style scoped>
+.dialog-card {
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.live-match-panel {
+  width: 580px;
+  flex-shrink: 0;
+  overflow: hidden;
+  align-self: stretch;
+}
+
+.live-match-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.live-match-row {
+  background: rgba(var(--v-theme-surface-variant), 0.4);
+}
+</style>

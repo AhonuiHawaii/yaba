@@ -24,6 +24,8 @@ import {
   updateRule as dbUpdateRule,
   deleteRule as dbDeleteRule,
   applyRules,
+  previewRule as dbPreviewRule,
+  previewKeywords as dbPreviewKeywords,
   runRescanRecurring,
   getCustomRecurring,
   createCustomRecurring as dbCreateCustomRecurring,
@@ -294,6 +296,22 @@ export const removeRule = (id) => {
     const changes = dbDeleteRule(id)
     if (!changes) return fail(new Error(`No rule found with id: ${id}`))
     return ok({ id, changes })
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const previewRuleMatch = (rule) => {
+  try {
+    return ok(dbPreviewRule(rule))
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const previewKeywordsMatch = (keywords) => {
+  try {
+    return ok(dbPreviewKeywords(keywords))
   } catch (e) {
     return fail(e)
   }

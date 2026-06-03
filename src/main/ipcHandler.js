@@ -28,6 +28,8 @@ import {
   removeRule,
   applyRulesToMonth,
   applyRulesToAll,
+  previewRuleMatch,
+  previewKeywordsMatch,
   rescanRecurringTransactions,
   fetchCustomRecurring,
   addCustomRecurring,
@@ -143,6 +145,14 @@ export const setupIpcHandlers = () => {
     return applyRulesToMonth(yyyymm)
   })
   ipcMain.handle('rules:applyToAll', () => applyRulesToAll())
+  ipcMain.handle('rules:preview', (_, rule) => {
+    if (!isObject(rule)) throw new Error('Invalid rule')
+    return previewRuleMatch(rule)
+  })
+  ipcMain.handle('rules:previewKeywords', (_, keywords) => {
+    if (!Array.isArray(keywords)) throw new Error('Invalid keywords')
+    return previewKeywordsMatch(keywords)
+  })
   ipcMain.handle('transactions:rescanRecurring', () => rescanRecurringTransactions())
 
   ipcMain.handle('customRecurring:fetch', () => fetchCustomRecurring())

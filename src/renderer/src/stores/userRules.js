@@ -111,6 +111,26 @@ export const useUserRulesStore = defineStore('userRules', () => {
     }
   }
 
+  async function previewRule(rule) {
+    try {
+      const result = await ipc.invoke('rules:preview', rule)
+      if (!result.success) throw new Error(result.error)
+      return result.data
+    } catch {
+      return { count: 0, samples: [] }
+    }
+  }
+
+  async function previewKeywords(keywords) {
+    try {
+      const result = await ipc.invoke('rules:previewKeywords', keywords)
+      if (!result.success) throw new Error(result.error)
+      return result.data
+    } catch {
+      return { count: 0, samples: [] }
+    }
+  }
+
   async function applyToAll() {
     loadingCount.value++
     error.value = null
@@ -135,6 +155,8 @@ export const useUserRulesStore = defineStore('userRules', () => {
     editRule,
     removeRule,
     moveRule,
+    previewRule,
+    previewKeywords,
     applyToMonth,
     applyToAll
   }

@@ -94,81 +94,115 @@
     </v-alert>
 
     <!-- Add / Edit Dialog -->
-    <v-dialog v-model="addDialog" max-width="420">
-      <v-card rounded="sm">
+    <v-dialog v-model="addDialog" max-width="980">
+      <v-card rounded="sm" class="dialog-card">
         <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">{{
           editingId ? 'Edit category' : 'New category'
         }}</v-card-title>
         <v-divider />
-        <v-card-text class="pa-5">
-          <div class="form-row mb-3">
-            <label>Category</label>
-            <v-autocomplete
-              v-model="form.categoryId"
-              :items="categoryItems"
-              item-title="name"
-              item-value="id"
-              placeholder="Pick existing or leave blank"
-              variant="outlined"
-              density="compact"
-              rounded="sm"
-              hide-details
-              clearable
-              color="primary"
-              @update:model-value="onCategoryPicked"
-            />
+        <div class="d-flex dialog-body">
+          <!-- Left: form -->
+          <div style="flex: 1; min-width: 0">
+            <v-card-text class="pa-5">
+              <div class="form-row mb-3">
+                <label>Category</label>
+                <v-autocomplete
+                  v-model="form.categoryId"
+                  :items="categoryItems"
+                  item-title="name"
+                  item-value="id"
+                  placeholder="Pick existing or leave blank"
+                  variant="outlined"
+                  density="compact"
+                  rounded="sm"
+                  hide-details
+                  clearable
+                  color="primary"
+                  @update:model-value="onCategoryPicked"
+                />
+              </div>
+              <div class="form-row mb-3">
+                <label>Name</label>
+                <v-text-field
+                  v-model="form.label"
+                  variant="outlined"
+                  density="compact"
+                  rounded="sm"
+                  autofocus
+                  hide-details
+                  color="primary"
+                />
+              </div>
+              <div class="form-row mb-3">
+                <label>Section</label>
+                <v-select
+                  v-model="form.type"
+                  :items="typeItems"
+                  variant="outlined"
+                  density="compact"
+                  rounded="sm"
+                  hide-details
+                  color="primary"
+                />
+              </div>
+              <div class="form-row mb-3">
+                <label>Monthly amount</label>
+                <v-text-field
+                  v-model="form.amount"
+                  type="number"
+                  prefix="$"
+                  variant="outlined"
+                  density="compact"
+                  rounded="sm"
+                  hide-details
+                  color="primary"
+                />
+              </div>
+              <div class="form-row">
+                <label>Keywords</label>
+                <v-text-field
+                  v-model="form.rulesRaw"
+                  placeholder="e.g. NETFLIX, SPOTIFY"
+                  variant="outlined"
+                  density="compact"
+                  rounded="sm"
+                  hide-details
+                  color="primary"
+                />
+              </div>
+            </v-card-text>
           </div>
-          <div class="form-row mb-3">
-            <label>Name</label>
-            <v-text-field
-              v-model="form.label"
-              variant="outlined"
-              density="compact"
-              rounded="sm"
-              autofocus
-              hide-details
-              color="primary"
-            />
+
+          <!-- Divider -->
+          <v-divider vertical />
+
+          <!-- Right: live match -->
+          <div class="live-match-panel pa-4 d-flex flex-column">
+            <div class="d-flex align-center ga-2 mb-3">
+              <v-icon size="14" color="primary">mdi-lightning-bolt</v-icon>
+              <span class="text-caption font-weight-medium text-medium-emphasis text-uppercase">Live match</span>
+              <v-chip v-if="liveMatch" size="x-small" :color="liveMatch.count > 0 ? 'primary' : 'default'" variant="tonal" rounded="pill">
+                {{ liveMatch.count }} transaction{{ liveMatch.count === 1 ? '' : 's' }}
+              </v-chip>
+            </div>
+            <div v-if="liveMatch && liveMatch.samples.length" class="d-flex flex-column ga-1 live-match-list flex-grow-1">
+              <div
+                v-for="tx in liveMatch.samples"
+                :key="tx.FITID"
+                class="d-flex align-center justify-space-between text-caption live-match-row px-2 py-1 rounded"
+              >
+                <span class="text-truncate mr-2">{{ tx.NAME || tx.MEMO || '—' }}</span>
+                <span class="text-medium-emphasis text-no-wrap">{{ tx.TRNAMT != null ? (tx.TRNAMT < 0 ? '-' : '+') + '$' + Math.abs(tx.TRNAMT).toFixed(2) : '—' }}</span>
+              </div>
+            </div>
+            <div v-else class="text-caption text-medium-emphasis flex-grow-1 d-flex align-center justify-center text-center" style="opacity:0.5">
+              {{ liveMatch ? 'No transactions match.' : 'Type keywords to\npreview results.' }}
+            </div>
           </div>
-          <div class="form-row mb-3">
-            <label>Section</label>
-            <v-select
-              v-model="form.type"
-              :items="typeItems"
-              variant="outlined"
-              density="compact"
-              rounded="sm"
-              hide-details
-              color="primary"
-            />
-          </div>
-          <div class="form-row mb-3">
-            <label>Monthly amount</label>
-            <v-text-field
-              v-model="form.amount"
-              type="number"
-              prefix="$"
-              variant="outlined"
-              density="compact"
-              rounded="sm"
-              hide-details
-              color="primary"
-            />
-          </div>
-          <div class="form-row">
-            <label>Keywords</label>
-            <v-text-field
-              v-model="form.rulesRaw"
-              placeholder="e.g. NETFLIX, SPOTIFY"
-              variant="outlined"
-              density="compact"
-              rounded="sm"
-              hide-details
-              color="primary"
-            />
-          </div>
-        </v-card-text>
-        <v-card-actions class="pa-5 pt-0">
+        </div>
+
+        <v-divider />
+        <v-card-actions class="pa-5 py-4">
           <v-spacer />
           <v-btn variant="text" rounded="sm" @click="addDialog = false">Cancel</v-btn>
           <v-btn
@@ -186,12 +220,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useUserBudgetsRulesStore } from '../stores/userBudgetsRules'
 import { useUserCategoriesStore } from '../stores/userCategories'
+import { useUserRulesStore } from '../stores/userRules'
 
 const store = useUserBudgetsRulesStore()
 const categoriesStore = useUserCategoriesStore()
+const rulesStore = useUserRulesStore()
 
 const categoryItems = computed(() => categoriesStore.categories)
 
@@ -239,12 +275,14 @@ const form = ref({ label: '', type: 'variable', amount: 0, rulesRaw: '', categor
 function openAdd() {
   editingId.value = null
   form.value = { label: '', type: 'variable', amount: 0, rulesRaw: '', categoryId: null }
+  liveMatch.value = null
   addDialog.value = true
 }
 
 function openEdit(g) {
   editingId.value = g.id
   form.value = { label: g.label, type: g.type, amount: g.amount, rulesRaw: g.rules.join(', '), categoryId: g.categoryId ?? null }
+  liveMatch.value = null
   addDialog.value = true
 }
 
@@ -259,6 +297,28 @@ async function save() {
     await store.addGroup(payload)
   }
   addDialog.value = false
+}
+
+// Live matching
+const liveMatch = ref(null)
+let liveMatchTimer = null
+
+watch(
+  () => form.value.rulesRaw,
+  (raw) => {
+    clearTimeout(liveMatchTimer)
+    const keywords = raw.split(',').map((k) => k.trim()).filter(Boolean)
+    if (!keywords.length) { liveMatch.value = null; return }
+    liveMatchTimer = setTimeout(async () => {
+      liveMatch.value = await rulesStore.previewKeywords(keywords)
+    }, 350)
+  }
+)
+
+function formatDate(dtposted) {
+  if (!dtposted) return ''
+  const s = String(dtposted)
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`
 }
 
 onMounted(() => store.fetchGroups())
@@ -276,5 +336,32 @@ onMounted(() => store.fetchGroups())
   font-size: 0.875rem;
   text-align: right;
   white-space: nowrap;
+}
+
+.dialog-card {
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.live-match-panel {
+  width: 560px;
+  flex-shrink: 0;
+  overflow: hidden;
+  align-self: stretch;
+}
+
+.live-match-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.live-match-row {
+  background: rgba(var(--v-theme-surface-variant), 0.4);
 }
 </style>
