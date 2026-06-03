@@ -254,7 +254,7 @@
 
             <template #item.category="{ item }">
               <v-chip
-                v-if="item.splitCategory1 || item.splitCategory2"
+                v-if="item.splitCategory2"
                 color="info"
                 variant="tonal"
                 size="x-small"
@@ -503,7 +503,11 @@
                 />
                 <v-combobox
                   v-model="splitState.category1"
-                  :items="categoriesStore.categories.filter((c) => c.type === splitState.type1).map((c) => c.name)"
+                  :items="
+                    categoriesStore.categories
+                      .filter((c) => c.type === splitState.type1)
+                      .map((c) => c.name)
+                  "
                   label="Category"
                   variant="outlined"
                   inset
@@ -544,7 +548,11 @@
                 />
                 <v-combobox
                   v-model="splitState.category2"
-                  :items="categoriesStore.categories.filter((c) => c.type === splitState.type2).map((c) => c.name)"
+                  :items="
+                    categoriesStore.categories
+                      .filter((c) => c.type === splitState.type2)
+                      .map((c) => c.name)
+                  "
                   label="Category"
                   variant="outlined"
                   inset
@@ -934,9 +942,7 @@ const _pf = usePeriodFilter()
 const { period, periodLabel, periodMonths, isNextPeriodFuture } = storeToRefs(_pf)
 const { prevPeriod, nextPeriod } = _pf
 
-const uncategorizedCount = computed(
-  () => store.transactions.filter((t) => !t.category && !t.splitCategory1).length
-)
+const uncategorizedCount = computed(() => store.transactions.filter((t) => !t.category).length)
 
 const categoryById = computed(() =>
   Object.fromEntries(categoriesStore.categories.map((c) => [c.id, c.name]))
@@ -1218,8 +1224,8 @@ function openSplitDialog(item) {
   splitTarget.value = item
   const findType = (name) => categoriesStore.categories.find((c) => c.name === name)?.type ?? null
   splitState.value = {
-    type1: item.splitCategory1 ? findType(item.splitCategory1) : null,
-    category1: item.splitCategory1 || '',
+    type1: item.category ? findType(item.category) : null,
+    category1: item.category || '',
     amount1: item.splitAmount1 ? Math.abs(Number(item.splitAmount1)) : 0,
     type2: item.splitCategory2 ? findType(item.splitCategory2) : null,
     category2: item.splitCategory2 || '',
@@ -1255,7 +1261,7 @@ async function saveSplits() {
   const sign = Math.sign(Number(splitTarget.value.TRNAMT)) || 1
 
   await store.editTransaction(splitTarget.value.FITID, {
-    splitCategory1: splitState.value.category1 || null,
+    category: splitState.value.category1 || null,
     splitAmount1: Number(splitState.value.amount1) * sign,
     splitCategory2: splitState.value.category2 || null,
     splitAmount2: Number(splitState.value.amount2) * sign
