@@ -5,7 +5,11 @@
         <div class="text-h6 font-weight-bold">Category Rules</div>
         <div class="text-body-2 text-medium-emphasis">Applied top-to-bottom as transactions are imported</div>
       </div>
-      <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAddDialog">Add rule</v-btn>
+      <div class="d-flex align-center gap-2">
+        <v-btn variant="tonal" color="primary" rounded="lg" prepend-icon="mdi-play-outline" @click="applyRules(false)">Apply to this month</v-btn>
+        <v-btn variant="tonal" color="primary" rounded="lg" prepend-icon="mdi-play-circle-outline" @click="applyRules(true)">Apply to all</v-btn>
+        <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAddDialog">Add rule</v-btn>
+      </div>
     </div>
 
     <!-- Apply result banner -->
@@ -205,10 +209,12 @@
                    color="primary" />
                 </v-col>
                 <v-col cols="8" class="mt-3">
-                  <v-combobox
-                    v-model="form.category"
-                    :items="allCategoryNames"
-                    label="Assign category"
+                  <v-select
+                    v-model="form.type"
+                    :items="typeOptions"
+                    item-title="label"
+                    item-value="value"
+                    label="Assign transaction type (optional)"
                     variant="solo"
                     inset
                     density="comfortable"
@@ -230,12 +236,10 @@
                    color="primary" />
                 </v-col>
                 <v-col cols="12" class="mt-3">
-                  <v-select
-                    v-model="form.type"
-                    :items="typeOptions"
-                    item-title="label"
-                    item-value="value"
-                    label="Assign transaction type (optional)"
+                  <v-combobox
+                    v-model="form.category"
+                    :items="allCategoryNames"
+                    label="Assign category"
                     variant="solo"
                     inset
                     density="comfortable"
@@ -338,7 +342,12 @@ onMounted(() => {
   store.fetchRules()
 })
 
-const allCategoryNames = computed(() => categoriesStore.categories.map((c) => c.name))
+const allCategoryNames = computed(() => {
+  const cats = form.value.type
+    ? categoriesStore.categories.filter((c) => c.type === form.value.type)
+    : categoriesStore.categories
+  return cats.map((c) => c.name)
+})
 
 const sortedRules = computed(() =>
   [...store.rules].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))

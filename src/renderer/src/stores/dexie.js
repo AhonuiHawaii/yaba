@@ -2,7 +2,7 @@ import Dexie from 'dexie'
 import defaultCategories from '../assets/categories.json'
 
 const db = new Dexie('BudgetAppFrontendDB')
-//  Do not create multiple versions of the database, it is not needed.
+
 db.version(1).stores({
   incomeCategories: 'id, name, createdAt',
   savingsCategories: 'id, name, createdAt',
@@ -16,17 +16,30 @@ db.version(1).stores({
   budgetGroups: 'id, type, categoryId, createdAt'
 })
 
+db.version(2).stores({
+  incomeCategories: null,
+  savingsCategories: null,
+  variableCategories: null,
+  billsCategories: null,
+  debtCategories: null,
+  categories: 'id, name, type, createdAt',
+  budgets: 'id, categoryId, amount, createdAt',
+  goals: 'id, name, targetDate, status, createdAt',
+  debtDetails: 'id, updatedAt',
+  budgetRollovers: 'id, categoryId, month, createdAt',
+  budgetGroups: 'id, type, categoryId, createdAt'
+})
+
 db.on('populate', () => {
   const now = new Date().toISOString()
-  db.billsCategories.bulkAdd(
-    defaultCategories
-      .filter((d) => d.categoryGroup === 'Expenses')
-      .map((d) => ({ id: crypto.randomUUID(), name: d.category, createdAt: now }))
-  )
-  db.variableCategories.bulkAdd(
-    defaultCategories
-      .filter((d) => d.categoryGroup === 'Variable')
-      .map((d) => ({ id: crypto.randomUUID(), name: d.category, createdAt: now }))
+  const groupToType = { Expenses: 'bills', Variable: 'variable' }
+  db.categories.bulkAdd(
+    defaultCategories.map((d) => ({
+      id: crypto.randomUUID(),
+      name: d.category,
+      type: groupToType[d.categoryGroup] ?? 'variable',
+      createdAt: now
+    }))
   )
 })
 

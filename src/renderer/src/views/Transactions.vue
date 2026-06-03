@@ -851,7 +851,7 @@ const categoryById = computed(() =>
 )
 
 function categoryName(id) {
-  return categoryById.value[id] ?? null
+  return categoryById.value[id] ?? (id || null)
 }
 
 const allCategoryItems = computed(() =>
