@@ -33,9 +33,7 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
   }
 
   function getBudget(id, month = null) {
-    return budgets.value.find(
-      (b) => b.id === id && (month ? b.month === month : true)
-    )
+    return budgets.value.find((b) => b.id === id && (month ? b.month === month : true))
   }
 
   async function upsertBudget(id, amount, month) {
