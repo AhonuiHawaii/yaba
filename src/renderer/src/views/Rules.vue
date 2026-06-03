@@ -482,6 +482,12 @@ watch(
   }
 )
 
+function matchedFieldText(tx) {
+  const v = tx[form.value.field]
+  if (v != null && String(v).trim() !== '') return String(v)
+  return tx.NAME || tx.MEMO || '—'
+}
+
 function formatDate(dtposted) {
   if (!dtposted) return ''
   const s = String(dtposted)
