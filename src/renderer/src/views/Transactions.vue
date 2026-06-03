@@ -290,18 +290,19 @@
             </template>
 
             <template #item.actions="{ item }">
-              <v-menu>
-                <template #activator="{ props }">
-                  <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" density="comfortable" size="small" />
-                </template>
-                <v-list density="compact">
-                  <v-list-item prepend-icon="mdi-account-edit-outline" title="Edit payee"  @click="openEditPayee(item)" />
-                  <v-list-item prepend-icon="mdi-note-edit-outline"    title="Edit notes"  @click="openNotesDialog(item)" />
-                  <v-list-item prepend-icon="mdi-auto-fix"             title="Create rule" @click="openCreateRuleFromTransaction(item)" />
-                  <v-divider />
-                  <v-list-item prepend-icon="mdi-delete-outline" title="Delete" base-color="error" @click="confirmDelete(item)" />
-                </v-list>
-              </v-menu>
+              <div class="d-flex align-center justify-end">
+                <v-menu>
+                  <template #activator="{ props }">
+                    <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" density="comfortable" size="small" />
+                  </template>
+                  <v-list density="compact">
+                    <v-list-item prepend-icon="mdi-account-edit-outline" title="Edit payee"  @click="openEditPayee(item)" />
+                    <v-list-item prepend-icon="mdi-note-edit-outline"    title="Edit notes"  @click="openNotesDialog(item)" />
+                    <v-list-item prepend-icon="mdi-auto-fix"             title="Create rule" @click="activeTab = 'category-rules'" />
+                  </v-list>
+                </v-menu>
+                <v-btn icon="mdi-delete-outline" variant="text" color="error" density="comfortable" size="small" @click="confirmDelete(item)" class="ml-1" />
+              </div>
             </template>
 
             <template #loading>
@@ -1038,7 +1039,7 @@ const headers = [
   { title: 'Account', key: 'ACCTID', width: '160px', sortable: true },
   { title: 'Category', key: 'category', width: '180px', sortable: false },
   { title: 'Amount', key: 'TRNAMT', width: '130px', sortable: true, align: 'end' },
-  { title: '', key: 'actions', width: '56px', sortable: false, align: 'end' }
+  { title: '', key: 'actions', width: '96px', sortable: false, align: 'end' }
 ]
 
 // ── Filtered data ─────────────────────────────────────────────────────────────
@@ -1279,7 +1280,10 @@ async function saveRule() {
     type: ruleForm.value.type || null,
     priority: ruleForm.value.priority ?? 0
   })
-  if (!rulesStore.error) ruleDialog.value = false
+  if (!rulesStore.error) {
+    ruleDialog.value = false
+    activeTab.value = 'category-rules'
+  }
 }
 </script>
 
