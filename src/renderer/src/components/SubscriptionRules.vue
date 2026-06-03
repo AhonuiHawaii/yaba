@@ -23,7 +23,6 @@
 
     <!-- Table Card -->
     <v-card rounded="sm" elevation="1">
-
       <div v-if="!rules.length" class="d-flex flex-column align-center pa-12 text-medium-emphasis">
         <v-icon size="48" class="mb-3" style="opacity: 0.3" icon="mdi-tune-variant" />
         <div class="text-body-2">No rules yet.</div>
@@ -99,7 +98,8 @@
             class="mb-4"
             hint="Transactions containing this will be tracked as subscriptions"
             persistent-hint
-           color="primary" />
+            color="primary"
+          />
           <v-select
             v-model="form.operator"
             :items="operatorOptions"
@@ -107,7 +107,8 @@
             variant="outlined"
             density="compact"
             rounded="sm"
-           color="primary" />
+            color="primary"
+          />
         </v-card-text>
         <v-card-actions class="pa-5 pt-0">
           <v-spacer />

@@ -3,12 +3,35 @@
     <div class="d-flex align-center justify-space-between mb-4">
       <div>
         <div class="text-h6 font-weight-bold">Category Rules</div>
-        <div class="text-body-2 text-medium-emphasis">Applied top-to-bottom as transactions are imported</div>
+        <div class="text-body-2 text-medium-emphasis">
+          Applied top-to-bottom as transactions are imported
+        </div>
       </div>
       <div class="d-flex align-center gap-2">
-        <v-btn variant="tonal" color="primary" rounded="lg" prepend-icon="mdi-play-outline" @click="applyRules(false)">Apply to this month</v-btn>
-        <v-btn variant="tonal" color="primary" rounded="lg" prepend-icon="mdi-play-circle-outline" @click="applyRules(true)">Apply to all</v-btn>
-        <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAddDialog">Add rule</v-btn>
+        <v-btn
+          variant="tonal"
+          color="primary"
+          rounded="lg"
+          prepend-icon="mdi-play-outline"
+          @click="applyRules(false)"
+          >Apply to this month</v-btn
+        >
+        <v-btn
+          variant="tonal"
+          color="primary"
+          rounded="lg"
+          prepend-icon="mdi-play-circle-outline"
+          @click="applyRules(true)"
+          >Apply to all</v-btn
+        >
+        <v-btn
+          variant="flat"
+          color="primary"
+          rounded="lg"
+          prepend-icon="mdi-plus"
+          @click="openAddDialog"
+          >Add rule</v-btn
+        >
       </div>
     </div>
 
@@ -179,7 +202,8 @@
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="6">
                   <v-select
@@ -193,7 +217,8 @@
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="12" class="mt-3">
                   <v-text-field
@@ -206,7 +231,8 @@
                     persistent-hint
                     :hint="operatorHint"
                     autofocus
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="8" class="mt-3">
                   <v-select
@@ -221,7 +247,8 @@
                     rounded="sm"
                     hide-details
                     clearable
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="4" class="mt-3">
                   <v-text-field
@@ -233,7 +260,8 @@
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="12" class="mt-3">
                   <v-combobox
@@ -246,7 +274,8 @@
                     rounded="sm"
                     hide-details
                     clearable
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
               </v-row>
             </v-card-text>
@@ -259,22 +288,41 @@
           <div class="live-match-panel pa-4 d-flex flex-column">
             <div class="d-flex align-center ga-2 mb-3">
               <v-icon size="14" color="primary">mdi-lightning-bolt</v-icon>
-              <span class="text-caption font-weight-medium text-medium-emphasis text-uppercase">Live match</span>
-              <v-chip v-if="liveMatch" size="x-small" :color="liveMatch.count > 0 ? 'primary' : 'default'" variant="tonal" rounded="pill">
+              <span class="text-caption font-weight-medium text-medium-emphasis text-uppercase"
+                >Live match</span
+              >
+              <v-chip
+                v-if="liveMatch"
+                size="x-small"
+                :color="liveMatch.count > 0 ? 'primary' : 'default'"
+                variant="tonal"
+                rounded="pill"
+              >
                 {{ liveMatch.count }} transaction{{ liveMatch.count === 1 ? '' : 's' }}
               </v-chip>
             </div>
-            <div v-if="liveMatch && liveMatch.samples.length" class="d-flex flex-column ga-1 live-match-list flex-grow-1">
+            <div
+              v-if="liveMatch && liveMatch.samples.length"
+              class="d-flex flex-column ga-1 live-match-list flex-grow-1"
+            >
               <div
                 v-for="tx in liveMatch.samples"
                 :key="tx.FITID"
                 class="d-flex align-center justify-space-between text-caption live-match-row px-2 py-1 rounded"
               >
                 <span class="text-truncate mr-2">{{ matchedFieldText(tx) }}</span>
-                <span class="text-medium-emphasis text-no-wrap">{{ tx.TRNAMT != null ? (tx.TRNAMT < 0 ? '-' : '+') + '$' + Math.abs(tx.TRNAMT).toFixed(2) : '—' }}</span>
+                <span class="text-medium-emphasis text-no-wrap">{{
+                  tx.TRNAMT != null
+                    ? (tx.TRNAMT < 0 ? '-' : '+') + '$' + Math.abs(tx.TRNAMT).toFixed(2)
+                    : '—'
+                }}</span>
               </div>
             </div>
-            <div v-else class="text-caption text-medium-emphasis flex-grow-1 d-flex align-center justify-center text-center" style="opacity:0.5">
+            <div
+              v-else
+              class="text-caption text-medium-emphasis flex-grow-1 d-flex align-center justify-center text-center"
+              style="opacity: 0.5"
+            >
               {{ liveMatch ? 'No transactions match.' : 'Type a match value\nto preview results.' }}
             </div>
           </div>
@@ -396,11 +444,15 @@ const typeOptions = [
 const operatorHint = computed(
   () =>
     ({
-      contains: 'Substring match. * matches one or more non-whitespace chars (does not cross spaces)',
-      equals: 'Full-field match. * matches one or more non-whitespace chars (does not cross spaces)',
-      startsWith: 'Prefix match. * matches one or more non-whitespace chars (does not cross spaces)',
+      contains:
+        'Substring match. * matches one or more non-whitespace chars (does not cross spaces)',
+      equals:
+        'Full-field match. * matches one or more non-whitespace chars (does not cross spaces)',
+      startsWith:
+        'Prefix match. * matches one or more non-whitespace chars (does not cross spaces)',
       wildcard: 'Anchored wildcard — must match the whole field. e.g. WAL*MART*',
-      wholeWord: 'Whole-word match. Use * inside a word — e.g. gas* matches "gasoline" but not "natural gases"',
+      wholeWord:
+        'Whole-word match. Use * inside a word — e.g. gas* matches "gasoline" but not "natural gases"',
       gt: 'Numeric — e.g. 50 matches amounts greater than 50',
       lt: 'Numeric — e.g. 50 matches amounts less than 50'
     })[form.value.operator] ?? ''
@@ -484,7 +536,10 @@ watch(
   () => [form.value.field, form.value.operator, form.value.value],
   ([field, operator, value]) => {
     clearTimeout(liveMatchTimer)
-    if (!value) { liveMatch.value = null; return }
+    if (!value) {
+      liveMatch.value = null
+      return
+    }
     liveMatchTimer = setTimeout(async () => {
       liveMatch.value = await store.previewRule({ field, operator, value })
     }, 350)

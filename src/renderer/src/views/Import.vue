@@ -110,7 +110,8 @@
                 rounded="sm"
                 hide-details
                 style="max-width: 280px"
-               color="primary" />
+                color="primary"
+              />
             </div>
           </div>
           <v-divider v-if="i < mappings.length - 1" />

@@ -80,7 +80,8 @@ const toggleTheme = () => {
       rounded="lg"
       style="max-width: 260px"
       class="mr-2"
-     color="primary" />
+      color="primary"
+    />
 
     <v-menu :close-on-content-click="false" location="bottom end">
       <template #activator="{ props: menuProps }">
@@ -96,8 +97,8 @@ const toggleTheme = () => {
 
       <v-card width="220" class="pt-2 pb-2" elevation="4">
         <div class="px-4 text-caption text-medium-emphasis mb-2">Accent color</div>
-        
-        <div class="d-flex flex-wrap px-4 mb-3 justify-center" style="gap: 8px;">
+
+        <div class="d-flex flex-wrap px-4 mb-3 justify-center" style="gap: 8px">
           <div
             v-for="accent in accentColors"
             :key="accent.value"
@@ -107,11 +108,7 @@ const toggleTheme = () => {
             :title="accent.title"
             @click="selectTheme(accent.value)"
           >
-            <v-icon
-              v-if="selectedBaseTheme === accent.value"
-              color="white"
-              size="14"
-            >
+            <v-icon v-if="selectedBaseTheme === accent.value" color="white" size="14">
               mdi-check
             </v-icon>
           </div>
@@ -139,7 +136,6 @@ const toggleTheme = () => {
     <v-btn
       variant="flat"
       color="primary"
-
       prepend-icon="mdi-upload"
       class="mr-2"
       @click="emit('navigate', 'Import')"

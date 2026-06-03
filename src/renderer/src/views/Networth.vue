@@ -346,7 +346,13 @@ const chartOptions = computed(() => {
     plugins: {
       legend: {
         position: 'top',
-        labels: { color: onSurfaceColor, usePointStyle: true, padding: 16, boxWidth: 6, boxHeight: 6 }
+        labels: {
+          color: onSurfaceColor,
+          usePointStyle: true,
+          padding: 16,
+          boxWidth: 6,
+          boxHeight: 6
+        }
       },
       tooltip: {
         callbacks: {

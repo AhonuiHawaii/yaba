@@ -21,21 +21,37 @@
         />
 
         <v-btn-group variant="flat" rounded color="primary" density="comfortable" class="ml-2">
-          <v-btn :variant="period === 'month' ? 'flat' : 'outlined'" :color="period === 'month' ? 'primary' : undefined" @click="period = 'month'"
+          <v-btn
+            :variant="period === 'month' ? 'flat' : 'outlined'"
+            :color="period === 'month' ? 'primary' : undefined"
+            @click="period = 'month'"
             >Month</v-btn
           >
-          <v-btn :variant="period === 'quarter' ? 'flat' : 'outlined'" :color="period === 'quarter' ? 'primary' : undefined" @click="period = 'quarter'"
+          <v-btn
+            :variant="period === 'quarter' ? 'flat' : 'outlined'"
+            :color="period === 'quarter' ? 'primary' : undefined"
+            @click="period = 'quarter'"
             >Quarter</v-btn
           >
-          <v-btn :variant="period === 'semi' ? 'flat' : 'outlined'" :color="period === 'semi' ? 'primary' : undefined" @click="period = 'semi'"
+          <v-btn
+            :variant="period === 'semi' ? 'flat' : 'outlined'"
+            :color="period === 'semi' ? 'primary' : undefined"
+            @click="period = 'semi'"
             >Semi</v-btn
           >
-          <v-btn :variant="period === 'annual' ? 'flat' : 'outlined'" :color="period === 'annual' ? 'primary' : undefined" @click="period = 'annual'"
+          <v-btn
+            :variant="period === 'annual' ? 'flat' : 'outlined'"
+            :color="period === 'annual' ? 'primary' : undefined"
+            @click="period = 'annual'"
             >Annual</v-btn
           >
         </v-btn-group>
 
-        <v-btn variant="flat" color="primary" prepend-icon="mdi-export" @click="emit('navigate', 'Backup')"
+        <v-btn
+          variant="flat"
+          color="primary"
+          prepend-icon="mdi-export"
+          @click="emit('navigate', 'Backup')"
           >Export</v-btn
         >
         <v-btn
@@ -116,7 +132,12 @@
         </v-dialog>
 
         <!-- Filter bar -->
-        <v-sheet rounded="lg" color="primary-container" border class="d-flex align-center ga-3 px-4 py-3 mb-4">
+        <v-sheet
+          rounded="lg"
+          color="primary-container"
+          border
+          class="d-flex align-center ga-3 px-4 py-3 mb-4"
+        >
           <v-text-field
             v-model="search"
             prepend-inner-icon="mdi-magnify"
@@ -125,7 +146,8 @@
             density="compact"
             hide-details
             rounded="pill"
-           color="primary" />
+            color="primary"
+          />
 
           <div class="d-flex ga-2">
             <v-btn
@@ -155,7 +177,8 @@
             hide-details
             rounded="lg"
             max-width="200"
-           color="primary" />
+            color="primary"
+          />
         </v-sheet>
 
         <!-- Bulk Action Bar -->
@@ -163,9 +186,7 @@
           <div v-if="selectedRows.length > 0" class="mb-3">
             <v-sheet rounded color="primary" class="pa-3 d-flex align-center ga-3">
               <v-btn-group variant="flat" color="surface" size="small" divided>
-                <v-btn class="font-weight-bold pe-none"
-                  >{{ selectedRows.length }} selected</v-btn
-                >
+                <v-btn class="font-weight-bold pe-none">{{ selectedRows.length }} selected</v-btn>
                 <v-btn prepend-icon="mdi-tag-multiple-outline" @click="openBulkCategoryDialog"
                   >Set Category</v-btn
                 >
@@ -277,14 +298,13 @@
             <template #loading>
               <v-skeleton-loader type="table-row@8" />
             </template>
-
-            <template #bottom="{ itemsLength }">
-              <div class="px-4 py-3 text-caption text-medium-emphasis text-center">
-                Showing {{ filteredTransactions.length }} of {{ itemsLength }} · select rows to
-                bulk-categorize
-              </div>
-            </template>
           </v-data-table>
+          <div class="px-4 py-2 text-caption text-medium-emphasis text-center">
+            {{ filteredTransactions.length }} transaction{{
+              filteredTransactions.length === 1 ? '' : 's'
+            }}
+            · select rows to bulk-categorize
+          </div>
         </v-card>
 
         <!-- Edit Category Dialog -->
@@ -322,7 +342,8 @@
                 hide-details
                 autofocus
                 clearable
-                @keyup.enter="saveCategory" />
+                @keyup.enter="saveCategory"
+              />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -369,7 +390,8 @@
                 hide-details
                 autofocus
                 clearable
-                @keyup.enter="savePayee" />
+                @keyup.enter="savePayee"
+              />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -441,7 +463,8 @@
                   hide-details
                   clearable
                   class="flex-grow-1"
-                 color="primary" />
+                  color="primary"
+                />
                 <v-text-field
                   v-model.number="splitState.amount1"
                   label="Amount"
@@ -451,7 +474,8 @@
                   density="compact"
                   hide-details
                   :prefix="userSettings.currencySymbol"
-                 color="primary" />
+                  color="primary"
+                />
               </div>
 
               <!-- Split 2 -->
@@ -466,7 +490,8 @@
                   hide-details
                   clearable
                   class="flex-grow-1"
-                 color="primary" />
+                  color="primary"
+                />
                 <v-text-field
                   v-model.number="splitState.amount2"
                   label="Amount"
@@ -476,7 +501,8 @@
                   density="compact"
                   hide-details
                   :prefix="userSettings.currencySymbol"
-                 color="primary" />
+                  color="primary"
+                />
               </div>
             </v-card-text>
 
@@ -529,7 +555,8 @@
                 hide-details
                 autofocus
                 no-resize
-               color="primary" />
+                color="primary"
+              />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -578,7 +605,8 @@
                 hide-details
                 autofocus
                 clearable
-               color="primary" />
+                color="primary"
+              />
               <div
                 v-if="bulkSelectionKind === 'mixed'"
                 class="text-caption text-medium-emphasis mt-2"
@@ -638,7 +666,8 @@
                 hide-details
                 autofocus
                 clearable
-                @keyup.enter="saveBulkPayee" />
+                @keyup.enter="saveBulkPayee"
+              />
             </v-card-text>
 
             <v-card-actions class="pa-6 pt-0">
@@ -685,7 +714,8 @@
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="6">
                   <v-select
@@ -699,7 +729,8 @@
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="12" class="mt-3">
                   <v-text-field
@@ -711,7 +742,8 @@
                     rounded="sm"
                     persistent-hint
                     :hint="ruleOperatorHint"
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="8" class="mt-3">
                   <v-autocomplete
@@ -724,7 +756,8 @@
                     rounded="sm"
                     hide-details
                     clearable
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="4" class="mt-3">
                   <v-text-field
@@ -736,7 +769,8 @@
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
                 <v-col cols="12" class="mt-3">
                   <v-select
@@ -751,7 +785,8 @@
                     rounded="sm"
                     hide-details
                     clearable
-                   color="primary" />
+                    color="primary"
+                  />
                 </v-col>
               </v-row>
             </v-card-text>
@@ -836,7 +871,6 @@ const rulesStore = useUserRulesStore()
 const { formatCurrency, formatDate } = userSettings
 
 const activeTab = ref('transactions')
-
 
 const _pf = usePeriodFilter()
 const { period, periodLabel, periodMonths, isNextPeriodFuture } = storeToRefs(_pf)

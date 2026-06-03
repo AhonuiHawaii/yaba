@@ -9,17 +9,11 @@
         </div>
       </div>
       <v-spacer />
-      <v-btn
-        color="primary"
-        rounded="sm"
-        prepend-icon="mdi-plus"
-        class="mr-2"
-        @click="openAdd"
-      >
+      <v-btn color="primary" rounded="sm" prepend-icon="mdi-plus" class="mr-2" @click="openAdd">
         Add manually
       </v-btn>
       <v-btn
-      color="primary"
+        color="primary"
         rounded="sm"
         prepend-icon="mdi-refresh"
         :loading="rescanning"
@@ -39,11 +33,7 @@
     <!-- Tab content -->
     <v-tabs-window v-model="activeTab">
       <v-tabs-window-item value="list">
-        <AllRecurring
-          :subscriptions="subscriptions"
-          :loading="loading"
-          @cancel="handleCancel"
-        />
+        <AllRecurring :subscriptions="subscriptions" :loading="loading" @cancel="handleCancel" />
       </v-tabs-window-item>
 
       <v-tabs-window-item value="calendar">
@@ -51,11 +41,7 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="rules">
-        <SubscriptionRules
-          :rules="rules"
-          :subscriptions="subscriptions"
-          @updated="fetchAll"
-        />
+        <SubscriptionRules :rules="rules" :subscriptions="subscriptions" @updated="fetchAll" />
       </v-tabs-window-item>
     </v-tabs-window>
 
@@ -74,7 +60,8 @@
             class="mb-4"
             hint="Transactions containing this text will be tracked"
             persistent-hint
-           color="primary" />
+            color="primary"
+          />
           <v-select
             v-model="addForm.operator"
             :items="operatorOptions"
@@ -82,7 +69,8 @@
             variant="solo"
             rounded="sm"
             class="mb-4"
-           color="primary" />
+            color="primary"
+          />
         </v-card-text>
         <v-card-actions class="pa-5 pt-0">
           <v-spacer />

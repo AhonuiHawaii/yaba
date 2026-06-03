@@ -20,7 +20,14 @@
 
     <!-- ── Tab toggle ────────────────────────────────────────────────────────── -->
     <div class="d-flex px-4 pb-4">
-      <v-btn-toggle v-model="activeTab" mandatory rounded="sm" density="comfortable" variant="flat" color="primary">
+      <v-btn-toggle
+        v-model="activeTab"
+        mandatory
+        rounded="sm"
+        density="comfortable"
+        variant="flat"
+        color="primary"
+      >
         <v-btn value="list" size="small" prepend-icon="mdi-format-list-bulleted">List</v-btn>
         <v-btn value="calendar" size="small" prepend-icon="mdi-calendar-month">Calendar</v-btn>
       </v-btn-toggle>
@@ -306,7 +313,8 @@
             density="comfortable"
             rounded="sm"
             hide-details
-           color="primary" />
+            color="primary"
+          />
           <div class="text-caption text-medium-emphasis mt-2">
             This creates a new Bills budget category. Assign transactions to it to track them here.
           </div>

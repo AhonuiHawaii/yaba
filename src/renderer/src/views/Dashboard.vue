@@ -159,7 +159,9 @@
                   <td class="py-3">
                     <div class="d-flex justify-space-between mb-2">
                       <span class="text-body-2">{{ cat.name }}</span>
-                      <span class="text-body-2 font-weight-medium">{{ formatCurrency(cat.amount) }}</span>
+                      <span class="text-body-2 font-weight-medium">{{
+                        formatCurrency(cat.amount)
+                      }}</span>
                     </div>
                     <v-progress-linear
                       :model-value="cat.progress"
@@ -239,7 +241,7 @@
           <v-table v-else hover density="compact">
             <tbody>
               <tr v-for="item in soonItems" :key="item.name">
-                <td class="py-2" style="width: 52px;">
+                <td class="py-2" style="width: 52px">
                   <v-avatar color="primary" variant="tonal" size="36" rounded="lg">
                     <v-icon size="18">mdi-receipt-text-outline</v-icon>
                   </v-avatar>

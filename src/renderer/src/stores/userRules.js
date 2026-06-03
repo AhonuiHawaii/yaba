@@ -101,8 +101,12 @@ export const useUserRulesStore = defineStore('userRules', () => {
     loadingCount.value++
     error.value = null
     try {
-      await ipc.invoke('rules:update', withPriorities[idx].id, { priority: withPriorities[idx].priority })
-      await ipc.invoke('rules:update', withPriorities[swapIdx].id, { priority: withPriorities[swapIdx].priority })
+      await ipc.invoke('rules:update', withPriorities[idx].id, {
+        priority: withPriorities[idx].priority
+      })
+      await ipc.invoke('rules:update', withPriorities[swapIdx].id, {
+        priority: withPriorities[swapIdx].priority
+      })
       await fetchRules()
     } catch (e) {
       error.value = e.message

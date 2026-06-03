@@ -182,11 +182,7 @@
       <v-table density="comfortable" class="bg-transparent">
         <thead>
           <tr>
-            <th
-              class="text-caption font-weight-bold text-uppercase text-primary"
-            >
-              Merchant
-            </th>
+            <th class="text-caption font-weight-bold text-uppercase text-primary">Merchant</th>
             <th class="text-caption font-weight-bold text-uppercase">Category</th>
             <th class="text-caption font-weight-bold text-uppercase text-right">Visits</th>
             <th class="text-caption font-weight-bold text-uppercase text-right">Total</th>

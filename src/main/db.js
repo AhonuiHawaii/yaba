@@ -478,9 +478,7 @@ function applyRules(transactions) {
       switch (rule.operator) {
         case 'contains': {
           if (ruleVal.includes('*')) {
-            const pattern = ruleVal
-              .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-              .replace(/\*/g, '\\S+')
+            const pattern = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
             matches = new RegExp(pattern, 'i').test(fieldStr)
           } else {
             matches = fieldStr.toLowerCase().includes(ruleVal.toLowerCase())
@@ -489,9 +487,7 @@ function applyRules(transactions) {
         }
         case 'equals': {
           if (ruleVal.includes('*')) {
-            const pattern = ruleVal
-              .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-              .replace(/\*/g, '\\S+')
+            const pattern = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
             matches = new RegExp(`^${pattern}$`, 'i').test(fieldStr)
           } else {
             matches = fieldStr.toLowerCase() === ruleVal.toLowerCase()
@@ -500,9 +496,7 @@ function applyRules(transactions) {
         }
         case 'startsWith': {
           if (ruleVal.includes('*')) {
-            const pattern = ruleVal
-              .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-              .replace(/\*/g, '\\S+')
+            const pattern = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
             matches = new RegExp(`^${pattern}`, 'i').test(fieldStr)
           } else {
             matches = fieldStr.toLowerCase().startsWith(ruleVal.toLowerCase())
@@ -546,33 +540,29 @@ function matchesOneRule(tx, { field, operator, value }) {
   switch (operator) {
     case 'contains': {
       if (value.includes('*')) {
-        const pattern = value
-          .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-          .replace(/\*/g, '\\S+')
+        const pattern = value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
         return new RegExp(pattern, 'i').test(fieldStr)
       }
       return fieldStr.toLowerCase().includes(value.toLowerCase())
     }
     case 'equals': {
       if (value.includes('*')) {
-        const pattern = value
-          .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-          .replace(/\*/g, '\\S+')
+        const pattern = value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
         return new RegExp(`^${pattern}$`, 'i').test(fieldStr)
       }
       return fieldStr.toLowerCase() === value.toLowerCase()
     }
     case 'startsWith': {
       if (value.includes('*')) {
-        const pattern = value
-          .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-          .replace(/\*/g, '\\S+')
+        const pattern = value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
         return new RegExp(`^${pattern}`, 'i').test(fieldStr)
       }
       return fieldStr.toLowerCase().startsWith(value.toLowerCase())
     }
-    case 'gt': return Number(raw) > Number(value)
-    case 'lt': return Number(raw) < Number(value)
+    case 'gt':
+      return Number(raw) > Number(value)
+    case 'lt':
+      return Number(raw) < Number(value)
     case 'wildcard': {
       const pattern = value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
       return new RegExp(`^${pattern}$`, 'i').test(fieldStr)
@@ -583,13 +573,18 @@ function matchesOneRule(tx, { field, operator, value }) {
       const pattern = hasStar ? escaped.replace(/\*/g, '\\S*') : escaped.replace(/\*/g, '\\*')
       return new RegExp(`\\b${pattern}\\b`, 'i').test(fieldStr)
     }
-    default: return false
+    default:
+      return false
   }
 }
 
 function previewRule({ field, operator, value }) {
   if (!field || !operator || !value) return { count: 0, samples: [] }
-  const txs = db.prepare('SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC').all()
+  const txs = db
+    .prepare(
+      'SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC'
+    )
+    .all()
   const matches = txs.filter((tx) => matchesOneRule(tx, { field, operator, value }))
   return { count: matches.length, samples: matches }
 }
@@ -597,9 +592,17 @@ function previewRule({ field, operator, value }) {
 function previewKeywords(keywords) {
   const clean = (keywords || []).map((k) => k.trim()).filter(Boolean)
   if (!clean.length) return { count: 0, samples: [] }
-  const txs = db.prepare('SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC').all()
+  const txs = db
+    .prepare(
+      'SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC'
+    )
+    .all()
   const matches = txs.filter((tx) =>
-    clean.some((kw) => String(tx.NAME ?? '').toLowerCase().includes(kw.toLowerCase()))
+    clean.some((kw) =>
+      String(tx.NAME ?? '')
+        .toLowerCase()
+        .includes(kw.toLowerCase())
+    )
   )
   return { count: matches.length, samples: matches }
 }

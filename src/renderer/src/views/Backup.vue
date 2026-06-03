@@ -66,9 +66,10 @@
           </v-avatar>
           <h2 class="card-header-title">Export a backup</h2>
         </div>
-        
+
         <p class="card-description-text">
-          Save a snapshot of your transactions, accounts and budgets to a single encrypted `.ledgerbak` file.
+          Save a snapshot of your transactions, accounts and budgets to a single encrypted
+          `.ledgerbak` file.
         </p>
 
         <div class="included-header">Included in backup</div>
@@ -108,7 +109,9 @@
               placeholder="Enter passphrase (minimum 8 characters)"
               class="passphrase-input-field"
             />
-            <span class="passphrase-hint">Must be at least 8 characters. Do not lose this passphrase.</span>
+            <span class="passphrase-hint"
+              >Must be at least 8 characters. Do not lose this passphrase.</span
+            >
           </div>
         </v-expand-transition>
 
@@ -173,7 +176,13 @@
         </v-card-text>
         <v-card-actions class="px-0 pb-0">
           <v-spacer />
-          <v-btn variant="text" rounded="lg" class="text-capitalize" @click="showConfirmDialog = false">Cancel</v-btn>
+          <v-btn
+            variant="text"
+            rounded="lg"
+            class="text-capitalize"
+            @click="showConfirmDialog = false"
+            >Cancel</v-btn
+          >
           <v-btn
             color="primary"
             variant="flat"
@@ -220,12 +229,15 @@ const totalAccounts = computed(() => {
 })
 
 const linkedAccountsCount = computed(() => {
-  return accountsStore.accounts.filter(a => a.ORG || a.INTU_BID).length
+  return accountsStore.accounts.filter((a) => a.ORG || a.INTU_BID).length
 })
 
 const calculatedDataSize = computed(() => {
   // Sum of raw transaction lengths
-  const txSize = transactionsStore.transactions.reduce((acc, t) => acc + (t.rawTransaction ? t.rawTransaction.length : 0), 0)
+  const txSize = transactionsStore.transactions.reduce(
+    (acc, t) => acc + (t.rawTransaction ? t.rawTransaction.length : 0),
+    0
+  )
   const acctSize = JSON.stringify(accountsStore.accounts).length
   const totalBytes = txSize + acctSize
   return totalBytes
@@ -248,7 +260,7 @@ const dbPath = computed(() => {
   const isWindows = window.api?.platform === 'win32'
   const isMac = window.api?.platform === 'darwin'
   const productName = window.api?.productName || 'YetAnotherBudgetApp'
-  
+
   if (isWindows) {
     return `%AppData%\\${productName}\\data`
   } else if (isMac) {
@@ -387,7 +399,9 @@ onMounted(() => {
   border-radius: var(--radius-xl) !important;
   padding: 20px 24px;
   border: 1px solid var(--color-border);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .stat-card:hover {
@@ -450,7 +464,6 @@ onMounted(() => {
   gap: 12px;
   margin-bottom: 12px;
 }
-
 
 .card-header-title {
   font-size: 16px;
@@ -526,7 +539,9 @@ onMounted(() => {
   background-color: var(--color-background);
   color: var(--color-text-primary);
   font-size: 13.5px;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
   outline: none;
 }
 
@@ -559,7 +574,9 @@ onMounted(() => {
   font-weight: 600;
   border: none;
   cursor: pointer;
-  transition: background-color var(--transition-fast), transform 100ms;
+  transition:
+    background-color var(--transition-fast),
+    transform 100ms;
 }
 
 .btn-export-primary:hover:not(:disabled) {
@@ -587,7 +604,9 @@ onMounted(() => {
   font-weight: 600;
   border: 1px solid var(--color-border);
   cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .btn-export-secondary:hover:not(:disabled) {
@@ -607,7 +626,9 @@ onMounted(() => {
   padding: 32px 16px;
   text-align: center;
   cursor: pointer;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
   display: flex;
   flex-direction: column;
   align-items: center;

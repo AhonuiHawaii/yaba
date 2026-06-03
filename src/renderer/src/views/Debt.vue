@@ -20,7 +20,8 @@
         color="secondary"
         hide-details
         style="max-width: 180px"
-        @update:model-value="debtsStore.setStrategy" />
+        @update:model-value="debtsStore.setStrategy"
+      />
     </div>
 
     <!-- Summary Cards -->
@@ -66,12 +67,7 @@
           {{ formatCurrency(paidOff) }} / {{ formatCurrency(totalStartingBalance) }}
         </span>
       </div>
-      <v-progress-linear
-        :model-value="overallProgress"
-        color="success"
-        height="10"
-        rounded
-      />
+      <v-progress-linear :model-value="overallProgress" color="success" height="10" rounded />
     </v-card>
 
     <!-- Per-debt Cards -->

@@ -1,9 +1,15 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import db from './dexie'
 
 export const useUserCategoriesStore = defineStore('userCategories', () => {
   const categories = ref([])
+
+  const categoryById = computed(() => {
+    const map = {}
+    for (const c of categories.value) map[c.id] = c
+    return map
+  })
 
   async function fetchCategories() {
     categories.value = await db.categories.orderBy('name').toArray()
@@ -43,6 +49,7 @@ export const useUserCategoriesStore = defineStore('userCategories', () => {
 
   return {
     categories,
+    categoryById,
     fetchCategories,
     getCategoriesByType,
     addCategory,

@@ -164,7 +164,8 @@
             hide-details="auto"
             class="mb-4"
             autofocus
-           color="primary" />
+            color="primary"
+          />
           <v-text-field
             v-model="manualForm.ORG"
             label="Lender"
@@ -174,7 +175,8 @@
             rounded="sm"
             hide-details="auto"
             class="mb-4"
-           color="primary" />
+            color="primary"
+          />
           <v-select
             v-model="manualForm.ACCTTYPE"
             :items="manualAccountTypes"
@@ -184,7 +186,8 @@
             rounded="sm"
             hide-details="auto"
             class="mb-4"
-           color="primary" />
+            color="primary"
+          />
           <v-text-field
             v-model.number="manualForm.interestRate"
             label="Interest Rate (%)"
@@ -194,7 +197,8 @@
             rounded="sm"
             hide-details="auto"
             class="mb-4"
-           color="primary" />
+            color="primary"
+          />
           <v-text-field
             v-model="manualForm.startingBalance"
             label="Current Balance Owed"
@@ -207,7 +211,8 @@
             hide-details="auto"
             class="mb-4"
             :prefix="userSettings.currencySymbol"
-           color="primary" />
+            color="primary"
+          />
           <template v-if="isVariableDueDate({ ACCTTYPE: manualForm.ACCTTYPE })">
             <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
               Payment Frequency
@@ -243,7 +248,8 @@
                   color="primary"
                   hide-details="auto"
                   append-inner-icon="mdi-calendar"
-                  @click:clear="manualForm.dueDate = null" />
+                  @click:clear="manualForm.dueDate = null"
+                />
               </template>
               <v-date-picker
                 :model-value="dueDateToPickerValue(manualForm.dueDate)"
@@ -277,7 +283,8 @@
                     hide-details="auto"
                     append-inner-icon="mdi-calendar"
                     class="mb-4"
-                    @click:clear="manualForm.paymentStartDate = null" />
+                    @click:clear="manualForm.paymentStartDate = null"
+                  />
                 </template>
                 <v-date-picker
                   :model-value="isoToPickerValue(manualForm.paymentStartDate)"
@@ -300,7 +307,8 @@
                 density="comfortable"
                 rounded="sm"
                 hide-details="auto"
-               color="primary" />
+                color="primary"
+              />
             </template>
           </template>
           <v-menu v-else :close-on-content-click="false" location="bottom end">
@@ -317,7 +325,8 @@
                 color="primary"
                 hide-details="auto"
                 append-inner-icon="mdi-calendar"
-                @click:clear="manualForm.dueDate = null" />
+                @click:clear="manualForm.dueDate = null"
+              />
             </template>
             <v-date-picker
               :model-value="dueDateToPickerValue(manualForm.dueDate)"
@@ -381,7 +390,8 @@
             hide-details="auto"
             class="mb-4"
             autofocus
-            @keyup.enter="saveEditName" />
+            @keyup.enter="saveEditName"
+          />
           <v-text-field
             v-model="editStartingBalance"
             label="Starting Balance"
@@ -396,7 +406,8 @@
             color="primary"
             :prefix="userSettings.currencySymbol"
             hint="Balance before any tracked transactions. Set this so the current balance is accurate."
-            @keyup.enter="saveEditName" />
+            @keyup.enter="saveEditName"
+          />
           <v-select
             v-model="editAccountCategory"
             :items="accountRoleItems"
@@ -409,7 +420,8 @@
             hide-details="auto"
             class="mb-4"
             hint="Override how this account is classified in Net Worth. 'Default' uses the account type."
-           color="primary" />
+            color="primary"
+          />
           <template v-if="isLoanAccount(editNameTarget)">
             <v-text-field
               v-model.number="editInterestRate"
@@ -421,7 +433,8 @@
               color="primary"
               hide-details="auto"
               class="mb-4"
-              @keyup.enter="saveEditName" />
+              @keyup.enter="saveEditName"
+            />
             <template v-if="isVariableDueDate(editNameTarget)">
               <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
                 Payment Frequency
@@ -457,7 +470,8 @@
                     color="primary"
                     hide-details="auto"
                     append-inner-icon="mdi-calendar"
-                    @click:clear="editDueDate = null" />
+                    @click:clear="editDueDate = null"
+                  />
                 </template>
                 <v-date-picker
                   :model-value="dueDateToPickerValue(editDueDate)"
@@ -491,7 +505,8 @@
                       hide-details="auto"
                       append-inner-icon="mdi-calendar"
                       class="mb-4"
-                      @click:clear="editPaymentStartDate = null" />
+                      @click:clear="editPaymentStartDate = null"
+                    />
                   </template>
                   <v-date-picker
                     :model-value="isoToPickerValue(editPaymentStartDate)"
@@ -514,7 +529,8 @@
                   density="comfortable"
                   rounded="sm"
                   hide-details="auto"
-                 color="primary" />
+                  color="primary"
+                />
               </template>
             </template>
             <v-menu v-else :close-on-content-click="false" location="bottom end">
@@ -531,7 +547,8 @@
                   color="primary"
                   hide-details="auto"
                   append-inner-icon="mdi-calendar"
-                  @click:clear="editDueDate = null" />
+                  @click:clear="editDueDate = null"
+                />
               </template>
               <v-date-picker
                 :model-value="dueDateToPickerValue(editDueDate)"

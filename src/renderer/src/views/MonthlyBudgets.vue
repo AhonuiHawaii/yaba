@@ -49,11 +49,7 @@
         >
           Copy last month
         </v-btn>
-        <v-btn
-          color="primary"
-          prepend-icon="mdi-plus"
-          @click="openAddCategoryDialog"
-        >
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddCategoryDialog">
           Add category
         </v-btn>
       </div>
@@ -115,21 +111,11 @@
       <v-table density="comfortable">
         <thead>
           <tr>
-            <th class="text-start text-caption text-medium-emphasis pl-5" width="200">
-              Category
-            </th>
-            <th class="text-start text-caption text-medium-emphasis" width="170">
-              Budgeted
-            </th>
-            <th class="text-start text-caption text-medium-emphasis" width="130">
-              Actual
-            </th>
-            <th class="text-start text-caption text-medium-emphasis" width="120">
-              Remaining
-            </th>
-            <th class="text-start text-caption text-medium-emphasis" width="220">
-              Progress
-            </th>
+            <th class="text-start text-caption text-medium-emphasis pl-5" width="200">Category</th>
+            <th class="text-start text-caption text-medium-emphasis" width="170">Budgeted</th>
+            <th class="text-start text-caption text-medium-emphasis" width="130">Actual</th>
+            <th class="text-start text-caption text-medium-emphasis" width="120">Remaining</th>
+            <th class="text-start text-caption text-medium-emphasis" width="220">Progress</th>
             <th width="88"></th>
           </tr>
         </thead>
@@ -137,13 +123,8 @@
           <template v-for="section in budgetSections" :key="section.type">
             <!-- Section header row -->
             <tr>
-              <td
-                colspan="6"
-                class="py-2 pl-5 border-b-0"
-              >
-                <span
-                  class="text-caption font-weight-bold text-uppercase text-primary"
-                >
+              <td colspan="6" class="py-2 pl-5 border-b-0">
+                <span class="text-caption font-weight-bold text-uppercase text-primary">
                   {{ section.label }}
                 </span>
               </td>
@@ -158,7 +139,10 @@
 
             <!-- Category rows -->
             <tr v-for="row in section.rows" :key="row.id">
-              <td class="text-body-2 font-weight-medium pl-5 text-truncate" style="max-width: 200px">
+              <td
+                class="text-body-2 font-weight-medium pl-5 text-truncate"
+                style="max-width: 200px"
+              >
                 {{ row.name }}
               </td>
               <td>
@@ -287,7 +271,13 @@
         <v-card-actions class="px-5 pb-5 pt-0">
           <v-spacer />
           <v-btn variant="text" @click="editCategoryDialog = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" :disabled="!editCategoryName.trim()" @click="saveEditCategory">Save</v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :disabled="!editCategoryName.trim()"
+            @click="saveEditCategory"
+            >Save</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>

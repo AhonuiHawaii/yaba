@@ -181,9 +181,7 @@
             <th class="text-caption font-weight-bold text-uppercase">Date</th>
             <th class="text-caption font-weight-bold text-uppercase">Source</th>
             <th class="text-caption font-weight-bold text-uppercase">Type</th>
-            <th
-              class="text-caption font-weight-bold text-uppercase text-right text-success"
-            >
+            <th class="text-caption font-weight-bold text-uppercase text-right text-success">
               Amount
             </th>
           </tr>
@@ -201,7 +199,7 @@
             <td class="text-body-2 font-weight-medium py-3">{{ t.name }}</td>
             <td class="py-3">
               <v-chip v-if="t.category" size="x-small" variant="tonal" color="primary">
-                {{ categoriesStore.categoryById[t.category]?.name || 'Unknown' }}
+                {{ resolveCategoryLabel(t.category) }}
               </v-chip>
               <span v-else class="text-caption text-medium-emphasis">Other</span>
             </td>
@@ -443,6 +441,16 @@ const incomeTrendOptions = computed(() => {
     }
   }
 })
+
+// ── Category label resolver ───────────────────────────────────────────────────
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+function resolveCategoryLabel(value) {
+  if (!value) return 'Other'
+  const hit = categoriesStore.categoryById[value]
+  if (hit?.name) return hit.name
+  // Orphaned UUID (category deleted) → "Unknown"; legacy plain-string → show as-is
+  return UUID_RE.test(value) ? 'Unknown' : value
+}
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 function formatPercent(val, total) {

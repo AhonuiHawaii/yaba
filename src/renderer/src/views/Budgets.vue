@@ -5,7 +5,9 @@
         <div class="text-h6 font-weight-bold">Payee Rules</div>
         <div class="text-body-2 text-medium-emphasis">Group spending &amp; set auto-rules</div>
       </div>
-      <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAdd">New category</v-btn>
+      <v-btn variant="flat" color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAdd"
+        >New category</v-btn
+      >
     </div>
 
     <!-- Empty State -->
@@ -13,7 +15,9 @@
       <v-card-text class="pa-12 text-center">
         <v-icon size="60" class="mb-4 text-disabled">mdi-tag-multiple-outline</v-icon>
         <div class="text-h6 font-weight-medium mb-2">No payee rules yet</div>
-        <div class="text-body-2 text-medium-emphasis">Add a category with keywords to auto-categorize transactions on import.</div>
+        <div class="text-body-2 text-medium-emphasis">
+          Add a category with keywords to auto-categorize transactions on import.
+        </div>
       </v-card-text>
     </v-card>
 
@@ -32,7 +36,9 @@
         </template>
 
         <template #item.type="{ item }">
-          <v-chip size="x-small" variant="tonal" rounded="pill">{{ sectionLabel(item.type) }}</v-chip>
+          <v-chip size="x-small" variant="tonal" rounded="pill">{{
+            sectionLabel(item.type)
+          }}</v-chip>
         </template>
 
         <template #item.rules="{ item }">
@@ -44,13 +50,20 @@
               variant="tonal"
               rounded="sm"
               class="font-weight-bold text-uppercase"
-            >{{ r }}</v-chip>
+              >{{ r }}</v-chip
+            >
             <span v-if="!item.rules.length" class="text-body-2 text-medium-emphasis">—</span>
           </div>
         </template>
 
         <template #item.categoryId="{ item }">
-          <v-chip v-if="categoryName(item.categoryId)" size="x-small" variant="tonal" color="primary" rounded="pill">
+          <v-chip
+            v-if="categoryName(item.categoryId)"
+            size="x-small"
+            variant="tonal"
+            color="primary"
+            rounded="pill"
+          >
             {{ categoryName(item.categoryId) }}
           </v-chip>
           <span v-else class="text-body-2 text-medium-emphasis">—</span>
@@ -180,22 +193,41 @@
           <div class="live-match-panel pa-4 d-flex flex-column">
             <div class="d-flex align-center ga-2 mb-3">
               <v-icon size="14" color="primary">mdi-lightning-bolt</v-icon>
-              <span class="text-caption font-weight-medium text-medium-emphasis text-uppercase">Live match</span>
-              <v-chip v-if="liveMatch" size="x-small" :color="liveMatch.count > 0 ? 'primary' : 'default'" variant="tonal" rounded="pill">
+              <span class="text-caption font-weight-medium text-medium-emphasis text-uppercase"
+                >Live match</span
+              >
+              <v-chip
+                v-if="liveMatch"
+                size="x-small"
+                :color="liveMatch.count > 0 ? 'primary' : 'default'"
+                variant="tonal"
+                rounded="pill"
+              >
                 {{ liveMatch.count }} transaction{{ liveMatch.count === 1 ? '' : 's' }}
               </v-chip>
             </div>
-            <div v-if="liveMatch && liveMatch.samples.length" class="d-flex flex-column ga-1 live-match-list flex-grow-1">
+            <div
+              v-if="liveMatch && liveMatch.samples.length"
+              class="d-flex flex-column ga-1 live-match-list flex-grow-1"
+            >
               <div
                 v-for="tx in liveMatch.samples"
                 :key="tx.FITID"
                 class="d-flex align-center justify-space-between text-caption live-match-row px-2 py-1 rounded"
               >
                 <span class="text-truncate mr-2">{{ tx.NAME || tx.MEMO || '—' }}</span>
-                <span class="text-medium-emphasis text-no-wrap">{{ tx.TRNAMT != null ? (tx.TRNAMT < 0 ? '-' : '+') + '$' + Math.abs(tx.TRNAMT).toFixed(2) : '—' }}</span>
+                <span class="text-medium-emphasis text-no-wrap">{{
+                  tx.TRNAMT != null
+                    ? (tx.TRNAMT < 0 ? '-' : '+') + '$' + Math.abs(tx.TRNAMT).toFixed(2)
+                    : '—'
+                }}</span>
               </div>
             </div>
-            <div v-else class="text-caption text-medium-emphasis flex-grow-1 d-flex align-center justify-center text-center" style="opacity:0.5">
+            <div
+              v-else
+              class="text-caption text-medium-emphasis flex-grow-1 d-flex align-center justify-center text-center"
+              style="opacity: 0.5"
+            >
               {{ liveMatch ? 'No transactions match.' : 'Type keywords to\npreview results.' }}
             </div>
           </div>
@@ -267,7 +299,6 @@ const typeItems = [
   { title: 'Income', value: 'income' }
 ]
 
-
 const addDialog = ref(false)
 const editingId = ref(null)
 const form = ref({ label: '', type: 'variable', amount: 0, rulesRaw: '', categoryId: null })
@@ -281,7 +312,13 @@ function openAdd() {
 
 function openEdit(g) {
   editingId.value = g.id
-  form.value = { label: g.label, type: g.type, amount: g.amount, rulesRaw: g.rules.join(', '), categoryId: g.categoryId ?? null }
+  form.value = {
+    label: g.label,
+    type: g.type,
+    amount: g.amount,
+    rulesRaw: g.rules.join(', '),
+    categoryId: g.categoryId ?? null
+  }
   liveMatch.value = null
   addDialog.value = true
 }
@@ -289,8 +326,17 @@ function openEdit(g) {
 async function save() {
   const label = form.value.label.trim()
   if (!label) return
-  const rules = form.value.rulesRaw.split(',').map((r) => r.trim()).filter(Boolean)
-  const payload = { type: form.value.type, label, rules, amount: Number(form.value.amount) || 0, categoryId: form.value.categoryId || null }
+  const rules = form.value.rulesRaw
+    .split(',')
+    .map((r) => r.trim())
+    .filter(Boolean)
+  const payload = {
+    type: form.value.type,
+    label,
+    rules,
+    amount: Number(form.value.amount) || 0,
+    categoryId: form.value.categoryId || null
+  }
   if (editingId.value) {
     await store.updateGroup(editingId.value, payload)
   } else {
@@ -307,8 +353,14 @@ watch(
   () => form.value.rulesRaw,
   (raw) => {
     clearTimeout(liveMatchTimer)
-    const keywords = raw.split(',').map((k) => k.trim()).filter(Boolean)
-    if (!keywords.length) { liveMatch.value = null; return }
+    const keywords = raw
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean)
+    if (!keywords.length) {
+      liveMatch.value = null
+      return
+    }
     liveMatchTimer = setTimeout(async () => {
       liveMatch.value = await rulesStore.previewKeywords(keywords)
     }, 350)

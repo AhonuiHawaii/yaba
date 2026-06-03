@@ -30,18 +30,14 @@
                 v-ripple
                 class="accent-swatch-circle"
                 :class="{
-                  'active': selectedBaseTheme === accent.value,
+                  active: selectedBaseTheme === accent.value,
                   'mr-4': index !== accentColors.length - 1
                 }"
                 :style="{ backgroundColor: accent.color }"
                 :title="accent.title"
                 @click="selectTheme(accent.value)"
               >
-                <v-icon
-                  v-if="selectedBaseTheme === accent.value"
-                  color="white"
-                  size="20"
-                >
+                <v-icon v-if="selectedBaseTheme === accent.value" color="white" size="20">
                   mdi-check
                 </v-icon>
               </div>
@@ -77,7 +73,8 @@
                     density="compact"
                     color="primary"
                     hide-details
-                    @update:model-value="updateCurrency"></v-autocomplete>
+                    @update:model-value="updateCurrency"
+                  ></v-autocomplete>
                 </div>
               </v-col>
 
@@ -506,7 +503,9 @@ const updateDecimalPlaces = (places) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   border: 2px solid transparent;
 }
 
@@ -515,7 +514,9 @@ const updateDecimalPlaces = (places) => {
 }
 
 .accent-swatch-circle.active {
-  box-shadow: 0 0 0 3px rgb(var(--v-theme-surface)), 0 0 0 5px rgb(var(--v-theme-primary));
+  box-shadow:
+    0 0 0 3px rgb(var(--v-theme-surface)),
+    0 0 0 5px rgb(var(--v-theme-primary));
   transform: scale(1.05);
 }
 </style>
