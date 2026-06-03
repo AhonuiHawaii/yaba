@@ -142,7 +142,7 @@
             <div v-if="allCombinedSorted.length === 0" class="text-body-2 text-medium-emphasis">
               No spending this period.
             </div>
-            <div v-for="(cat, idx) in allCombinedSorted" :key="cat.id" class="mb-3">
+            <div v-for="cat in allCombinedSorted" :key="cat.id" class="mb-3">
               <div class="d-flex align-center justify-space-between mb-1">
                 <div class="d-flex align-center gap-2">
                   <v-icon size="15" class="text-medium-emphasis">{{ categoryIcon(cat) }}</v-icon>
@@ -280,10 +280,6 @@ function buildActualsMap(catList) {
     const trnAmt = Number(t.TRNAMT)
     if (t.category)
       actuals.set(t.category, (actuals.get(t.category) || 0) + (trnAmt < 0 ? Math.abs(trnAmt) : 0))
-    if (t.splitCategory1 && t.splitCategory1 !== t.category && t.splitAmount1 > 0)
-      actuals.set(t.splitCategory1, (actuals.get(t.splitCategory1) || 0) + t.splitAmount1)
-    if (t.splitCategory2 && t.splitCategory2 !== t.category && t.splitAmount2 > 0)
-      actuals.set(t.splitCategory2, (actuals.get(t.splitCategory2) || 0) + t.splitAmount2)
   }
   return catList.map((cat) => ({
     ...cat,
@@ -460,5 +456,5 @@ async function loadSpending() {
 }
 
 onMounted(loadSpending)
-watch(periodStart, loadSpending)
+watch([periodStart, period], loadSpending)
 </script>
