@@ -68,7 +68,6 @@
     <v-tabs v-model="activeTab" class="mb-4" color="primary">
       <v-tab value="transactions" prepend-icon="mdi-format-list-bulleted">Transactions</v-tab>
       <v-tab value="category-rules" prepend-icon="mdi-tag-multiple-outline">Category Rules</v-tab>
-      <v-tab value="payee-rules" prepend-icon="mdi-auto-fix">Payee Rules</v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="activeTab">
@@ -876,11 +875,6 @@
       <v-tabs-window-item value="category-rules">
         <RulesView />
       </v-tabs-window-item>
-
-      <!-- ── Payee Rules Tab ───────────────────────────────────────────────── -->
-      <v-tabs-window-item value="payee-rules">
-        <PayeeRules />
-      </v-tabs-window-item>
     </v-tabs-window>
   </v-container>
 </template>
@@ -897,7 +891,6 @@ import { useUserRulesStore } from '../stores/userRules'
 import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import RulesView from '@components/Rules.vue'
-import PayeeRules from '@components/PayeeRules.vue'
 const store = useUserTransactionsStore()
 const accountsStore = useUserAccountsStore()
 const categoriesStore = useUserCategoriesStore()

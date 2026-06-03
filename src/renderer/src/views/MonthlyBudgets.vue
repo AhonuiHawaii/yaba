@@ -103,33 +103,25 @@
       </v-col>
     </v-row>
 
-    <!-- Budget table -->
-    <v-card rounded="lg" elevation="0" border>
-      <v-card-item class="pa-5 pb-3">
-        <v-card-title class="text-body-1 font-weight-bold">Budget</v-card-title>
-      </v-card-item>
-      <v-table density="comfortable">
-        <thead>
-          <tr>
-            <th class="text-start text-caption text-medium-emphasis pl-5" width="200">Category</th>
-            <th class="text-start text-caption text-medium-emphasis" width="170">Budgeted</th>
-            <th class="text-start text-caption text-medium-emphasis" width="130">Actual</th>
-            <th class="text-start text-caption text-medium-emphasis" width="120">Remaining</th>
-            <th class="text-start text-caption text-medium-emphasis" width="220">Progress</th>
-            <th width="88"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <template v-for="section in budgetSections" :key="section.type">
-            <!-- Section header row -->
+    <!-- Budget sections -->
+    <div class="d-flex flex-column ga-4">
+      <div v-for="section in budgetSections" :key="section.type">
+        <div class="text-caption font-weight-bold text-uppercase text-primary mb-2">
+          {{ section.label }}
+        </div>
+        <v-card rounded="lg" elevation="0" border>
+        <v-table density="comfortable">
+          <thead>
             <tr>
-              <td colspan="6" class="py-2 pl-5 border-b-0">
-                <span class="text-caption font-weight-bold text-uppercase text-primary">
-                  {{ section.label }}
-                </span>
-              </td>
+              <th class="text-start text-caption text-medium-emphasis pl-5" width="200">Category</th>
+              <th class="text-start text-caption text-medium-emphasis" width="170">Budgeted</th>
+              <th class="text-start text-caption text-medium-emphasis" width="130">Actual</th>
+              <th class="text-start text-caption text-medium-emphasis" width="120">Remaining</th>
+              <th class="text-start text-caption text-medium-emphasis" width="220">Progress</th>
+              <th width="88"></th>
             </tr>
-
+          </thead>
+          <tbody>
             <!-- Empty state -->
             <tr v-if="section.rows.length === 0 && addingType !== section.type">
               <td colspan="6" class="text-center text-caption text-medium-emphasis py-3">
@@ -209,15 +201,11 @@
                 />
               </td>
             </tr>
-
-            <!-- Section divider -->
-            <tr>
-              <td colspan="6" class="pa-0"><v-divider /></td>
-            </tr>
-          </template>
-        </tbody>
-      </v-table>
-    </v-card>
+          </tbody>
+        </v-table>
+        </v-card>
+      </div>
+    </div>
 
     <!-- Add category dialog -->
     <v-dialog v-model="addCategoryDialog" max-width="360">
@@ -364,15 +352,16 @@ const SECTION_TYPES = [
 
 const budgetRows = computed(() =>
   categoriesStore.categories.map((cat) => {
-    const monthlyBudget = budgetsStore.getBudget(cat.id)?.amount || 0
-    const periodBudget = monthlyBudget * periodLength.value
+    const periodBudget = periodMonths.value.reduce(
+      (sum, m) => sum + (budgetsStore.getBudget(cat.id, m)?.amount || 0),
+      0
+    )
     const actual = actualsByCategory.value.get(cat.id) || 0
     const remaining = periodBudget - actual
     const progress =
       periodBudget > 0 ? Math.min((actual / periodBudget) * 100, 100) : actual > 0 ? 100 : 0
     return {
       ...cat,
-      monthlyBudget,
       periodBudget,
       actual,
       remaining,
@@ -398,8 +387,10 @@ const totalRemaining = computed(() => totalBudgeted.value - totalActual.value)
 
 // ── Budget update ─────────────────────────────────────────────────────────────
 async function updateBudget(categoryId, value) {
-  const monthlyAmount = (Number(value) || 0) / periodLength.value
-  await budgetsStore.upsertBudget(categoryId, monthlyAmount)
+  const perMonth = (Number(value) || 0) / periodLength.value
+  await Promise.all(
+    periodMonths.value.map((m) => budgetsStore.upsertBudget(categoryId, perMonth, m))
+  )
 }
 
 // ── Copy last period ──────────────────────────────────────────────────────────
@@ -439,8 +430,8 @@ async function copyLastPeriod() {
     }
 
     await Promise.all(
-      [...prevActuals.entries()].map(([id, total]) =>
-        budgetsStore.upsertBudget(id, total / periodLength.value)
+      [...prevActuals.entries()].flatMap(([id, total]) =>
+        periodMonths.value.map((m) => budgetsStore.upsertBudget(id, total / periodLength.value, m))
       )
     )
     snackbarText.value = 'Budget copied from previous period'

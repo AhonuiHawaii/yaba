@@ -6,11 +6,8 @@ const db = new Dexie('BudgetAppFrontendDB')
 
 db.version(3).stores({
   categories: 'id, name, type, createdAt',
-  budgets: 'id, categoryId, amount, createdAt',
-  goals: 'id, name, targetDate, status, createdAt',
-  debtDetails: 'id, updatedAt',
-  budgetRollovers: 'id, categoryId, month, createdAt',
-  budgetGroups: 'id, type, categoryId, createdAt'
+  budgets: 'id, categoryId, amount, month, createdAt',
+  debtDetails: 'id, updatedAt'
 })
 
 db.on('populate', () => {
