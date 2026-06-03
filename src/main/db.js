@@ -487,12 +487,28 @@ function applyRules(transactions) {
           }
           break
         }
-        case 'equals':
-          matches = fieldStr.toLowerCase() === ruleVal.toLowerCase()
+        case 'equals': {
+          if (ruleVal.includes('*')) {
+            const pattern = ruleVal
+              .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+              .replace(/\*/g, '.*')
+            matches = new RegExp(`^${pattern}$`, 'i').test(fieldStr)
+          } else {
+            matches = fieldStr.toLowerCase() === ruleVal.toLowerCase()
+          }
           break
-        case 'startsWith':
-          matches = fieldStr.toLowerCase().startsWith(ruleVal.toLowerCase())
+        }
+        case 'startsWith': {
+          if (ruleVal.includes('*')) {
+            const pattern = ruleVal
+              .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+              .replace(/\*/g, '.*')
+            matches = new RegExp(`^${pattern}`, 'i').test(fieldStr)
+          } else {
+            matches = fieldStr.toLowerCase().startsWith(ruleVal.toLowerCase())
+          }
           break
+        }
         case 'gt':
           matches = Number(raw) > Number(ruleVal)
           break
@@ -505,7 +521,9 @@ function applyRules(transactions) {
           break
         }
         case 'wholeWord': {
-          const pattern = ruleVal.replace(/[.*+^${}()|[\]\\]/g, '\\$&')
+          const hasStar = ruleVal.includes('*')
+          const escaped = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+          const pattern = hasStar ? escaped.replace(/\*/g, '\\S*') : escaped.replace(/\*/g, '\\*')
           matches = new RegExp(`\\b${pattern}\\b`, 'i').test(fieldStr)
           break
         }
@@ -535,8 +553,24 @@ function matchesOneRule(tx, { field, operator, value }) {
       }
       return fieldStr.toLowerCase().includes(value.toLowerCase())
     }
-    case 'equals': return fieldStr.toLowerCase() === value.toLowerCase()
-    case 'startsWith': return fieldStr.toLowerCase().startsWith(value.toLowerCase())
+    case 'equals': {
+      if (value.includes('*')) {
+        const pattern = value
+          .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+          .replace(/\*/g, '.*')
+        return new RegExp(`^${pattern}$`, 'i').test(fieldStr)
+      }
+      return fieldStr.toLowerCase() === value.toLowerCase()
+    }
+    case 'startsWith': {
+      if (value.includes('*')) {
+        const pattern = value
+          .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+          .replace(/\*/g, '.*')
+        return new RegExp(`^${pattern}`, 'i').test(fieldStr)
+      }
+      return fieldStr.toLowerCase().startsWith(value.toLowerCase())
+    }
     case 'gt': return Number(raw) > Number(value)
     case 'lt': return Number(raw) < Number(value)
     case 'wildcard': {
@@ -544,7 +578,9 @@ function matchesOneRule(tx, { field, operator, value }) {
       return new RegExp(`^${pattern}$`, 'i').test(fieldStr)
     }
     case 'wholeWord': {
-      const pattern = value.replace(/[.*+^${}()|[\]\\]/g, '\\$&')
+      const hasStar = value.includes('*')
+      const escaped = value.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+      const pattern = hasStar ? escaped.replace(/\*/g, '\\S*') : escaped.replace(/\*/g, '\\*')
       return new RegExp(`\\b${pattern}\\b`, 'i').test(fieldStr)
     }
     default: return false

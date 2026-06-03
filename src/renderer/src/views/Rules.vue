@@ -387,11 +387,11 @@ const typeOptions = [
 const operatorHint = computed(
   () =>
     ({
-      contains: 'Use wildcard (*) or quoted phrases — e.g. wal* matches "Walmart"',
-      equals: 'Must match the full field exactly',
-      startsWith: 'e.g. "wal" matches fields that begin with "wal"',
-      wildcard: 'Use * for any characters — e.g. WAL*MART*',
-      wholeWord: 'e.g. "gas" matches "gas station" but not "gasoline"',
+      contains: 'Substring match. Use * as wildcard — e.g. UBER*TRIP matches "UBER *TRIP 706..."',
+      equals: 'Full-field match. Use * as wildcard — e.g. WAL* matches a field that is exactly "Walmart" or "Walgreens"',
+      startsWith: 'Prefix match. Use * as wildcard — e.g. WAL*MART matches "Wal Mart 123"',
+      wildcard: 'Anchored wildcard — must match the whole field. e.g. WAL*MART*',
+      wholeWord: 'Whole-word match. Use * inside a word — e.g. gas* matches "gasoline" but not "natural gases"',
       gt: 'Numeric — e.g. 50 matches amounts greater than 50',
       lt: 'Numeric — e.g. 50 matches amounts less than 50'
     })[form.value.operator] ?? ''
