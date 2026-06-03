@@ -1264,9 +1264,9 @@ const ruleOperatorHint = computed(
   () =>
     ({
       contains:
-        'Use wildcard (*) or quoted phrases — e.g. wal* matches "Walmart", "gas station" matches exactly',
-      equals: 'Must match the full field exactly',
-      startsWith: 'e.g. "wal" matches fields that begin with "wal"',
+        'Substring match. Bank separators (*, #, etc.) are ignored. "Uber Eats" matches "UBER *EATS"',
+      equals: 'Full-field match. Bank separators (*, #, etc.) are ignored.',
+      startsWith: 'Prefix match. Bank separators (*, #, etc.) are ignored.',
       wildcard: 'Use * for any characters — e.g. WAL*MART*',
       wholeWord: 'e.g. "gas" matches "gas station" but not "gasoline"',
       gt: 'Numeric — e.g. 50 matches amounts greater than 50',

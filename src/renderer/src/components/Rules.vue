@@ -445,11 +445,11 @@ const operatorHint = computed(
   () =>
     ({
       contains:
-        'Substring match. * matches one or more non-whitespace chars (does not cross spaces)',
+        'Substring match. Bank separators (*, #, etc.) are ignored. "Uber Eats" matches "UBER *EATS"',
       equals:
-        'Full-field match. * matches one or more non-whitespace chars (does not cross spaces)',
+        'Full-field match. Bank separators (*, #, etc.) are ignored.',
       startsWith:
-        'Prefix match. * matches one or more non-whitespace chars (does not cross spaces)',
+        'Prefix match. Bank separators (*, #, etc.) are ignored.',
       wildcard: 'Anchored wildcard — must match the whole field. e.g. WAL*MART*',
       wholeWord:
         'Whole-word match. Use * inside a word — e.g. gas* matches "gasoline" but not "natural gases"',
