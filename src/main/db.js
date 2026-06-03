@@ -458,6 +458,24 @@ function deleteRule(id) {
 }
 
 /**
+ * Normalize bank transaction text for matching. Bank feeds use inconsistent
+ * delimiters (*, #, /, etc.) between merchant segments — e.g. "WALMART*GROCERIES",
+ * "PAYPAL *MERCHANT", "AMAZON.COM/BILLING". This normalizes all such separators
+ * to spaces so users can write natural phrases like "Uber Eats" and match
+ * "UBER *EATS", "UBER*EATS", or "UBER/EATS" without needing wildcards.
+ *
+ * For advanced glob-style pattern matching, use the 'wildcard' operator.
+ */
+const normalizeBankText = (value) =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/['']/g, '')
+    .replace(/[*#:/\\|_()\[\]{}-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+/**
  * Evaluate all rules (highest priority first) against each transaction.
  * First matching rule wins per transaction.
  * @param {Object[]} transactions
@@ -475,34 +493,20 @@ function applyRules(transactions) {
       const ruleVal = rule.value
       let matches = false
 
+      // contains / equals / startsWith use normalized text matching.
+      // Bank separators (*, #, /, etc.) are collapsed to spaces before comparison
+      // so "Uber Eats" matches "UBER *EATS", "UBER*EATS", "UBER/EATS", etc.
+      // For raw glob-style pattern matching, use the 'wildcard' operator.
       switch (rule.operator) {
-        case 'contains': {
-          if (ruleVal.includes('*')) {
-            const pattern = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
-            matches = new RegExp(pattern, 'i').test(fieldStr)
-          } else {
-            matches = fieldStr.toLowerCase().includes(ruleVal.toLowerCase())
-          }
+        case 'contains':
+          matches = normalizeBankText(fieldStr).includes(normalizeBankText(ruleVal))
           break
-        }
-        case 'equals': {
-          if (ruleVal.includes('*')) {
-            const pattern = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
-            matches = new RegExp(`^${pattern}$`, 'i').test(fieldStr)
-          } else {
-            matches = fieldStr.toLowerCase() === ruleVal.toLowerCase()
-          }
+        case 'equals':
+          matches = normalizeBankText(fieldStr) === normalizeBankText(ruleVal)
           break
-        }
-        case 'startsWith': {
-          if (ruleVal.includes('*')) {
-            const pattern = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
-            matches = new RegExp(`^${pattern}`, 'i').test(fieldStr)
-          } else {
-            matches = fieldStr.toLowerCase().startsWith(ruleVal.toLowerCase())
-          }
+        case 'startsWith':
+          matches = normalizeBankText(fieldStr).startsWith(normalizeBankText(ruleVal))
           break
-        }
         case 'gt':
           matches = Number(raw) > Number(ruleVal)
           break
@@ -537,28 +541,15 @@ function applyRules(transactions) {
 function matchesOneRule(tx, { field, operator, value }) {
   const raw = tx[field]
   const fieldStr = String(raw ?? '')
+  // contains / equals / startsWith use normalized text matching (see normalizeBankText).
+  // For raw glob-style pattern matching, use the 'wildcard' operator.
   switch (operator) {
-    case 'contains': {
-      if (value.includes('*')) {
-        const pattern = value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
-        return new RegExp(pattern, 'i').test(fieldStr)
-      }
-      return fieldStr.toLowerCase().includes(value.toLowerCase())
-    }
-    case 'equals': {
-      if (value.includes('*')) {
-        const pattern = value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
-        return new RegExp(`^${pattern}$`, 'i').test(fieldStr)
-      }
-      return fieldStr.toLowerCase() === value.toLowerCase()
-    }
-    case 'startsWith': {
-      if (value.includes('*')) {
-        const pattern = value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '\\S+')
-        return new RegExp(`^${pattern}`, 'i').test(fieldStr)
-      }
-      return fieldStr.toLowerCase().startsWith(value.toLowerCase())
-    }
+    case 'contains':
+      return normalizeBankText(fieldStr).includes(normalizeBankText(value))
+    case 'equals':
+      return normalizeBankText(fieldStr) === normalizeBankText(value)
+    case 'startsWith':
+      return normalizeBankText(fieldStr).startsWith(normalizeBankText(value))
     case 'gt':
       return Number(raw) > Number(value)
     case 'lt':
@@ -599,14 +590,10 @@ function previewKeywords(keywords) {
     .all()
   const matches = txs.filter((tx) =>
     clean.some((kw) => {
-      const lc = kw.toLowerCase()
+      const needle = normalizeBankText(kw)
       return (
-        String(tx.NAME ?? '')
-          .toLowerCase()
-          .includes(lc) ||
-        String(tx.MEMO ?? '')
-          .toLowerCase()
-          .includes(lc)
+        normalizeBankText(tx.NAME).includes(needle) ||
+        normalizeBankText(tx.MEMO).includes(needle)
       )
     })
   )
