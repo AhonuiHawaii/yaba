@@ -289,7 +289,7 @@ const avgPerMonth = computed(() =>
 const incomeBySource = computed(() => {
   const map = new Map()
   for (const t of incomeTransactions.value) {
-    const key = t.category || t.NAME || t.MEMO || 'Other'
+    const key = resolveCategoryLabel(t.category) || t.NAME || t.MEMO || 'Other'
     map.set(key, (map.get(key) || 0) + Number(t.TRNAMT))
   }
   return Array.from(map.entries())
@@ -379,9 +379,12 @@ const trendChipLabel = computed(() => {
 const hexToRgba = (hex, alpha) => {
   if (!hex) return `rgba(0, 0, 0, ${alpha})`
   if (hex.startsWith('rgb')) return hex
-  const r = parseInt(hex.slice(1, 3), 16) || 0
-  const g = parseInt(hex.slice(3, 5), 16) || 0
-  const b = parseInt(hex.slice(5, 7), 16) || 0
+  const full = hex.length === 4
+    ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
+    : hex
+  const r = parseInt(full.slice(1, 3), 16) || 0
+  const g = parseInt(full.slice(3, 5), 16) || 0
+  const b = parseInt(full.slice(5, 7), 16) || 0
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
@@ -473,5 +476,5 @@ async function loadIncome() {
 }
 
 onMounted(loadIncome)
-watch(periodStart, loadIncome)
+watch([periodStart, period], loadIncome)
 </script>
