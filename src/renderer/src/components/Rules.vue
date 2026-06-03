@@ -391,7 +391,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useUserRulesStore } from '../stores/userRules'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserTransactionsStore } from '../stores/userTransactions'
@@ -547,13 +547,24 @@ function confirmDelete(item) {
 async function doDelete() {
   if (!deleteTarget.value) return
   await store.removeRule(deleteTarget.value.id)
-  deleteDialog.value = false
-  deleteTarget.value = null
+  if (!store.error) {
+    deleteDialog.value = false
+    deleteTarget.value = null
+  }
 }
+
+watch(
+  () => form.value.type,
+  () => {
+    form.value.category = ''
+  }
+)
 
 // Live matching
 const liveMatch = ref(null)
 let liveMatchTimer = null
+
+onUnmounted(() => clearTimeout(liveMatchTimer))
 
 watch(
   () => [form.value.field, form.value.operator, form.value.value],
@@ -582,7 +593,7 @@ async function applyRules(applyAll = false) {
   const result = applyAll ? await store.applyToAll() : await store.applyToMonth(currentMonth)
   if (result?.success) {
     applyResult.value = result.data
-    if (!applyAll) await transactionsStore.fetchTransactionsByMonth(currentMonth)
+    await transactionsStore.fetchTransactionsByMonth(currentMonth)
   }
 }
 </script>

@@ -312,9 +312,9 @@
                       @click="openNotesDialog(item)"
                     />
                     <v-list-item
-                      prepend-icon="mdi-auto-fix"
-                      title="Create rule"
-                      @click="activeTab = 'category-rules'"
+                      prepend-icon="mdi-call-split"
+                      title="Split transaction"
+                      @click="openSplitDialog(item)"
                     />
                   </v-list>
                 </v-menu>
@@ -488,9 +488,22 @@
 
               <!-- Split 1 -->
               <div class="d-flex align-start ga-3 mb-3">
-                <v-autocomplete
+                <v-select
+                  v-model="splitState.type1"
+                  :items="budgetsStore.types"
+                  label="Type"
+                  variant="outlined"
+                  inset
+                  density="compact"
+                  hide-details
+                  clearable
+                  color="primary"
+                  style="max-width: 140px"
+                  @update:model-value="splitState.category1 = ''"
+                />
+                <v-combobox
                   v-model="splitState.category1"
-                  :items="categoriesForTransaction(splitTarget)"
+                  :items="categoriesStore.categories.filter((c) => c.type === splitState.type1).map((c) => c.name)"
                   label="Category"
                   variant="outlined"
                   inset
@@ -510,14 +523,28 @@
                   hide-details
                   :prefix="userSettings.currencySymbol"
                   color="primary"
+                  style="max-width: 120px"
                 />
               </div>
 
               <!-- Split 2 -->
               <div class="d-flex align-start ga-3">
-                <v-autocomplete
+                <v-select
+                  v-model="splitState.type2"
+                  :items="budgetsStore.types"
+                  label="Type"
+                  variant="outlined"
+                  inset
+                  density="compact"
+                  hide-details
+                  clearable
+                  color="primary"
+                  style="max-width: 140px"
+                  @update:model-value="splitState.category2 = ''"
+                />
+                <v-combobox
                   v-model="splitState.category2"
-                  :items="categoriesForTransaction(splitTarget)"
+                  :items="categoriesStore.categories.filter((c) => c.type === splitState.type2).map((c) => c.name)"
                   label="Category"
                   variant="outlined"
                   inset
@@ -537,6 +564,7 @@
                   hide-details
                   :prefix="userSettings.currencySymbol"
                   color="primary"
+                  style="max-width: 120px"
                 />
               </div>
             </v-card-text>
@@ -922,6 +950,8 @@ const allCategoryItems = computed(() =>
   categoriesStore.categories.map((c) => ({ title: c.name, value: c.id }))
 )
 
+const allCategoryNames = computed(() => categoriesStore.categories.map((c) => c.name))
+
 const incomeCategoryItems = computed(() =>
   categoriesStore.categories
     .filter((c) => c.type === 'income')
@@ -1176,19 +1206,22 @@ async function saveNotes() {
 const splitDialog = ref(false)
 const splitTarget = ref(null)
 const splitState = ref({
+  type1: null,
   category1: '',
   amount1: 0,
+  type2: null,
   category2: '',
   amount2: 0
 })
 
 function openSplitDialog(item) {
   splitTarget.value = item
+  const findType = (name) => categoriesStore.categories.find((c) => c.name === name)?.type ?? null
   splitState.value = {
+    type1: item.splitCategory1 ? findType(item.splitCategory1) : null,
     category1: item.splitCategory1 || '',
-    amount1: item.splitAmount1
-      ? Math.abs(Number(item.splitAmount1))
-      : Math.abs(Number(item.TRNAMT)),
+    amount1: item.splitAmount1 ? Math.abs(Number(item.splitAmount1)) : 0,
+    type2: item.splitCategory2 ? findType(item.splitCategory2) : null,
     category2: item.splitCategory2 || '',
     amount2: item.splitAmount2 ? Math.abs(Number(item.splitAmount2)) : 0
   }
@@ -1209,7 +1242,11 @@ const splitRemaining = computed(() => {
 })
 
 const isSplitValid = computed(() => {
-  return Math.abs(splitRemaining.value) < 0.001
+  return (
+    Math.abs(splitRemaining.value) < 0.001 &&
+    !!splitState.value.category1 &&
+    !!splitState.value.category2
+  )
 })
 
 async function saveSplits() {
@@ -1219,9 +1256,9 @@ async function saveSplits() {
 
   await store.editTransaction(splitTarget.value.FITID, {
     splitCategory1: splitState.value.category1 || null,
-    splitAmount1: splitState.value.amount1 ? Number(splitState.value.amount1) * sign : null,
+    splitAmount1: Number(splitState.value.amount1) * sign,
     splitCategory2: splitState.value.category2 || null,
-    splitAmount2: splitState.value.amount2 ? Number(splitState.value.amount2) * sign : null
+    splitAmount2: Number(splitState.value.amount2) * sign
   })
 
   splitDialog.value = false

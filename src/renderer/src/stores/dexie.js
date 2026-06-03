@@ -1,6 +1,12 @@
 import Dexie from 'dexie'
 
-// DO NOT add db.version() migrations. Bump the version number only if the schema must change.
+/*
+Initialize Dexie database
+
+DO NOT UPDATE OR ALTER THIS FILE
+
+*/
+
 const db = new Dexie('Budgets')
 
 db.version(1).stores({
