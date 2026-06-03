@@ -480,7 +480,7 @@ function applyRules(transactions) {
           if (ruleVal.includes('*')) {
             const pattern = ruleVal
               .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-              .replace(/\*/g, '.*')
+              .replace(/\*/g, '\\S+')
             matches = new RegExp(pattern, 'i').test(fieldStr)
           } else {
             matches = fieldStr.toLowerCase().includes(ruleVal.toLowerCase())
@@ -491,7 +491,7 @@ function applyRules(transactions) {
           if (ruleVal.includes('*')) {
             const pattern = ruleVal
               .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-              .replace(/\*/g, '.*')
+              .replace(/\*/g, '\\S+')
             matches = new RegExp(`^${pattern}$`, 'i').test(fieldStr)
           } else {
             matches = fieldStr.toLowerCase() === ruleVal.toLowerCase()
@@ -502,7 +502,7 @@ function applyRules(transactions) {
           if (ruleVal.includes('*')) {
             const pattern = ruleVal
               .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-              .replace(/\*/g, '.*')
+              .replace(/\*/g, '\\S+')
             matches = new RegExp(`^${pattern}`, 'i').test(fieldStr)
           } else {
             matches = fieldStr.toLowerCase().startsWith(ruleVal.toLowerCase())
@@ -548,7 +548,7 @@ function matchesOneRule(tx, { field, operator, value }) {
       if (value.includes('*')) {
         const pattern = value
           .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-          .replace(/\*/g, '.*')
+          .replace(/\*/g, '\\S+')
         return new RegExp(pattern, 'i').test(fieldStr)
       }
       return fieldStr.toLowerCase().includes(value.toLowerCase())
@@ -557,7 +557,7 @@ function matchesOneRule(tx, { field, operator, value }) {
       if (value.includes('*')) {
         const pattern = value
           .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-          .replace(/\*/g, '.*')
+          .replace(/\*/g, '\\S+')
         return new RegExp(`^${pattern}$`, 'i').test(fieldStr)
       }
       return fieldStr.toLowerCase() === value.toLowerCase()
@@ -566,7 +566,7 @@ function matchesOneRule(tx, { field, operator, value }) {
       if (value.includes('*')) {
         const pattern = value
           .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-          .replace(/\*/g, '.*')
+          .replace(/\*/g, '\\S+')
         return new RegExp(`^${pattern}`, 'i').test(fieldStr)
       }
       return fieldStr.toLowerCase().startsWith(value.toLowerCase())

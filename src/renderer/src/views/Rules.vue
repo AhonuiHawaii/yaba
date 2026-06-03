@@ -396,9 +396,9 @@ const typeOptions = [
 const operatorHint = computed(
   () =>
     ({
-      contains: 'Substring match. Use * as wildcard — e.g. UBER*TRIP matches "UBER *TRIP 706..."',
-      equals: 'Full-field match. Use * as wildcard — e.g. WAL* matches a field that is exactly "Walmart" or "Walgreens"',
-      startsWith: 'Prefix match. Use * as wildcard — e.g. WAL*MART matches "Wal Mart 123"',
+      contains: 'Substring match. * matches one or more non-whitespace chars (does not cross spaces)',
+      equals: 'Full-field match. * matches one or more non-whitespace chars (does not cross spaces)',
+      startsWith: 'Prefix match. * matches one or more non-whitespace chars (does not cross spaces)',
       wildcard: 'Anchored wildcard — must match the whole field. e.g. WAL*MART*',
       wholeWord: 'Whole-word match. Use * inside a word — e.g. gas* matches "gasoline" but not "natural gases"',
       gt: 'Numeric — e.g. 50 matches amounts greater than 50',
