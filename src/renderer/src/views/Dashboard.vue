@@ -362,23 +362,38 @@ const incomeBudget = computed(() =>
   periodMonths.value.reduce((sum, m) => sum + sumBudgetByType('income', m), 0)
 )
 
+const totalExpenseBudget = computed(() =>
+  periodMonths.value.reduce(
+    (sum, m) =>
+      sum +
+      categoriesStore.categories
+        .filter((c) => c.type !== 'income')
+        .reduce((s, c) => s + (budgetsStore.getBudget(c.id, m)?.amount || 0), 0),
+    0
+  )
+)
+
 const spendPct = computed(() =>
   totalIncome.value > 0 ? Math.round((totalSpending.value / totalIncome.value) * 100) : 0
 )
-const leftToBudget = computed(() => totalIncome.value - totalSpending.value)
+const leftToBudget = computed(() => incomeBudget.value - totalExpenseBudget.value)
 const netPeriodChange = computed(() => totalIncome.value - totalSpending.value)
 
 // ── actualsMap ────────────────────────────────────────────────────────────────
 const actualsMap = computed(() => {
   const map = new Map()
   for (const t of currentTransactions.value) {
-    const trnAmt = Number(t.TRNAMT)
-    if (t.category)
-      map.set(t.category, (map.get(t.category) || 0) + (trnAmt < 0 ? Math.abs(trnAmt) : 0))
-    if (t.splitCategory1 && t.splitAmount1 > 0)
-      map.set(t.splitCategory1, (map.get(t.splitCategory1) || 0) + t.splitAmount1)
-    if (t.splitCategory2 && t.splitAmount2 > 0)
-      map.set(t.splitCategory2, (map.get(t.splitCategory2) || 0) + t.splitAmount2)
+    if (t.splitCategory2) {
+      if (t.category && Number(t.splitAmount1) < 0)
+        map.set(t.category, (map.get(t.category) || 0) + Math.abs(Number(t.splitAmount1)))
+      if (Number(t.splitAmount2) < 0)
+        map.set(
+          t.splitCategory2,
+          (map.get(t.splitCategory2) || 0) + Math.abs(Number(t.splitAmount2))
+        )
+    } else if (t.category && Number(t.TRNAMT) < 0) {
+      map.set(t.category, (map.get(t.category) || 0) + Math.abs(Number(t.TRNAMT)))
+    }
   }
   return map
 })
@@ -424,9 +439,11 @@ const last6MonthlyTotals = ref([])
 const hexToRgba = (hex, alpha) => {
   if (!hex) return `rgba(0, 0, 0, ${alpha})`
   if (hex.startsWith('rgb')) return hex
-  const r = parseInt(hex.slice(1, 3), 16) || 0
-  const g = parseInt(hex.slice(3, 5), 16) || 0
-  const b = parseInt(hex.slice(5, 7), 16) || 0
+  let h = hex.slice(1)
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]
+  const r = parseInt(h.slice(0, 2), 16) || 0
+  const g = parseInt(h.slice(2, 4), 16) || 0
+  const b = parseInt(h.slice(4, 6), 16) || 0
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
