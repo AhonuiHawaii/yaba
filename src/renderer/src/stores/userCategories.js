@@ -13,9 +13,7 @@ export const useUserCategoriesStore = defineStore('userCategories', () => {
 
   async function fetchCategories() {
     const all = await db.budgets.toArray()
-    categories.value = all
-      .filter((b) => b.categoryId === b.id)
-      .sort((a, b) => a.name.localeCompare(b.name))
+    categories.value = all.filter((b) => b.name).sort((a, b) => a.name.localeCompare(b.name))
   }
 
   function getCategoriesByType(type) {
@@ -26,7 +24,6 @@ export const useUserCategoriesStore = defineStore('userCategories', () => {
     const id = crypto.randomUUID()
     const newCategory = {
       id,
-      categoryId: id,
       name: category.name,
       type: category.type,
       amount: 0,
@@ -44,7 +41,7 @@ export const useUserCategoriesStore = defineStore('userCategories', () => {
   }
 
   async function deleteCategory(id) {
-    await db.budgets.where('categoryId').equals(id).delete()
+    await db.budgets.delete(id)
     await fetchCategories()
   }
 

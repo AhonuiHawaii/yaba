@@ -219,7 +219,11 @@
         <v-card-actions class="px-5 pb-5 pt-0">
           <v-spacer />
           <v-btn variant="text" @click="addTypeDialog = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" :disabled="!newTypeName.trim()" @click="saveNewType"
+          <v-btn
+            color="primary"
+            variant="flat"
+            :disabled="!newTypeName?.trim()"
+            @click="saveNewType"
             >Add</v-btn
           >
         </v-card-actions>
@@ -249,7 +253,7 @@
           <v-btn
             color="primary"
             variant="flat"
-            :disabled="!categoryDialogName.trim()"
+            :disabled="!categoryDialogName?.trim()"
             @click="saveCategoryDialog"
             >{{ categoryDialogMode === 'edit' ? 'Save' : 'Add' }}</v-btn
           >

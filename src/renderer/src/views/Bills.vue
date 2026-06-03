@@ -39,7 +39,7 @@
     <template v-if="activeTab === 'list'">
       <!-- ── Stat cards ──────────────────────────────────────────────────────── -->
       <div class="px-4 pb-4">
-        <v-row dense>
+        <v-row density="comfortable">
           <v-col cols="12" sm="4">
             <v-card rounded="lg" elevation="0" border class="pa-1">
               <v-card-text class="pa-5">

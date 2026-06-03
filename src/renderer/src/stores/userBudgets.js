@@ -32,17 +32,17 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
     }
   }
 
-  function getBudget(categoryId, month = null) {
+  function getBudget(id, month = null) {
     return budgets.value.find(
-      (b) => b.categoryId === categoryId && (month ? b.month === month : true)
+      (b) => b.id === id && (month ? b.month === month : true)
     )
   }
 
-  async function upsertBudget(categoryId, amount, month) {
+  async function upsertBudget(id, amount, month) {
     loadingCount.value++
     error.value = null
     try {
-      const existing = budgets.value.find((b) => b.categoryId === categoryId && b.month === month)
+      const existing = budgets.value.find((b) => b.id === id && b.month === month)
       const normalizedAmount = Number(amount) || 0
       const now = new Date().toISOString()
 
@@ -50,8 +50,7 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
         await db.budgets.update(existing.id, { amount: normalizedAmount, updatedAt: now })
       } else {
         await db.budgets.add({
-          id: crypto.randomUUID(),
-          categoryId,
+          id,
           month,
           amount: normalizedAmount,
           createdAt: now,
@@ -84,7 +83,6 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
     const id = crypto.randomUUID()
     await db.budgets.add({
       id,
-      categoryId: id,
       type: name,
       amount: 0,
       month: null,
