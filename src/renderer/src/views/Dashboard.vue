@@ -311,7 +311,7 @@ const recurringTransactions = ref([])
 
 // ── Period navigation ─────────────────────────────────────────────────────────
 const _pf = usePeriodFilter()
-const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
+const { period, periodStart, periodMonths, periodLabel, isNextPeriodFuture } =
   storeToRefs(_pf)
 const { prevPeriod, nextPeriod, currentMonthValue, offsetMonth } = _pf
 
@@ -414,6 +414,7 @@ const topCategories = computed(() => {
 // ── Needs review ──────────────────────────────────────────────────────────────
 const needsReview = computed(() =>
   [...currentTransactions.value]
+    .filter((t) => !t.category && !t.splitCategory1)
     .sort((a, b) => String(b.DTPOSTED || '').localeCompare(String(a.DTPOSTED || '')))
     .slice(0, 5)
 )
@@ -421,11 +422,6 @@ const needsReview = computed(() =>
 // ── Spending vs budget chart (last 6 monthly totals) ─────────────────────────
 const last6MonthlyTotals = ref([])
 
-function ordinalDay(n) {
-  const s = ['th', 'st', 'nd', 'rd']
-  const v = n % 100
-  return n + (s[(v - 20) % 10] || s[v] || s[0])
-}
 
 const hexToRgba = (hex, alpha) => {
   if (!hex) return `rgba(0, 0, 0, ${alpha})`

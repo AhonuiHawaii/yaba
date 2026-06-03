@@ -748,10 +748,11 @@ function getMonthlyTotals() {
       `
     SELECT
       SUBSTR(DTPOSTED, 1, 6) AS month,
-      SUM(CASE WHEN TRNAMT > 0 THEN TRNAMT ELSE 0 END) AS income,
-      SUM(CASE WHEN TRNAMT < 0 THEN ABS(TRNAMT) ELSE 0 END) AS spending
+      SUM(CASE WHEN transactionType = 'income'  THEN TRNAMT       ELSE 0 END) AS income,
+      SUM(CASE WHEN transactionType = 'expense' THEN ABS(TRNAMT)  ELSE 0 END) AS spending
     FROM Transactions
     WHERE DTPOSTED IS NOT NULL
+      AND COALESCE(transactionType, '') <> 'transfer'
     GROUP BY month
     ORDER BY month
   `

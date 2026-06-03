@@ -243,7 +243,7 @@ const ipc = window.electron?.ipcRenderer
 const _pf = usePeriodFilter()
 const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
   storeToRefs(_pf)
-const { prevPeriod, nextPeriod, currentMonthValue, offsetMonth } = _pf
+const { prevPeriod, nextPeriod } = _pf
 
 // ── Period bounds ─────────────────────────────────────────────────────────────
 const periodBounds = computed(() => {

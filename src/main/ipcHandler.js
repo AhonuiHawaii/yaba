@@ -1,4 +1,6 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { app, ipcMain, BrowserWindow } from 'electron'
+import fs from 'fs'
+import path from 'path'
 import { setupBackupHandlers } from './backup.js'
 import {
   importAccount,
@@ -170,6 +172,15 @@ export const setupIpcHandlers = () => {
   ipcMain.handle('customRecurring:delete', (_, id) => {
     if (!isFiniteNumber(id)) throw new Error('Invalid ID')
     return removeCustomRecurring(id)
+  })
+
+  ipcMain.handle('backup:dbSize', () => {
+    try {
+      const DB_PATH = path.join(app.getPath('userData'), 'data', 'budget.db')
+      return fs.statSync(DB_PATH).size
+    } catch {
+      return 0
+    }
   })
 
   setupBackupHandlers()

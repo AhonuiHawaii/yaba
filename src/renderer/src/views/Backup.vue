@@ -35,7 +35,7 @@
     <!-- Stats -->
     <v-row class="mb-2">
       <v-col cols="12" md="4">
-        <v-card elevation="1" rounded="lg" class="pa-5 h-100">
+        <v-card elevation="0" border rounded="lg" class="pa-5 h-100">
           <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
             Database Size
           </div>
@@ -50,7 +50,7 @@
       </v-col>
 
       <v-col cols="12" md="4">
-        <v-card elevation="1" rounded="lg" class="pa-5 h-100">
+        <v-card elevation="0" border rounded="lg" class="pa-5 h-100">
           <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
             Accounts
           </div>
@@ -62,7 +62,7 @@
       </v-col>
 
       <v-col cols="12" md="4">
-        <v-card elevation="1" rounded="lg" class="pa-5 h-100">
+        <v-card elevation="0" border rounded="lg" class="pa-5 h-100">
           <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
             Encryption
           </div>
@@ -76,7 +76,7 @@
     <v-row>
       <!-- Export -->
       <v-col cols="12" md="6">
-        <v-card elevation="1" rounded="lg" class="pa-6 d-flex flex-column h-100">
+        <v-card elevation="0" border rounded="lg" class="pa-6 d-flex flex-column h-100">
           <div class="d-flex align-center ga-3 mb-3">
             <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
               <v-icon size="18">mdi-export</v-icon>
@@ -123,7 +123,7 @@
                 placeholder="Enter passphrase (minimum 8 characters)"
                 variant="outlined"
                 density="compact"
-                rounded="sm"
+                rounded="lg"
                 hint="Must be at least 8 characters. Do not lose this passphrase."
                 persistent-hint
               />
@@ -136,7 +136,7 @@
             <v-btn
               color="primary"
               variant="flat"
-              rounded="sm"
+              rounded="lg"
               prepend-icon="mdi-download"
               :loading="isExporting"
               :disabled="!isValid"
@@ -144,22 +144,13 @@
             >
               Export now
             </v-btn>
-            <v-btn
-              variant="outlined"
-              rounded="sm"
-              prepend-icon="mdi-folder-open-outline"
-              :disabled="isExporting || !isValid"
-              @click="handleExport"
-            >
-              Choose folder
-            </v-btn>
           </div>
         </v-card>
       </v-col>
 
       <!-- Restore -->
       <v-col cols="12" md="6">
-        <v-card elevation="1" rounded="lg" class="pa-6 d-flex flex-column h-100">
+        <v-card elevation="0" border rounded="lg" class="pa-6 d-flex flex-column h-100">
           <div class="d-flex align-center ga-3 mb-3">
             <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
               <v-icon size="18">mdi-import</v-icon>
@@ -208,11 +199,11 @@
         </v-card-text>
         <v-card-actions class="px-0 pb-0">
           <v-spacer />
-          <v-btn variant="text" rounded="sm" @click="showConfirmDialog = false">Cancel</v-btn>
+          <v-btn variant="text" rounded="lg" @click="showConfirmDialog = false">Cancel</v-btn>
           <v-btn
             color="primary"
             variant="flat"
-            rounded="sm"
+            rounded="lg"
             :loading="isImporting"
             @click="confirmImport"
           >
@@ -257,19 +248,10 @@ const linkedAccountsCount = computed(() => {
   return accountsStore.accounts.filter((a) => a.ORG || a.INTU_BID).length
 })
 
-const calculatedDataSize = computed(() => {
-  // Sum of raw transaction lengths
-  const txSize = transactionsStore.transactions.reduce(
-    (acc, t) => acc + (t.rawTransaction ? t.rawTransaction.length : 0),
-    0
-  )
-  const acctSize = JSON.stringify(accountsStore.accounts).length
-  const totalBytes = txSize + acctSize
-  return totalBytes
-})
+const dbSize = ref(0)
 
 const formattedDbSize = computed(() => {
-  const bytes = calculatedDataSize.value
+  const bytes = dbSize.value
   if (bytes === 0) {
     if (totalAccounts.value > 0 || totalTransactions.value > 0) {
       // Estimated base size of an empty SQLite DB file + schema
@@ -295,13 +277,7 @@ const dbPath = computed(() => {
   }
 })
 
-const shortenedPath = computed(() => {
-  return dbPath.value
-})
 
-const formattedDbPath = computed(() => {
-  return dbPath.value
-})
 
 const isValid = computed(() => {
   if (!encryptWithPassword.value) return true
@@ -311,8 +287,7 @@ const isValid = computed(() => {
 async function loadStats() {
   await accountsStore.fetchAccounts()
   await transactionsStore.fetchAccountSummary()
-  // Fetch all transactions to calculate the exact raw transaction data size
-  await transactionsStore.fetchTransactions({ DTPOSTED: '' })
+  dbSize.value = await window.electron.ipcRenderer.invoke('backup:dbSize')
 }
 
 async function handleExport() {

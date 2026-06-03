@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, session } from 'electron'
+import { app, shell, BrowserWindow, session } from 'electron'
 
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
 import { join } from 'path'

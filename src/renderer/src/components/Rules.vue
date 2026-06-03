@@ -552,11 +552,7 @@ function matchedFieldText(tx) {
   return tx.NAME || tx.MEMO || '—'
 }
 
-function formatDate(dtposted) {
-  if (!dtposted) return ''
-  const s = String(dtposted)
-  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`
-}
+
 
 const applyResult = ref(null)
 

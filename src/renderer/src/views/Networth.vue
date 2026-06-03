@@ -51,7 +51,7 @@
     <!-- ── Stat cards ──────────────────────────────────────────────────────── -->
     <v-row class="mb-4">
       <v-col cols="12" sm="4">
-        <v-card rounded="lg" elevation="0" border class="pa-1">
+        <v-card rounded="lg" elevation="0" border>
           <v-card-text class="pa-5">
             <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
               Assets
@@ -63,7 +63,7 @@
         </v-card>
       </v-col>
       <v-col cols="12" sm="4">
-        <v-card rounded="lg" elevation="0" border class="pa-1">
+        <v-card rounded="lg" elevation="0" border>
           <v-card-text class="pa-5">
             <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
               Debts
@@ -75,7 +75,7 @@
         </v-card>
       </v-col>
       <v-col cols="12" sm="4">
-        <v-card rounded="lg" elevation="0" border class="pa-1">
+        <v-card rounded="lg" elevation="0" border>
           <v-card-text class="pa-5">
             <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
               Net Worth
@@ -165,7 +165,7 @@ const theme = useTheme()
 const reportError = ref(null)
 
 const _pf = usePeriodFilter()
-const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
+const { period, periodStart, periodMonths, periodLabel, isNextPeriodFuture } =
   storeToRefs(_pf)
 const { prevPeriod, nextPeriod, offsetMonth } = _pf
 

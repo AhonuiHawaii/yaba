@@ -20,7 +20,7 @@
           @click="nextPeriod"
         />
 
-        <v-btn-group variant="flat" rounded color="primary" density="comfortable" class="ml-2">
+        <v-btn-group variant="flat" rounded="lg" color="primary" density="comfortable" class="ml-2">
           <v-btn
             :variant="period === 'month' ? 'flat' : 'outlined'"
             :color="period === 'month' ? 'primary' : undefined"
@@ -67,8 +67,8 @@
     <!-- Tabs -->
     <v-tabs v-model="activeTab" class="mb-4" color="primary">
       <v-tab value="transactions" prepend-icon="mdi-format-list-bulleted">Transactions</v-tab>
-      <v-tab value="payee-rules" prepend-icon="mdi-tag-multiple-outline">Category Rules</v-tab>
-      <v-tab value="category-rules" prepend-icon="mdi-auto-fix">Payee Rules</v-tab>
+      <v-tab value="category-rules" prepend-icon="mdi-tag-multiple-outline">Category Rules</v-tab>
+      <v-tab value="payee-rules" prepend-icon="mdi-auto-fix">Payee Rules</v-tab>
     </v-tabs>
 
     <v-tabs-window v-model="activeTab">
@@ -76,7 +76,7 @@
       <v-tabs-window-item value="transactions">
         <!-- Import Transactions Dialog -->
         <v-dialog v-model="importDialog" max-width="500">
-          <v-card rounded="sm">
+          <v-card rounded="lg">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-3">
@@ -107,7 +107,7 @@
                 prepend-inner-icon="mdi-folder-open-outline"
                 variant="outlined"
                 density="comfortable"
-                rounded="sm"
+                rounded="lg"
                 hide-details="auto"
                 :error-messages="store.error ? [store.error] : []"
                 @update:model-value="store.clearError()"
@@ -147,8 +147,8 @@
             <v-btn
               v-for="k in filterKinds"
               :key="k.value"
-              :variant="'flat'"
-              :color="filterKind === k.value ? 'flat' : 'primary'"
+              :variant="filterKind === k.value ? 'flat' : 'outlined'"
+              :color="filterKind === k.value ? 'primary' : undefined"
               size="small"
               rounded="pill"
               @click="filterKind = k.value"
@@ -215,7 +215,7 @@
         <!-- Empty State -->
         <v-card
           v-if="!store.loading && store.transactions.length === 0"
-          rounded="sm"
+          rounded="lg"
           elevation="0"
           border
         >
@@ -227,7 +227,7 @@
         </v-card>
 
         <!-- Data Table -->
-        <v-card v-else rounded="sm" elevation="0" border>
+        <v-card v-else rounded="lg" elevation="0" border>
           <v-data-table
             v-model="selectedRows"
             show-select
@@ -289,6 +289,21 @@
               </span>
             </template>
 
+            <template #item.actions="{ item }">
+              <v-menu>
+                <template #activator="{ props }">
+                  <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" density="comfortable" size="small" />
+                </template>
+                <v-list density="compact">
+                  <v-list-item prepend-icon="mdi-account-edit-outline" title="Edit payee"  @click="openEditPayee(item)" />
+                  <v-list-item prepend-icon="mdi-note-edit-outline"    title="Edit notes"  @click="openNotesDialog(item)" />
+                  <v-list-item prepend-icon="mdi-auto-fix"             title="Create rule" @click="openCreateRuleFromTransaction(item)" />
+                  <v-divider />
+                  <v-list-item prepend-icon="mdi-delete-outline" title="Delete" base-color="error" @click="confirmDelete(item)" />
+                </v-list>
+              </v-menu>
+            </template>
+
             <template #loading>
               <v-skeleton-loader type="table-row@8" />
             </template>
@@ -303,7 +318,7 @@
 
         <!-- Edit Category Dialog -->
         <v-dialog v-model="editCategoryDialog" max-width="420">
-          <v-card rounded="sm">
+          <v-card rounded="lg">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-3">
@@ -352,7 +367,7 @@
 
         <!-- Edit Payee Dialog -->
         <v-dialog v-model="editPayeeDialog" max-width="420">
-          <v-card rounded="sm">
+          <v-card rounded="lg">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-3">
@@ -400,7 +415,7 @@
 
         <!-- Split Transaction Dialog -->
         <v-dialog v-model="splitDialog" max-width="500" persistent>
-          <v-card rounded="sm">
+          <v-card rounded="lg">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-3">
@@ -518,7 +533,7 @@
 
         <!-- Notes Dialog -->
         <v-dialog v-model="notesDialog" max-width="460">
-          <v-card rounded="sm">
+          <v-card rounded="lg">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-3">
@@ -565,7 +580,7 @@
 
         <!-- Bulk Category Dialog -->
         <v-dialog v-model="bulkCategoryDialog" max-width="420">
-          <v-card rounded="sm">
+          <v-card rounded="lg">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-3">
@@ -626,7 +641,7 @@
 
         <!-- Bulk Payee Dialog -->
         <v-dialog v-model="bulkPayeeDialog" max-width="420">
-          <v-card rounded="sm">
+          <v-card rounded="lg">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-3">
@@ -676,7 +691,7 @@
 
         <!-- Create Rule from Transaction Dialog -->
         <v-dialog v-model="ruleDialog" max-width="520" persistent>
-          <v-card rounded="sm">
+          <v-card rounded="lg">
             <v-card-title class="pa-6 pb-4">
               <div class="d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-3">
@@ -706,7 +721,7 @@
                     variant="outlined"
                     inset
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     hide-details
                     color="primary"
                   />
@@ -721,7 +736,7 @@
                     variant="outlined"
                     inset
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     hide-details
                     color="primary"
                   />
@@ -733,7 +748,7 @@
                     variant="outlined"
                     inset
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     persistent-hint
                     :hint="ruleOperatorHint"
                     color="primary"
@@ -747,7 +762,7 @@
                     variant="outlined"
                     inset
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     hide-details
                     clearable
                     color="primary"
@@ -761,7 +776,7 @@
                     variant="outlined"
                     inset
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     hide-details
                     color="primary"
                   />
@@ -776,7 +791,7 @@
                     variant="outlined"
                     inset
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     hide-details
                     clearable
                     color="primary"
@@ -791,7 +806,7 @@
               <v-btn
                 color="primary"
                 variant="flat"
-                rounded="sm"
+                rounded="lg"
                 :loading="rulesStore.loading"
                 :disabled="
                   !ruleForm.field || !ruleForm.operator || !ruleForm.value || !ruleForm.category
@@ -806,7 +821,7 @@
 
         <!-- Delete Confirmation Dialog -->
         <v-dialog v-model="deleteDialog" max-width="400">
-          <v-card rounded="sm">
+          <v-card rounded="lg">
             <v-card-title class="text-h6 pa-6 pb-4">Delete Transaction</v-card-title>
             <v-card-text class="pa-6 pt-0 text-body-2 text-medium-emphasis">
               Permanently delete
@@ -819,7 +834,7 @@
               <v-btn
                 color="error"
                 variant="flat"
-                rounded="sm"
+                rounded="lg"
                 :loading="store.loading"
                 @click="doDelete"
               >
@@ -1015,25 +1030,6 @@ const accountOptions = computed(() =>
   }))
 )
 
-const typeOptions = [
-  { label: 'Credit', value: 'CREDIT' }, // Generic credit
-  { label: 'Debit', value: 'DEBIT' }, // Generic debit
-  { label: 'Check', value: 'CHECK' }, // Written check
-  { label: 'Deposit', value: 'DEP' }, // Deposit
-  { label: 'ATM', value: 'ATM' }, // ATM debit/credit
-  { label: 'Purchases', value: 'POS' }, // Point-of-sale
-  { label: 'Transfer', value: 'XFER' }, // Account transfer
-  { label: 'Payment', value: 'PAYMENT' }, // Electronic payment
-  { label: 'Cash', value: 'CASH' }, // Cash withdrawal
-  { label: 'Direct Dep', value: 'DIRECTDEP' }, // Direct deposit
-  { label: 'Direct Debit', value: 'DIRECTDEBIT' }, // Merchant-initiated debit
-  { label: 'Repeat Payment', value: 'REPEATPMT' }, // Standing order / repeat payment
-  { label: 'Interest', value: 'INT' }, // Interest earned or charged
-  { label: 'Dividend', value: 'DIV' }, // Dividend
-  { label: 'Fee', value: 'FEE' }, // Financial institution fee
-  { label: 'Service Charge', value: 'SRVCHG' }, // Service charge
-  { label: 'Other', value: 'OTHER' } // Catch-all
-]
 
 // ── Table headers ─────────────────────────────────────────────────────────────
 const headers = [
@@ -1041,7 +1037,8 @@ const headers = [
   { title: 'Payee', key: 'NAME', sortable: false },
   { title: 'Account', key: 'ACCTID', width: '160px', sortable: true },
   { title: 'Category', key: 'category', width: '180px', sortable: false },
-  { title: 'Amount', key: 'TRNAMT', width: '130px', sortable: true, align: 'end' }
+  { title: 'Amount', key: 'TRNAMT', width: '130px', sortable: true, align: 'end' },
+  { title: '', key: 'actions', width: '56px', sortable: false, align: 'end' }
 ]
 
 // ── Filtered data ─────────────────────────────────────────────────────────────
@@ -1078,18 +1075,6 @@ const filteredTransactions = computed(() => {
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
-function typeColor(type) {
-  return (
-    {
-      CREDIT: 'success',
-      DEBIT: 'error',
-      CHECK: 'warning',
-      DEP: 'success',
-      POS: 'error',
-      ATM: 'warning'
-    }[String(type || '').toUpperCase()] || 'secondary'
-  )
-}
 
 // ── Edit Category ─────────────────────────────────────────────────────────────
 const editCategoryDialog = ref(false)
@@ -1170,7 +1155,6 @@ async function saveNotes() {
 // ── Split Transactions ────────────────────────────────────────────────────────
 const splitDialog = ref(false)
 const splitTarget = ref(null)
-const expandedRows = ref([])
 const splitState = ref({
   category1: '',
   amount1: 0,

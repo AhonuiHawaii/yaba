@@ -286,17 +286,15 @@ import { useUserBudgetsRulesStore } from '../stores/userBudgetsRules'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserRulesStore } from '../stores/userRules'
 import { useUserTransactionsStore } from '../stores/userTransactions'
+import { usePeriodFilter } from '../stores/usePeriodFilter'
 
 const store = useUserBudgetsRulesStore()
 const categoriesStore = useUserCategoriesStore()
 const rulesStore = useUserRulesStore()
 const transactionsStore = useUserTransactionsStore()
+const _pf = usePeriodFilter()
 
-function currentMonthValue() {
-  const now = new Date()
-  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
-}
-const currentMonth = currentMonthValue()
+const currentMonth = _pf.currentMonthValue()
 
 const categoryItems = computed(() => categoriesStore.categories)
 
@@ -453,11 +451,7 @@ watch(
   }
 )
 
-function formatDate(dtposted) {
-  if (!dtposted) return ''
-  const s = String(dtposted)
-  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`
-}
+
 
 onMounted(() => store.fetchGroups())
 </script>
