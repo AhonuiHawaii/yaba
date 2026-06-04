@@ -265,7 +265,7 @@
           <v-card-item class="pa-5 pb-0 position-relative" style="z-index: 1">
             <v-card-title class="text-body-1 font-weight-bold">Spending vs budget</v-card-title>
             <template #append>
-              <v-chip size="x-small" variant="tonal">{{ sparklineViewType }}</v-chip>
+              <v-chip size="x-small" variant="flat">{{ sparklineViewType }}</v-chip>
             </template>
           </v-card-item>
         </v-card>
