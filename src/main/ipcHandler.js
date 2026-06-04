@@ -38,7 +38,8 @@ import {
   removeCategory,
   fetchBudgets,
   upsertBudget,
-  fetchCategoryTypes
+  fetchCategoryTypes,
+  fetchDebtPayments
 } from './main.js'
 
 const isNonEmptyString = (v) => typeof v === 'string' && v.trim().length > 0
@@ -130,6 +131,7 @@ export const setupIpcHandlers = () => {
   ipcMain.handle('reports:monthsWithData', () => fetchMonthsWithData())
   ipcMain.handle('reports:monthlyTotals', () => fetchMonthlyTotals())
   ipcMain.handle('reports:netWorthHistory', () => fetchNetWorthHistory())
+  ipcMain.handle('reports:debtPayments', () => fetchDebtPayments())
 
   ipcMain.handle('rules:fetch', () => fetchRules())
   ipcMain.handle('rules:create', (_, rule) => {

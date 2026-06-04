@@ -32,7 +32,8 @@ import {
   deleteCategory as dbDeleteCategory,
   getBudgets as dbGetBudgets,
   upsertBudget as dbUpsertBudget,
-  getCategoryTypes as dbGetCategoryTypes
+  getCategoryTypes as dbGetCategoryTypes,
+  getDebtPayments
 } from './db.js'
 
 /*
@@ -95,7 +96,7 @@ export const importTransactions = async (ofxData) => {
       if ('rename' in patch) updates.NAME = patch.rename
       if ('subscription' in patch) updates.subscription = patch.subscription
       if ('bill' in patch) updates.bill = patch.bill
-      if ('linkAccount' in patch) updates.linkAccount = patch.linkAccount
+      if ('linkAccount' in patch) updates.linkedAccount = patch.linkAccount
       if (Object.keys(updates).length > 0) {
         updateTransaction(patch.FITID, updates)
       }
@@ -240,6 +241,14 @@ export const fetchUncategorized = (yyyymm) => {
 export const fetchAccountSummary = () => {
   try {
     return ok(getAccountSummary().map((s) => ({ ...s, ACCTID: maskAcctid(s.ACCTID) })))
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const fetchDebtPayments = () => {
+  try {
+    return ok(getDebtPayments())
   } catch (e) {
     return fail(e)
   }
@@ -467,7 +476,7 @@ export const importBatch = async (items) => {
         if ('rename' in patch) upd.NAME = patch.rename
         if ('subscription' in patch) upd.subscription = patch.subscription
         if ('bill' in patch) upd.bill = patch.bill
-        if ('linkAccount' in patch) upd.linkAccount = patch.linkAccount
+        if ('linkAccount' in patch) upd.linkedAccount = patch.linkAccount
         if (Object.keys(upd).length > 0) {
           updateTransaction(patch.FITID, upd)
         }

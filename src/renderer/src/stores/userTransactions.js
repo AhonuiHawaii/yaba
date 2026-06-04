@@ -13,6 +13,7 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
   const accountSummary = ref([]) // [{ ACCTID, count, total }]
   const monthlyTotals = ref([]) // [{ month, income, spending }]
   const netWorthHistory = ref([]) // [{ month, assets, liabilities, netWorth }]
+  const debtPayments = ref([]) // [{ linkedAccount, total }]
 
   const loadingCount = ref(0)
   const loading = computed(() => loadingCount.value > 0)
@@ -168,6 +169,20 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
     }
   }
 
+  async function fetchDebtPayments() {
+    loadingCount.value++
+    error.value = null
+    try {
+      const result = await ipc.invoke('reports:debtPayments')
+      if (!result.success) throw new Error(result.error)
+      debtPayments.value = result.data
+    } catch (err) {
+      setError(err)
+    } finally {
+      loadingCount.value--
+    }
+  }
+
   async function fetchMonthlyTotals() {
     loadingCount.value++
     error.value = null
@@ -225,6 +240,7 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
     accountSummary,
     monthlyTotals,
     netWorthHistory,
+    debtPayments,
     loading,
     error,
     // Transactions
@@ -239,6 +255,7 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
     fetchMonthsWithData,
     fetchMonthlyTotals,
     fetchNetWorthHistory,
+    fetchDebtPayments,
     // Util
     clearError
   }

@@ -50,11 +50,25 @@ db.exec(`
     paymentStartDate TEXT,
     paymentCount    INTEGER,
     startingBalance REAL,
+    minimumPayment  REAL DEFAULT 0,
+    creditLimit     REAL DEFAULT 0,
     accountCategory TEXT DEFAULT NULL,
     createdAt       TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     lastImport      TEXT
   )
 `)
+
+// Safe schema migrations for existing databases
+try {
+  db.exec('ALTER TABLE Accounts ADD COLUMN minimumPayment REAL DEFAULT 0;')
+} catch (err) {
+  // Column likely exists
+}
+try {
+  db.exec('ALTER TABLE Accounts ADD COLUMN creditLimit REAL DEFAULT 0;')
+} catch (err) {
+  // Column likely exists
+}
 
 // One row per OFX transaction. OFX fields come from the bank; app fields
 // (transactionType, category, split*, notes, recurring) are set by the user.
@@ -87,9 +101,16 @@ db.exec(`
     dueDate         INTEGER,
     frequency       TEXT,
     subscription       INTEGER NOT NULL DEFAULT 0,
-    bill               INTEGER NOT NULL DEFAULT 0
+    bill               INTEGER NOT NULL DEFAULT 0,
+    linkedAccount      TEXT DEFAULT NULL
   )
 `)
+
+try {
+  db.exec('ALTER TABLE Transactions ADD COLUMN linkedAccount TEXT DEFAULT NULL;')
+} catch (err) {
+  // Column likely exists
+}
 
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_dtposted ON Transactions(DTPOSTED)`)
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_acctid   ON Transactions(ACCTID)`)
@@ -169,7 +190,8 @@ const VALID_COLUMNS = new Set([
   'dueDate',
   'frequency',
   'subscription',
-  'bill'
+  'bill',
+  'linkedAccount'
 ])
 
 // OFX date columns — use LIKE prefix matching so partial dates work
@@ -350,8 +372,8 @@ function createManualAccount(acct) {
 
   db.prepare(
     `
-    INSERT INTO Accounts (ACCTID, ACCTTYPE, ORG, displayName, interestRate, dueDate, paymentFrequency, paymentStartDate, paymentCount, startingBalance)
-    VALUES (@ACCTID, @ACCTTYPE, @ORG, @displayName, @interestRate, @dueDate, @paymentFrequency, @paymentStartDate, @paymentCount, @startingBalance)
+    INSERT INTO Accounts (ACCTID, ACCTTYPE, ORG, displayName, interestRate, dueDate, paymentFrequency, paymentStartDate, paymentCount, startingBalance, minimumPayment, creditLimit)
+    VALUES (@ACCTID, @ACCTTYPE, @ORG, @displayName, @interestRate, @dueDate, @paymentFrequency, @paymentStartDate, @paymentCount, @startingBalance, @minimumPayment, @creditLimit)
   `
   ).run({
     ACCTID: acct.ACCTID,
@@ -365,7 +387,9 @@ function createManualAccount(acct) {
     paymentCount: Number(acct.paymentCount) > 0 ? Math.round(Number(acct.paymentCount)) : null,
     startingBalance: Number.isFinite(Number(acct.startingBalance))
       ? Number(acct.startingBalance)
-      : null
+      : null,
+    minimumPayment: Number(acct.minimumPayment) || 0,
+    creditLimit: Number(acct.creditLimit) || 0
   })
 }
 
@@ -401,6 +425,8 @@ function updateAccount(acctid, updates = {}) {
     'paymentStartDate',
     'paymentCount',
     'startingBalance',
+    'minimumPayment',
+    'creditLimit',
     'accountCategory'
   ])
   const entries = Object.entries(updates)
@@ -719,7 +745,7 @@ function applyRules(transactions) {
           if (action.type === 'rename') patch.rename = action.value
           if (action.type === 'subscription') patch.subscription = Number(action.value)
           if (action.type === 'bill') patch.bill = Number(action.value)
-          if (action.type === 'linkAccount') patch.linkAccount = action.value
+          if (action.type === 'linkAccount') patch.linkedAccount = action.value
         }
         // Always push a patch if there's a match, even if actions are empty,
         // though normally actions aren't empty.
@@ -959,6 +985,14 @@ function checkDuplicateFitids(fitids) {
     .map((r) => r.FITID)
 }
 
+function getDebtPayments() {
+  return db
+    .prepare(
+      'SELECT linkedAccount, SUM(TRNAMT) as total FROM Transactions WHERE linkedAccount IS NOT NULL GROUP BY linkedAccount'
+    )
+    .all()
+}
+
 export default db
 export {
   // Transactions
@@ -998,5 +1032,6 @@ export {
   deleteCategory,
   getBudgets,
   upsertBudget,
-  getCategoryTypes
+  getCategoryTypes,
+  getDebtPayments
 }
