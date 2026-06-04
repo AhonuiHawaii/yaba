@@ -440,7 +440,7 @@ export const checkDuplicates = (fitids) => {
 export const importBatch = async (items) => {
   try {
     const results = []
-    for (const { ofxText, targetAcctId, skipFitids = [] } of items) {
+    for (const { ofxText, targetAcctId, skipFitids = [], targetBalance } of items) {
       const transactions = await extractTransactionData(ofxText)
       if (!transactions.length) {
         results.push({ total: 0, inserted: 0, skipped: 0 })
@@ -462,12 +462,6 @@ export const importBatch = async (items) => {
         if (accountData.ACCTID) {
           // Check if account already exists before upserting
           const existingAccount = getAccount(accountData.ACCTID)
-
-          if (!existingAccount && accountData.BALAMT) {
-            // It's a new account and we have a ledger balance! Auto-calculate starting balance.
-            const sumOfTxns = validTxns.reduce((sum, t) => sum + Number(t.TRNAMT), 0)
-            accountData.startingBalance = Number(accountData.BALAMT) - sumOfTxns
-          }
 
           upsertAccount(accountData)
           realAcctid = accountData.ACCTID
@@ -493,6 +487,19 @@ export const importBatch = async (items) => {
         if ('linkAccount' in patch) upd.linkedAccount = patch.linkAccount
         if (Object.keys(upd).length > 0) {
           updateTransaction(patch.FITID, upd)
+        }
+      }
+
+      // After everything is inserted, if a targetBalance is provided, adjust startingBalance
+      if (targetBalance !== undefined && targetBalance !== null && targetBalance !== '') {
+        const currentDbBalance = getAccountBalance(realAcctid)
+        const diff = Number(targetBalance) - currentDbBalance
+        if (Math.abs(diff) > 0.01) {
+          const acc = getAccount(realAcctid)
+          if (acc) {
+            acc.startingBalance = (acc.startingBalance || 0) + diff
+            upsertAccount(acc)
+          }
         }
       }
 

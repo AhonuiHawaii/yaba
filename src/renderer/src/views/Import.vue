@@ -364,33 +364,63 @@
                     }}</span>
                   </div>
 
-                  <v-alert
-                    v-if="
-                      Math.abs(p.dbBalance + sumImporting(p) - Number(p.ledgerBalance.BALAMT)) <
-                      0.01
-                    "
-                    type="success"
-                    variant="flat"
-                    class="font-weight-bold rounded-lg text-center"
-                  >
+                  <v-alert v-if="Math.abs((p.dbBalance + sumImporting(p)) - Number(p.ledgerBalance.BALAMT)) < 0.01" type="success" variant="flat" class="font-weight-bold rounded-lg text-center">
                     <v-icon start>mdi-check-circle</v-icon> Reconciled Perfectly!
                   </v-alert>
                   <v-alert v-else type="warning" variant="tonal" class="rounded-lg">
-                    Discrepancy of
-                    <strong>{{
-                      formatCurrency(
-                        Math.abs(p.dbBalance + sumImporting(p) - Number(p.ledgerBalance.BALAMT))
-                      )
-                    }}</strong
-                    >. You may be missing historical transactions.
+                    <div class="mb-3">
+                      Discrepancy of <strong>{{ formatCurrency(Math.abs((p.dbBalance + sumImporting(p)) - Number(p.ledgerBalance.BALAMT))) }}</strong>. You may be missing historical transactions.
+                    </div>
+                    
+                    <div v-if="!p.adjustBalance" class="d-flex align-center gap-2">
+                      <v-text-field
+                        v-model="p.targetBalance"
+                        label="True Balance"
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        prefix="$"
+                        type="number"
+                        style="max-width: 200px"
+                      />
+                      <v-btn color="warning" variant="flat" @click="p.adjustBalance = true">
+                        Fix Discrepancy
+                      </v-btn>
+                    </div>
+                    <div v-else class="text-success font-weight-bold d-flex align-center">
+                      <v-icon start>mdi-check</v-icon> Starting balance will be adjusted to ${{ p.targetBalance }}.
+                      <v-btn variant="text" size="small" class="ml-2" @click="p.adjustBalance = false">Undo</v-btn>
+                    </div>
                   </v-alert>
                 </div>
-                <div v-else class="text-center pa-6 bg-surface-variant rounded-lg">
-                  <v-icon size="32" color="medium-emphasis" class="mb-2">mdi-bank-off</v-icon>
-                  <div class="text-body-2 text-medium-emphasis">
-                    Bank did not provide a ledger balance for this account, so we cannot verify
-                    reconciliation.
+                <div v-else class="bg-surface-variant rounded-lg pa-4">
+                  <div class="d-flex justify-space-between align-center mb-4">
+                    <span class="text-body-2 text-medium-emphasis">App Balance (After Import):</span>
+                    <span class="font-weight-bold text-h6">{{ formatCurrency(p.dbBalance + sumImporting(p)) }}</span>
                   </div>
+                  
+                  <v-alert type="info" variant="tonal" class="rounded-lg mb-0">
+                    <div class="mb-2">Bank did not provide a ledger balance to verify against.</div>
+                    <div v-if="!p.adjustBalance" class="d-flex align-center gap-2 mt-2">
+                      <v-text-field
+                        v-model="p.targetBalance"
+                        label="Manually Fix Balance"
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        prefix="$"
+                        type="number"
+                        style="max-width: 200px"
+                      />
+                      <v-btn color="primary" variant="tonal" :disabled="!p.targetBalance" @click="p.adjustBalance = true">
+                        Adjust
+                      </v-btn>
+                    </div>
+                    <div v-else class="text-success font-weight-bold d-flex align-center">
+                      <v-icon start>mdi-check</v-icon> Starting balance will be adjusted to ${{ p.targetBalance }}.
+                      <v-btn variant="text" size="small" class="ml-2" @click="p.adjustBalance = false">Undo</v-btn>
+                    </div>
+                  </v-alert>
                 </div>
               </v-card>
             </v-col>
@@ -613,8 +643,16 @@ async function goToDuplicates() {
     if (res.success) {
       previewResults.value = res.data
 
-      // Initialize fuzzy resolutions state
+      // Auto-set fuzzy resolutions and adjust balance flags
       for (const pr of previewResults.value) {
+        pr.adjustBalance = false
+        pr.targetBalance = pr.ledgerBalance?.BALAMT || ''
+        
+        // If it's a new account and we have a ledger balance, automatically enable auto-adjust
+        if (!pr.dbBalance && pr.targetBalance) {
+          pr.adjustBalance = true
+        }
+
         for (const fd of pr.fuzzyDuplicates) {
           if (!fuzzyResolutions.value[fd.imported.FITID]) {
             fuzzyResolutions.value[fd.imported.FITID] = 'import' // Default to import, user can switch to skip
@@ -747,10 +785,20 @@ function formatDateShort(dt) {
 async function doImport() {
   importing.value = true
   try {
-    const batchData = mappings.value.map((m) => ({
-      ofxText: rawOfxData.value[m.filename],
-      targetAcctId: m.targetAcctId
-    }))
+    const batchData = mappings.value.map(m => {
+      // Find the corresponding preview result by exact matched account ID
+      // If it's a new account, targetAcctId is null, so we try to match by the parsed ACCTID
+      const p = previewResults.value.find(pr => 
+        (m.targetAcctId && pr.accountId && pr.accountId.endsWith(m.targetAcctId.replace(/[^a-zA-Z0-9]/g, '').slice(-4))) || 
+        (!m.targetAcctId && pr.accountId && pr.accountId.replace(/[^a-zA-Z0-9]/g, '') === (m.parsedAccount.ACCTID || '').replace(/[^a-zA-Z0-9]/g, ''))
+      ) || previewResults.value[0] // fallback to first just in case
+      
+      return {
+        ofxText: rawOfxData.value[m.filename],
+        targetAcctId: m.targetAcctId,
+        targetBalance: p && p.adjustBalance ? p.targetBalance : null
+      }
+    })
 
     const skips = Object.keys(fuzzyResolutions.value).filter(
       (id) => fuzzyResolutions.value[id] === 'skip'
