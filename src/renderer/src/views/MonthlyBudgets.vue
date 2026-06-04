@@ -1,48 +1,18 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Header -->
-    <div class="d-flex flex-wrap align-start justify-space-between ga-4 mb-6">
-      <div>
-        <div class="text-h5 font-weight-bold">Monthly budget</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <p class="text-h5 font-weight-bold mb-1">Monthly budget</p>
+        <p class="text-body-2 text-medium-emphasis mb-0">
           Budgeted vs actual · {{ periodLabel }}
-        </div>
-      </div>
-      <div class="d-flex align-center ga-3 flex-wrap">
-        <div class="d-flex align-center">
-          <v-btn
-            icon="mdi-chevron-left"
-            variant="text"
-            density="compact"
-            size="small"
-            @click="prevPeriod"
-          />
-          <span class="text-body-2 font-weight-medium mx-2 text-no-wrap">{{ periodLabel }}</span>
-          <v-btn
-            icon="mdi-chevron-right"
-            variant="text"
-            density="compact"
-            size="small"
-            :disabled="isNextPeriodFuture"
-            @click="nextPeriod"
-          />
-        </div>
-        <v-btn-toggle
-          v-model="period"
-          mandatory
-          density="compact"
-          rounded="lg"
-          variant="outlined"
-          color="primary"
-          divided
-        >
-          <v-btn value="month" size="small">Month</v-btn>
-          <v-btn value="quarter" size="small">Quarter</v-btn>
-          <v-btn value="semi" size="small">Semi</v-btn>
-          <v-btn value="annual" size="small">Annual</v-btn>
-        </v-btn-toggle>
+        </p>
+      </v-col>
+      <v-col cols="auto" class="pa-0 d-flex align-center ga-3 flex-wrap">
+        <FilterComponent />
         <v-btn
           color="primary"
+          variant="tonal"
           prepend-icon="mdi-content-copy"
           :loading="copying"
           @click="copyLastPeriod"
@@ -50,8 +20,8 @@
           Copy last month
         </v-btn>
         <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddTypeDialog"> Add type </v-btn>
-      </div>
-    </div>
+      </v-col>
+    </v-row>
 
     <v-alert
       v-if="loadError || budgetsStore.error || categoriesStore.error"
@@ -65,33 +35,51 @@
     <!-- Summary cards -->
     <v-row class="mb-6">
       <v-col cols="12" md="4">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-2">
-              Budgeted
-            </div>
-            <div class="text-h5 font-weight-bold">{{ formatCurrency(totalBudgeted) }}</div>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[1]" :line-width="1" :model-value="sparklineBudgeted" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Budgeted</span>
+              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-clipboard-text-outline</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">{{ formatCurrency(totalBudgeted) }}</div>
           </v-card-text>
         </v-card>
       </v-col>
       <v-col cols="12" md="4">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-2">
-              Actual
-            </div>
-            <div class="text-h5 font-weight-bold">{{ formatCurrency(totalActual) }}</div>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[0]" :line-width="1" :model-value="sparklineActual" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Actual</span>
+              <v-avatar color="secondary" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-currency-usd</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">{{ formatCurrency(totalActual) }}</div>
           </v-card-text>
         </v-card>
       </v-col>
       <v-col cols="12" md="4">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-2">
-              Remaining
-            </div>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[2]" :line-width="1" :model-value="sparklineRemaining" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Remaining</span>
+              <v-avatar :color="totalRemaining >= 0 ? 'success' : 'error'" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-scale-balance</v-icon>
+              </v-avatar>
+            </v-row>
             <div
-              class="text-h5 font-weight-bold"
+              class="text-h4 font-weight-black mb-1"
               :class="totalRemaining >= 0 ? 'text-success' : 'text-error'"
             >
               {{ formatCurrency(totalRemaining) }}
@@ -270,10 +258,14 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import FilterComponent from '../components/filterComponent.vue'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import { useUserBudgetsStore } from '../stores/userBudgets'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { useTheme } from 'vuetify'
+
+const theme = useTheme()
 
 const budgetsStore = useUserBudgetsStore()
 const categoriesStore = useUserCategoriesStore()
@@ -378,6 +370,136 @@ const budgetSections = computed(() =>
 const totalBudgeted = computed(() => budgetRows.value.reduce((sum, r) => sum + r.periodBudget, 0))
 const totalActual = computed(() => budgetRows.value.reduce((sum, r) => sum + r.actual, 0))
 const totalRemaining = computed(() => totalBudgeted.value - totalActual.value)
+
+// ── Sparklines ────────────────────────────────────────────────────────────────
+const sparklineLineColor = computed(() => (theme.current.value.dark ? 'white' : 'black'))
+const gradient = [
+  [theme.current.value.colors.primary, theme.current.value.colors['primary-container']],
+  [theme.current.value.colors.success, theme.current.value.colors['success-container']],
+  [theme.current.value.colors.info, theme.current.value.colors['info-container']],
+  [theme.current.value.colors.secondary, theme.current.value.colors['secondary-container']]
+]
+
+const ensureVariance = (data) => {
+  if (!data || data.length <= 1) return [0, 1]
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  if (min === max) {
+    const arr = [...data]
+    arr[0] = min - (min === 0 ? 1 : Math.abs(min * 0.01))
+    arr[arr.length - 1] = max + (max === 0 ? 1 : Math.abs(max * 0.01))
+    return arr
+  }
+  return data
+}
+
+const periodBounds = computed(() => {
+  const lastMonth = periodMonths.value[periodMonths.value.length - 1]
+  const sy = parseInt(periodStart.value.slice(0, 4))
+  const sm = parseInt(periodStart.value.slice(4, 6)) - 1
+  const ey = parseInt(lastMonth.slice(0, 4))
+  const em = parseInt(lastMonth.slice(4, 6)) - 1
+  return { start: new Date(sy, sm, 1), end: new Date(ey, em + 1, 0, 23, 59, 59, 999) }
+})
+
+const chartData = computed(() => {
+  const points = []
+
+  if (periodMonths.value.length > 1) {
+    for (const m of periodMonths.value) {
+      points.push({ key: m, budgeted: 0, actual: 0 })
+    }
+    
+    for (const p of points) {
+      p.budgeted = categoriesStore.categories.reduce((sum, c) => sum + (budgetsStore.getBudget(c.id, p.key)?.amount || 0), 0)
+    }
+
+    for (const t of transactions.value) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 6) {
+        const monthKey = s.slice(0, 6)
+        const p = points.find((pt) => pt.key === monthKey)
+        if (p) {
+          const trnAmt = Number(t.TRNAMT)
+          const entries = t.splitCategory2
+            ? [{ id: t.category, amt: Number(t.splitAmount1) || 0 }, { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }]
+            : [{ id: t.category, amt: trnAmt }]
+          for (const { id, amt } of entries) {
+            if (!id) continue
+            if (incomeIds.value.has(id)) {
+              if (amt > 0) p.actual += amt
+            } else {
+              if (amt < 0) p.actual += Math.abs(amt)
+            }
+          }
+        }
+      }
+    }
+  } else {
+    const { start, end } = periodBounds.value
+    let current = new Date(start)
+    while (current <= end) {
+      points.push({
+        date: new Date(current),
+        actual: 0
+      })
+      current.setDate(current.getDate() + 1)
+    }
+    
+    for (const t of transactions.value) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 8) {
+        const tDate = new Date(parseInt(s.slice(0, 4)), parseInt(s.slice(4, 6)) - 1, parseInt(s.slice(6, 8)))
+        const dayIndex = points.findIndex(d => d.date && d.date.getFullYear() === tDate.getFullYear() && d.date.getMonth() === tDate.getMonth() && d.date.getDate() === tDate.getDate())
+        if (dayIndex !== -1) {
+          const p = points[dayIndex]
+          const trnAmt = Number(t.TRNAMT)
+          const entries = t.splitCategory2
+            ? [{ id: t.category, amt: Number(t.splitAmount1) || 0 }, { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }]
+            : [{ id: t.category, amt: trnAmt }]
+          for (const { id, amt } of entries) {
+            if (!id) continue
+            if (incomeIds.value.has(id)) {
+              if (amt > 0) p.actual += amt
+            } else {
+              if (amt < 0) p.actual += Math.abs(amt)
+            }
+          }
+        }
+      }
+    }
+  }
+  return points
+})
+
+const sparklineBudgeted = computed(() => {
+  if (periodMonths.value.length > 1) {
+    return ensureVariance(chartData.value.map(d => d.budgeted))
+  }
+  const arr = Array(chartData.value.length).fill(totalBudgeted.value)
+  return ensureVariance(arr)
+})
+
+const sparklineActual = computed(() => {
+  let running = 0
+  const data = chartData.value.map(d => {
+    running += d.actual
+    return periodMonths.value.length > 1 ? d.actual : running
+  })
+  return ensureVariance(data)
+})
+
+const sparklineRemaining = computed(() => {
+  if (periodMonths.value.length > 1) {
+    return ensureVariance(chartData.value.map(d => d.budgeted - d.actual))
+  }
+  let runningActual = 0
+  const data = chartData.value.map(d => {
+    runningActual += d.actual
+    return totalBudgeted.value - runningActual
+  })
+  return ensureVariance(data)
+})
 
 // ── Budget update ─────────────────────────────────────────────────────────────
 async function updateBudget(categoryId, value) {
