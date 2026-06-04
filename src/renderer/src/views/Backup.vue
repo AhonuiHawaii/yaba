@@ -90,7 +90,7 @@
 
           <div class="text-body-2 text-medium-emphasis mb-5">
             Save a snapshot of your transactions, accounts and budgets to a single encrypted
-            `.ledgerbak` file.
+            `.yaba` file.
           </div>
 
           <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
@@ -109,30 +109,22 @@
           </div>
 
           <div class="d-flex align-center justify-space-between mb-3">
-            <span class="text-body-2">Encrypt with password</span>
-            <v-switch
-              v-model="encryptWithPassword"
-              color="primary"
-              hide-details
-              density="compact"
-            />
+            <span class="text-body-2">Encryption passphrase</span>
           </div>
 
-          <v-expand-transition>
-            <div v-if="encryptWithPassword" class="mb-3">
-              <v-text-field
-                v-model="passphrase"
-                type="password"
-                label="Encryption passphrase"
-                placeholder="Enter passphrase (minimum 8 characters)"
-                variant="flat"
-                density="compact"
-                rounded="lg"
-                hint="Must be at least 8 characters. Do not lose this passphrase."
-                persistent-hint
-              />
-            </div>
-          </v-expand-transition>
+          <div class="mb-3">
+            <v-text-field
+              v-model="passphrase"
+              type="password"
+              label="Encryption passphrase"
+              placeholder="Enter passphrase (minimum 8 characters)"
+              variant="flat"
+              density="compact"
+              rounded="lg"
+              hint="Must be at least 8 characters. Do not lose this passphrase."
+              persistent-hint
+            />
+          </div>
 
           <v-spacer />
 
@@ -179,17 +171,6 @@
 
           <v-spacer />
 
-          <div class="d-flex align-center justify-space-between">
-            <span class="text-body-2">Merge instead of replace (keep newer records)</span>
-            <v-switch
-              v-model="mergeInsteadOfReplace"
-              color="primary"
-              hide-details
-              inset
-              density="compact"
-              :disabled="true"
-            />
-          </div>
         </v-card>
       </v-col>
     </v-row>
@@ -234,8 +215,6 @@ const transactionsStore = useUserTransactionsStore()
 const passphrase = ref('')
 const isExporting = ref(false)
 const isImporting = ref(false)
-const encryptWithPassword = ref(true)
-const mergeInsteadOfReplace = ref(false)
 const showConfirmDialog = ref(false)
 const error = ref('')
 const success = ref('')
@@ -282,7 +261,6 @@ const dbPath = computed(() => {
 })
 
 const isValid = computed(() => {
-  if (!encryptWithPassword.value) return true
   return passphrase.value.length >= 8
 })
 
@@ -328,7 +306,7 @@ async function confirmImport() {
       showConfirmDialog.value = false
     } else if (res.success) {
       success.value =
-        'Backup restored successfully. Please restart the application to load your restored data.'
+        'Backup restored successfully. The application will now restart to load your restored data.'
       passphrase.value = ''
       showConfirmDialog.value = false
     } else {
