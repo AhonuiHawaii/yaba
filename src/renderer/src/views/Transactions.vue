@@ -104,7 +104,7 @@
                 label="Choose OFX / QFX file"
                 prepend-icon=""
                 prepend-inner-icon="mdi-folder-open-outline"
-                variant="outlined"
+                variant="flat"
                 density="comfortable"
                 rounded="lg"
                 hide-details="auto"
@@ -136,7 +136,7 @@
             v-model="search"
             prepend-inner-icon="mdi-magnify"
             placeholder="Search payee or note"
-            variant="outlined"
+            variant="flat"
             density="compact"
             hide-details
             color="primary"
@@ -146,7 +146,7 @@
             <v-btn
               v-for="k in filterKinds"
               :key="k.value"
-              :variant="filterKind === k.value ? 'flat' : 'outlined'"
+              :variant="filterKind === k.value ? 'flat' : 'flat'"
               :color="filterKind === k.value ? 'primary' : undefined"
               size="small"
               rounded="pill"
@@ -165,7 +165,7 @@
             item-title="label"
             item-value="value"
             placeholder="Account"
-            variant="outlined"
+            variant="flat"
             density="compact"
             hide-details
             rounded="lg"
@@ -258,7 +258,7 @@
               <v-chip
                 v-if="item.splitCategory2"
                 color="info"
-                variant="tonal"
+                variant="flat"
                 size="x-small"
                 rounded="pill"
                 @click="openSplitDialog(item)"
@@ -266,7 +266,7 @@
               >
               <v-chip
                 v-else-if="item.category"
-                variant="tonal"
+                variant="flat"
                 size="x-small"
                 rounded="pill"
                 @click="openEditCategory(item)"
@@ -275,7 +275,7 @@
               <v-btn
                 v-else
                 color="primary"
-                variant="outlined"
+                variant="flat"
                 size="x-small"
                 rounded="pill"
                 prepend-icon="mdi-plus"
@@ -372,7 +372,7 @@
                 v-model="editCategoryValue"
                 :items="categoriesForTransaction(editTarget)"
                 label="Category"
-                variant="outlined"
+                variant="flat"
                 inset
                 density="comfortable"
                 color="primary"
@@ -420,7 +420,7 @@
               <v-text-field
                 v-model="editPayeeValue"
                 label="Payee"
-                variant="outlined"
+                variant="flat"
                 inset
                 density="comfortable"
                 color="primary"
@@ -494,7 +494,7 @@
                   v-model="splitState.type1"
                   :items="budgetsStore.types"
                   label="Type"
-                  variant="outlined"
+                  variant="flat"
                   inset
                   density="compact"
                   hide-details
@@ -511,7 +511,7 @@
                       .map((c) => c.name)
                   "
                   label="Category"
-                  variant="outlined"
+                  variant="flat"
                   inset
                   density="compact"
                   hide-details
@@ -523,7 +523,7 @@
                   v-model.number="splitState.amount1"
                   label="Amount"
                   type="number"
-                  variant="outlined"
+                  variant="flat"
                   inset
                   density="compact"
                   hide-details
@@ -539,7 +539,7 @@
                   v-model="splitState.type2"
                   :items="budgetsStore.types"
                   label="Type"
-                  variant="outlined"
+                  variant="flat"
                   inset
                   density="compact"
                   hide-details
@@ -556,7 +556,7 @@
                       .map((c) => c.name)
                   "
                   label="Category"
-                  variant="outlined"
+                  variant="flat"
                   inset
                   density="compact"
                   hide-details
@@ -568,7 +568,7 @@
                   v-model.number="splitState.amount2"
                   label="Amount"
                   type="number"
-                  variant="outlined"
+                  variant="flat"
                   inset
                   density="compact"
                   hide-details
@@ -622,7 +622,7 @@
               <v-textarea
                 v-model="notesValue"
                 label="Add a note…"
-                variant="outlined"
+                variant="flat"
                 inset
                 rows="4"
                 hide-details
@@ -672,7 +672,7 @@
                 v-model="bulkCategoryValue"
                 :items="bulkCategoryItems"
                 label="Category"
-                variant="outlined"
+                variant="flat"
                 inset
                 density="comfortable"
                 hide-details
@@ -732,7 +732,7 @@
               <v-text-field
                 v-model="bulkPayeeValue"
                 label="Payee"
-                variant="outlined"
+                variant="flat"
                 inset
                 density="comfortable"
                 color="primary"

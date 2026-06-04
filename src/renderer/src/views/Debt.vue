@@ -15,7 +15,7 @@
           item-title="title"
           item-value="value"
           label="Strategy"
-          variant="outlined"
+          variant="flat"
           density="comfortable"
           color="primary"
           hide-details
@@ -83,9 +83,9 @@
       <!-- Summary Cards -->
       <v-row class="mb-8">
         <v-col cols="12" sm="6" md="3">
-          <v-card rounded="lg" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
+          <v-card rounded="lg" variant="flat" class="pa-6 d-flex flex-column h-100 bg-surface">
             <div class="d-flex align-center mb-4">
-              <v-avatar color="error" variant="tonal" size="48" class="mr-4">
+              <v-avatar color="error" variant="flat" size="48" class="mr-4">
                 <v-icon>mdi-credit-card-remove-outline</v-icon>
               </v-avatar>
               <div>
@@ -101,9 +101,9 @@
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
-          <v-card rounded="lg" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
+          <v-card rounded="lg" variant="flat" class="pa-6 d-flex flex-column h-100 bg-surface">
             <div class="d-flex align-center mb-4">
-              <v-avatar color="success" variant="tonal" size="48" class="mr-4">
+              <v-avatar color="success" variant="flat" size="48" class="mr-4">
                 <v-icon>mdi-check-decagram-outline</v-icon>
               </v-avatar>
               <div class="flex-grow-1">
@@ -131,9 +131,9 @@
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
-          <v-card rounded="lg" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
+          <v-card rounded="lg" variant="flat" class="pa-6 d-flex flex-column h-100 bg-surface">
             <div class="d-flex align-center mb-4">
-              <v-avatar color="primary" variant="tonal" size="48" class="mr-4">
+              <v-avatar color="primary" variant="flat" size="48" class="mr-4">
                 <v-icon>mdi-calendar-month-outline</v-icon>
               </v-avatar>
               <div>
@@ -154,7 +154,7 @@
         <v-col cols="12" sm="6" md="3">
           <v-card rounded="lg" class="pa-6 d-flex flex-column h-100 bg-surface">
             <div class="d-flex align-center mb-4">
-              <v-avatar color="warning" variant="tonal" size="48" class="mr-4">
+              <v-avatar color="warning" variant="flat" size="48" class="mr-4">
                 <v-icon>mdi-cash-remove</v-icon>
               </v-avatar>
               <div>
@@ -199,7 +199,7 @@
                 {{ formatCurrency(debt.currentBalance) }}
               </div>
               <v-chip
-                variant="tonal"
+                variant="flat"
                 size="small"
                 class="font-weight-bold"
                 :color="debt.isHighApr ? 'error' : 'warning'"
@@ -261,7 +261,7 @@
       </v-row>
       <v-card
         v-else
-        variant="outlined"
+        variant="flat"
         rounded="lg"
         class="pa-12 text-center text-medium-emphasis border-dashed"
       >
@@ -294,7 +294,7 @@
                 v-model.number="editForm.startingBalance"
                 label="Starting Balance"
                 prefix="$"
-                variant="outlined"
+                variant="flat"
                 density="comfortable"
                 rounded="lg"
                 type="number"
@@ -308,7 +308,7 @@
                 v-model.number="editForm.minimumPayment"
                 label="Min. Payment"
                 prefix="$"
-                variant="outlined"
+                variant="flat"
                 density="comfortable"
                 rounded="lg"
                 type="number"
@@ -322,7 +322,7 @@
                 v-model.number="editForm.interestRate"
                 label="Interest Rate (APR)"
                 suffix="%"
-                variant="outlined"
+                variant="flat"
                 density="comfortable"
                 rounded="lg"
                 type="number"
@@ -336,7 +336,7 @@
                 v-model.number="editForm.creditLimit"
                 label="Credit Limit (Optional)"
                 prefix="$"
-                variant="outlined"
+                variant="flat"
                 density="comfortable"
                 rounded="lg"
                 type="number"
@@ -347,7 +347,7 @@
             </v-col>
           </v-row>
 
-          <v-card variant="tonal" color="primary" class="mt-4 pa-4" rounded="lg">
+          <v-card variant="flat" color="primary" class="mt-4 pa-4" rounded="lg">
             <div class="d-flex align-center mb-2">
               <v-icon size="20" class="mr-2">mdi-link</v-icon>
               <div class="font-weight-bold">Automate Tracking</div>
@@ -406,7 +406,7 @@
           <v-text-field
             v-model="ruleForm.keyword"
             label="Transaction name contains"
-            variant="outlined"
+            variant="flat"
             density="comfortable"
             rounded="lg"
             color="primary"

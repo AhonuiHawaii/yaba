@@ -11,7 +11,7 @@
       </v-col>
     </v-row>
 
-    <v-alert v-if="reportError" type="error" variant="tonal" class="mb-5 rounded-xl border">
+    <v-alert v-if="reportError" type="error" variant="flat" class="mb-5 rounded-xl border">
       {{ reportError }}
     </v-alert>
 
@@ -53,7 +53,7 @@
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Assets</span
               >
-              <v-avatar color="success" variant="tonal" size="38" rounded="lg">
+              <v-avatar color="success" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-bank</v-icon>
               </v-avatar>
             </v-row>
@@ -104,7 +104,7 @@
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Debts</span
               >
-              <v-avatar color="error" variant="tonal" size="38" rounded="lg">
+              <v-avatar color="error" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-credit-card-outline</v-icon>
               </v-avatar>
             </v-row>
@@ -155,7 +155,7 @@
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Net Worth</span
               >
-              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-scale-balance</v-icon>
               </v-avatar>
             </v-row>
@@ -206,7 +206,7 @@
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Period Change</span
               >
-              <v-avatar color="secondary" variant="tonal" size="38" rounded="lg">
+              <v-avatar color="secondary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-trending-up</v-icon>
               </v-avatar>
             </v-row>
@@ -241,7 +241,7 @@
           <v-card-item class="pa-5 pb-0">
             <v-card-title class="text-body-1 font-weight-bold">Net Worth Trend</v-card-title>
             <template #append>
-              <v-chip size="x-small" variant="tonal" class="font-weight-medium" color="primary">{{
+              <v-chip size="x-small" variant="flat" class="font-weight-medium" color="primary">{{
                 trendChipLabel
               }}</v-chip>
             </template>
@@ -451,8 +451,8 @@ const trendMonthKeys = computed(() => {
 
 const trendMonths = computed(() => {
   const history = netWorthHistory.value || []
-  return trendMonthKeys.value.map(monthKey => {
-    const pastRecords = history.filter(r => r.month <= monthKey)
+  return trendMonthKeys.value.map((monthKey) => {
+    const pastRecords = history.filter((r) => r.month <= monthKey)
     if (pastRecords.length > 0) {
       return { month: monthKey, ...pastRecords[pastRecords.length - 1] }
     }
@@ -501,21 +501,21 @@ const ensureVariance = (data) => {
 }
 
 const sparklineAssets = computed(() => {
-  const data = trendMonths.value.map(r => r.assets)
+  const data = trendMonths.value.map((r) => r.assets)
   return ensureVariance(data)
 })
 const sparklineLiabilities = computed(() => {
-  const data = trendMonths.value.map(r => r.liabilities)
+  const data = trendMonths.value.map((r) => r.liabilities)
   return ensureVariance(data)
 })
 const sparklineNetWorth = computed(() => {
-  const data = trendMonths.value.map(r => r.netWorth)
+  const data = trendMonths.value.map((r) => r.netWorth)
   return ensureVariance(data)
 })
 const sparklinePeriodChange = computed(() => {
   const data = trendMonths.value.map((r, i, arr) => {
     if (i === 0) return 0
-    return r.netWorth - arr[i-1].netWorth
+    return r.netWorth - arr[i - 1].netWorth
   })
   return ensureVariance(data)
 })

@@ -4,9 +4,7 @@
     <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
       <v-col cols="auto" class="pa-0">
         <p class="text-h5 font-weight-bold mb-1">Income</p>
-        <p class="text-body-2 text-medium-emphasis mb-0">
-          What you earn · {{ periodLabel }}
-        </p>
+        <p class="text-body-2 text-medium-emphasis mb-0">What you earn · {{ periodLabel }}</p>
       </v-col>
       <v-col cols="auto" class="pa-0 d-flex align-center ga-3 flex-wrap">
         <FilterComponent />
@@ -17,14 +15,42 @@
     <v-row class="mb-4">
       <!-- Total Income -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[1]" :line-width="1" :model-value="sparklineTotalIncome" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[1]"
+              :line-width="1"
+              :model-value="sparklineTotalIncome"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Total Income</span>
-              <v-avatar color="success" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Total Income</span
+              >
+              <v-avatar color="success" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-arrow-down-thin</v-icon>
               </v-avatar>
             </v-row>
@@ -38,14 +64,42 @@
 
       <!-- Avg / Month -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[2]" :line-width="1" :model-value="sparklineAvgPerMonth" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[2]"
+              :line-width="1"
+              :model-value="sparklineAvgPerMonth"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Avg / Month</span>
-              <v-avatar color="info" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Avg / Month</span
+              >
+              <v-avatar color="info" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-calculator</v-icon>
               </v-avatar>
             </v-row>
@@ -57,14 +111,42 @@
 
       <!-- Largest Source -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[3]" :line-width="1" :model-value="sparklineLargestSource" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[3]"
+              :line-width="1"
+              :model-value="sparklineLargestSource"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Largest Source</span>
-              <v-avatar color="secondary" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Largest Source</span
+              >
+              <v-avatar color="secondary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-star-outline</v-icon>
               </v-avatar>
             </v-row>
@@ -80,14 +162,42 @@
 
       <!-- Savings Rate -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[1]" :line-width="1" :model-value="sparklineSavingsRate" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[1]"
+              :line-width="1"
+              :model-value="sparklineSavingsRate"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Savings Rate</span>
-              <v-avatar color="success" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Savings Rate</span
+              >
+              <v-avatar color="success" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-piggy-bank-outline</v-icon>
               </v-avatar>
             </v-row>
@@ -106,7 +216,7 @@
           <v-card-item class="pa-5 pb-0">
             <v-card-title class="text-body-1 font-weight-bold">Income trend</v-card-title>
             <template #append>
-              <v-chip size="x-small" variant="tonal">{{ trendChipLabel }}</v-chip>
+              <v-chip size="x-small" variant="flat">{{ trendChipLabel }}</v-chip>
             </template>
           </v-card-item>
           <div style="height: 240px; padding: 8px 16px 16px">
@@ -191,7 +301,7 @@
             </td>
             <td class="text-body-2 font-weight-medium py-3">{{ t.name }}</td>
             <td class="py-3">
-              <v-chip v-if="t.category" size="x-small" variant="tonal" color="primary">
+              <v-chip v-if="t.category" size="x-small" variant="flat" color="primary">
                 {{ resolveCategoryLabel(t.category) }}
               </v-chip>
               <span v-else class="text-caption text-medium-emphasis">Other</span>
@@ -339,7 +449,7 @@ const sparkData = computed(() => {
     for (const m of periodMonths.value) {
       points.push({ key: m, income: 0, spending: 0, largestSourceIncome: 0 })
     }
-    
+
     for (const t of currentTransactions.value) {
       const s = String(t.DTPOSTED || '')
       if (s.length >= 6) {
@@ -371,12 +481,22 @@ const sparkData = computed(() => {
       })
       current.setDate(current.getDate() + 1)
     }
-    
+
     for (const t of currentTransactions.value) {
       const s = String(t.DTPOSTED || '')
       if (s.length >= 8) {
-        const tDate = new Date(parseInt(s.slice(0, 4)), parseInt(s.slice(4, 6)) - 1, parseInt(s.slice(6, 8)))
-        const dayIndex = points.findIndex(d => d.date && d.date.getFullYear() === tDate.getFullYear() && d.date.getMonth() === tDate.getMonth() && d.date.getDate() === tDate.getDate())
+        const tDate = new Date(
+          parseInt(s.slice(0, 4)),
+          parseInt(s.slice(4, 6)) - 1,
+          parseInt(s.slice(6, 8))
+        )
+        const dayIndex = points.findIndex(
+          (d) =>
+            d.date &&
+            d.date.getFullYear() === tDate.getFullYear() &&
+            d.date.getMonth() === tDate.getMonth() &&
+            d.date.getDate() === tDate.getDate()
+        )
         if (dayIndex !== -1) {
           const amt = Number(t.TRNAMT)
           if (amt > 0) {
@@ -397,7 +517,7 @@ const sparkData = computed(() => {
 
 const sparklineTotalIncome = computed(() => {
   let running = 0
-  const data = sparkData.value.map(d => {
+  const data = sparkData.value.map((d) => {
     running += d.income
     return periodMonths.value.length > 1 ? d.income : running
   })
@@ -411,7 +531,7 @@ const sparklineAvgPerMonth = computed(() => {
 
 const sparklineLargestSource = computed(() => {
   let running = 0
-  const data = sparkData.value.map(d => {
+  const data = sparkData.value.map((d) => {
     running += d.largestSourceIncome
     return periodMonths.value.length > 1 ? d.largestSourceIncome : running
   })
@@ -421,7 +541,7 @@ const sparklineLargestSource = computed(() => {
 const sparklineSavingsRate = computed(() => {
   let runningIncome = 0
   let runningSpending = 0
-  const data = sparkData.value.map(d => {
+  const data = sparkData.value.map((d) => {
     runningIncome += d.income
     runningSpending += d.spending
     const i = periodMonths.value.length > 1 ? d.income : runningIncome

@@ -17,14 +17,42 @@
     <v-row class="mb-4">
       <!-- Total Spent -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[0]" :line-width="1" :model-value="sparklineSpent" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[0]"
+              :line-width="1"
+              :model-value="sparklineSpent"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Total Spent</span>
-              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Total Spent</span
+              >
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-currency-usd</v-icon>
               </v-avatar>
             </v-row>
@@ -36,14 +64,42 @@
 
       <!-- Avg / Month -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[1]" :line-width="1" :model-value="sparklineAvgPerMonth" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[1]"
+              :line-width="1"
+              :model-value="sparklineAvgPerMonth"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Avg / Month</span>
-              <v-avatar color="info" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Avg / Month</span
+              >
+              <v-avatar color="info" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-calculator</v-icon>
               </v-avatar>
             </v-row>
@@ -55,18 +111,48 @@
 
       <!-- Top Category -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[3]" :line-width="1" :model-value="sparklineTopCategory" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[3]"
+              :line-width="1"
+              :model-value="sparklineTopCategory"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Top Category</span>
-              <v-avatar color="secondary" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Top Category</span
+              >
+              <v-avatar color="secondary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-star-outline</v-icon>
               </v-avatar>
             </v-row>
-            <div class="text-h4 font-weight-black mb-1 text-truncate">{{ topCategory?.name ?? '—' }}</div>
+            <div class="text-h4 font-weight-black mb-1 text-truncate">
+              {{ topCategory?.name ?? '—' }}
+            </div>
             <div class="text-caption text-medium-emphasis">
               {{ topCategory ? formatCurrency(topCategory.actual) : 'No data' }}
             </div>
@@ -76,14 +162,42 @@
 
       <!-- Transactions -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[2]" :line-width="1" :model-value="sparklineTransactions" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[2]"
+              :line-width="1"
+              :model-value="sparklineTransactions"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Transactions</span>
-              <v-avatar color="success" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Transactions</span
+              >
+              <v-avatar color="success" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-swap-vertical</v-icon>
               </v-avatar>
             </v-row>
@@ -104,7 +218,7 @@
           <v-card-item class="pa-5 pb-0">
             <v-card-title class="text-body-1 font-weight-bold">Spending trend</v-card-title>
             <template #append>
-              <v-chip size="x-small" variant="tonal">{{ trendChipLabel }}</v-chip>
+              <v-chip size="x-small" variant="flat">{{ trendChipLabel }}</v-chip>
             </template>
           </v-card-item>
           <div style="height: 240px; padding: 8px 16px 16px">
@@ -188,7 +302,7 @@
           <tr v-for="m in displayedMerchants" :key="m.name">
             <td class="text-body-2 font-weight-medium py-3">{{ m.name }}</td>
             <td class="py-3">
-              <v-chip v-if="m.category" size="x-small" variant="tonal" color="primary">
+              <v-chip v-if="m.category" size="x-small" variant="flat" color="primary">
                 {{ m.category }}
               </v-chip>
               <span v-else class="text-caption text-medium-emphasis">—</span>
@@ -321,7 +435,7 @@ const sparkData = computed(() => {
     for (const m of periodMonths.value) {
       points.push({ key: m, spent: 0, transactions: 0, topCategorySpent: 0 })
     }
-    
+
     for (const t of currentTransactions.value) {
       const s = String(t.DTPOSTED || '')
       if (s.length >= 6) {
@@ -349,12 +463,22 @@ const sparkData = computed(() => {
       })
       current.setDate(current.getDate() + 1)
     }
-    
+
     for (const t of currentTransactions.value) {
       const s = String(t.DTPOSTED || '')
       if (s.length >= 8) {
-        const tDate = new Date(parseInt(s.slice(0, 4)), parseInt(s.slice(4, 6)) - 1, parseInt(s.slice(6, 8)))
-        const dayIndex = points.findIndex(d => d.date && d.date.getFullYear() === tDate.getFullYear() && d.date.getMonth() === tDate.getMonth() && d.date.getDate() === tDate.getDate())
+        const tDate = new Date(
+          parseInt(s.slice(0, 4)),
+          parseInt(s.slice(4, 6)) - 1,
+          parseInt(s.slice(6, 8))
+        )
+        const dayIndex = points.findIndex(
+          (d) =>
+            d.date &&
+            d.date.getFullYear() === tDate.getFullYear() &&
+            d.date.getMonth() === tDate.getMonth() &&
+            d.date.getDate() === tDate.getDate()
+        )
         if (dayIndex !== -1 && Number(t.TRNAMT) < 0) {
           const amt = Math.abs(Number(t.TRNAMT))
           points[dayIndex].spent += amt
@@ -371,7 +495,7 @@ const sparkData = computed(() => {
 
 const sparklineSpent = computed(() => {
   let running = 0
-  const data = sparkData.value.map(d => {
+  const data = sparkData.value.map((d) => {
     running += d.spent
     return periodMonths.value.length > 1 ? d.spent : running
   })
@@ -385,7 +509,7 @@ const sparklineAvgPerMonth = computed(() => {
 
 const sparklineTopCategory = computed(() => {
   let running = 0
-  const data = sparkData.value.map(d => {
+  const data = sparkData.value.map((d) => {
     running += d.topCategorySpent
     return periodMonths.value.length > 1 ? d.topCategorySpent : running
   })
@@ -394,7 +518,7 @@ const sparklineTopCategory = computed(() => {
 
 const sparklineTransactions = computed(() => {
   let running = 0
-  const data = sparkData.value.map(d => {
+  const data = sparkData.value.map((d) => {
     running += d.transactions
     return periodMonths.value.length > 1 ? d.transactions : running
   })

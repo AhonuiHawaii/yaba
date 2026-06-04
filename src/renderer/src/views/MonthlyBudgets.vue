@@ -4,15 +4,13 @@
     <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
       <v-col cols="auto" class="pa-0">
         <p class="text-h5 font-weight-bold mb-1">Monthly budget</p>
-        <p class="text-body-2 text-medium-emphasis mb-0">
-          Budgeted vs actual · {{ periodLabel }}
-        </p>
+        <p class="text-body-2 text-medium-emphasis mb-0">Budgeted vs actual · {{ periodLabel }}</p>
       </v-col>
       <v-col cols="auto" class="pa-0 d-flex align-center ga-3 flex-wrap">
         <FilterComponent />
         <v-btn
           color="primary"
-          variant="tonal"
+          variant="flat"
           prepend-icon="mdi-content-copy"
           :loading="copying"
           @click="copyLastPeriod"
@@ -26,7 +24,7 @@
     <v-alert
       v-if="loadError || budgetsStore.error || categoriesStore.error"
       type="error"
-      variant="tonal"
+      variant="flat"
       class="mb-5"
     >
       {{ loadError || budgetsStore.error || categoriesStore.error }}
@@ -35,14 +33,42 @@
     <!-- Summary cards -->
     <v-row class="mb-6">
       <v-col cols="12" md="4">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[1]" :line-width="1" :model-value="sparklineBudgeted" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[1]"
+              :line-width="1"
+              :model-value="sparklineBudgeted"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Budgeted</span>
-              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Budgeted</span
+              >
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-clipboard-text-outline</v-icon>
               </v-avatar>
             </v-row>
@@ -51,14 +77,42 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="4">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[0]" :line-width="1" :model-value="sparklineActual" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[0]"
+              :line-width="1"
+              :model-value="sparklineActual"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Actual</span>
-              <v-avatar color="secondary" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Actual</span
+              >
+              <v-avatar color="secondary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-currency-usd</v-icon>
               </v-avatar>
             </v-row>
@@ -67,14 +121,47 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="4">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
-          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
-            <v-sparkline :fill="true" :gradient="gradient[2]" :line-width="1" :model-value="sparklineRemaining" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[2]"
+              :line-width="1"
+              :model-value="sparklineRemaining"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
           <v-card-text class="pa-5 position-relative" style="z-index: 1">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
-              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Remaining</span>
-              <v-avatar :color="totalRemaining >= 0 ? 'success' : 'error'" variant="tonal" size="38" rounded="lg">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Remaining</span
+              >
+              <v-avatar
+                :color="totalRemaining >= 0 ? 'success' : 'error'"
+                variant="flat"
+                size="38"
+                rounded="lg"
+              >
                 <v-icon size="20">mdi-scale-balance</v-icon>
               </v-avatar>
             </v-row>
@@ -141,7 +228,7 @@
                     :model-value="row.periodBudget > 0 ? row.periodBudget : ''"
                     type="number"
                     :prefix="userSettings.currencySymbol"
-                    variant="outlined"
+                    variant="flat"
                     density="compact"
                     hide-details
                     @update:model-value="(v) => updateBudget(row.id, v)"
@@ -197,7 +284,7 @@
           <v-text-field
             v-model="newTypeName"
             label="Name"
-            variant="outlined"
+            variant="flat"
             density="compact"
             hide-details
             autofocus
@@ -228,7 +315,7 @@
           <v-text-field
             v-model="categoryDialogName"
             label="Name"
-            variant="outlined"
+            variant="flat"
             density="compact"
             hide-details
             autofocus
@@ -409,9 +496,12 @@ const chartData = computed(() => {
     for (const m of periodMonths.value) {
       points.push({ key: m, budgeted: 0, actual: 0 })
     }
-    
+
     for (const p of points) {
-      p.budgeted = categoriesStore.categories.reduce((sum, c) => sum + (budgetsStore.getBudget(c.id, p.key)?.amount || 0), 0)
+      p.budgeted = categoriesStore.categories.reduce(
+        (sum, c) => sum + (budgetsStore.getBudget(c.id, p.key)?.amount || 0),
+        0
+      )
     }
 
     for (const t of transactions.value) {
@@ -422,7 +512,10 @@ const chartData = computed(() => {
         if (p) {
           const trnAmt = Number(t.TRNAMT)
           const entries = t.splitCategory2
-            ? [{ id: t.category, amt: Number(t.splitAmount1) || 0 }, { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }]
+            ? [
+                { id: t.category, amt: Number(t.splitAmount1) || 0 },
+                { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }
+              ]
             : [{ id: t.category, amt: trnAmt }]
           for (const { id, amt } of entries) {
             if (!id) continue
@@ -445,17 +538,30 @@ const chartData = computed(() => {
       })
       current.setDate(current.getDate() + 1)
     }
-    
+
     for (const t of transactions.value) {
       const s = String(t.DTPOSTED || '')
       if (s.length >= 8) {
-        const tDate = new Date(parseInt(s.slice(0, 4)), parseInt(s.slice(4, 6)) - 1, parseInt(s.slice(6, 8)))
-        const dayIndex = points.findIndex(d => d.date && d.date.getFullYear() === tDate.getFullYear() && d.date.getMonth() === tDate.getMonth() && d.date.getDate() === tDate.getDate())
+        const tDate = new Date(
+          parseInt(s.slice(0, 4)),
+          parseInt(s.slice(4, 6)) - 1,
+          parseInt(s.slice(6, 8))
+        )
+        const dayIndex = points.findIndex(
+          (d) =>
+            d.date &&
+            d.date.getFullYear() === tDate.getFullYear() &&
+            d.date.getMonth() === tDate.getMonth() &&
+            d.date.getDate() === tDate.getDate()
+        )
         if (dayIndex !== -1) {
           const p = points[dayIndex]
           const trnAmt = Number(t.TRNAMT)
           const entries = t.splitCategory2
-            ? [{ id: t.category, amt: Number(t.splitAmount1) || 0 }, { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }]
+            ? [
+                { id: t.category, amt: Number(t.splitAmount1) || 0 },
+                { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }
+              ]
             : [{ id: t.category, amt: trnAmt }]
           for (const { id, amt } of entries) {
             if (!id) continue
@@ -474,7 +580,7 @@ const chartData = computed(() => {
 
 const sparklineBudgeted = computed(() => {
   if (periodMonths.value.length > 1) {
-    return ensureVariance(chartData.value.map(d => d.budgeted))
+    return ensureVariance(chartData.value.map((d) => d.budgeted))
   }
   const arr = Array(chartData.value.length).fill(totalBudgeted.value)
   return ensureVariance(arr)
@@ -482,7 +588,7 @@ const sparklineBudgeted = computed(() => {
 
 const sparklineActual = computed(() => {
   let running = 0
-  const data = chartData.value.map(d => {
+  const data = chartData.value.map((d) => {
     running += d.actual
     return periodMonths.value.length > 1 ? d.actual : running
   })
@@ -491,10 +597,10 @@ const sparklineActual = computed(() => {
 
 const sparklineRemaining = computed(() => {
   if (periodMonths.value.length > 1) {
-    return ensureVariance(chartData.value.map(d => d.budgeted - d.actual))
+    return ensureVariance(chartData.value.map((d) => d.budgeted - d.actual))
   }
   let runningActual = 0
-  const data = chartData.value.map(d => {
+  const data = chartData.value.map((d) => {
     runningActual += d.actual
     return totalBudgeted.value - runningActual
   })

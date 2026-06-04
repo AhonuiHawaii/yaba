@@ -13,7 +13,7 @@
       </v-col>
     </v-row>
 
-    <v-alert v-if="dashboardError" type="error" variant="tonal" class="mb-5 rounded-xl border">
+    <v-alert v-if="dashboardError" type="error" variant="flat" class="mb-5 rounded-xl border">
       {{ dashboardError }}
     </v-alert>
 
@@ -55,7 +55,7 @@
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Income</span
               >
-              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-arrow-down-thin</v-icon>
               </v-avatar>
             </v-row>
@@ -106,7 +106,7 @@
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Spent</span
               >
-              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-arrow-up-thin</v-icon>
               </v-avatar>
             </v-row>
@@ -156,7 +156,7 @@
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Left to budget</span
               >
-              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-view-grid-outline</v-icon>
               </v-avatar>
             </v-row>
@@ -207,7 +207,7 @@
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Net Worth</span
               >
-              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
                 <v-icon size="20">mdi-chart-line</v-icon>
               </v-avatar>
             </v-row>
@@ -320,7 +320,7 @@
                   </p>
                 </td>
                 <td class="text-right py-2">
-                  <v-chip size="x-small" variant="outlined">
+                  <v-chip size="x-small" variant="flat">
                     {{ tx.category ? tx.category : 'Uncategorized' }}
                   </v-chip>
                 </td>
@@ -343,7 +343,7 @@
           <v-card-item class="pa-5 pb-2">
             <v-card-title class="text-body-1 font-weight-bold">Upcoming bills</v-card-title>
             <template #append>
-              <v-chip size="x-small" variant="tonal" color="primary">Next 7 days</v-chip>
+              <v-chip size="x-small" variant="flat" color="primary">Next 7 days</v-chip>
             </template>
           </v-card-item>
           <p v-if="soonItems.length === 0" class="px-5 pb-5 text-body-2 text-medium-emphasis mb-0">
@@ -353,7 +353,7 @@
             <tbody>
               <tr v-for="item in soonItems" :key="item.name">
                 <td class="py-2" style="width: 52px">
-                  <v-avatar color="primary" variant="tonal" size="36" rounded="lg">
+                  <v-avatar color="primary" variant="flat" size="36" rounded="lg">
                     <v-icon size="18">mdi-receipt-text-outline</v-icon>
                   </v-avatar>
                 </td>
@@ -650,10 +650,7 @@ const chartJsData = computed(() => {
           theme.current.value.colors.primary,
           isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
         ],
-        borderColor: [
-          'transparent',
-          isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'
-        ],
+        borderColor: ['transparent', isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'],
         borderWidth: 1,
         borderRadius: 4,
         barPercentage: 0.8,

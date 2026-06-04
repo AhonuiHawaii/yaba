@@ -82,7 +82,7 @@
       <v-col cols="12" md="6">
         <v-card elevation="0" border rounded="lg" class="pa-6 d-flex flex-column h-100">
           <div class="d-flex align-center ga-3 mb-3">
-            <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
+            <v-avatar color="primary" variant="flat" size="34" rounded="lg">
               <v-icon size="18">mdi-export</v-icon>
             </v-avatar>
             <div class="text-subtitle-1 font-weight-bold">Export a backup</div>
@@ -97,13 +97,13 @@
             Included in backup
           </div>
           <div class="d-flex flex-wrap ga-2 mb-5">
-            <v-chip size="small" variant="tonal" color="primary" prepend-icon="mdi-swap-vertical">
+            <v-chip size="small" variant="flat" color="primary" prepend-icon="mdi-swap-vertical">
               Transactions
             </v-chip>
-            <v-chip size="small" variant="tonal" color="primary" prepend-icon="mdi-bank-outline">
+            <v-chip size="small" variant="flat" color="primary" prepend-icon="mdi-bank-outline">
               Accounts
             </v-chip>
-            <v-chip size="small" variant="tonal" color="primary" prepend-icon="mdi-sitemap-outline">
+            <v-chip size="small" variant="flat" color="primary" prepend-icon="mdi-sitemap-outline">
               Budgets & rules
             </v-chip>
           </div>
@@ -125,7 +125,7 @@
                 type="password"
                 label="Encryption passphrase"
                 placeholder="Enter passphrase (minimum 8 characters)"
-                variant="outlined"
+                variant="flat"
                 density="compact"
                 rounded="lg"
                 hint="Must be at least 8 characters. Do not lose this passphrase."
@@ -156,7 +156,7 @@
       <v-col cols="12" md="6">
         <v-card elevation="0" border rounded="lg" class="pa-6 d-flex flex-column h-100">
           <div class="d-flex align-center ga-3 mb-3">
-            <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
+            <v-avatar color="primary" variant="flat" size="34" rounded="lg">
               <v-icon size="18">mdi-import</v-icon>
             </v-avatar>
             <div class="text-subtitle-1 font-weight-bold">Restore from a backup</div>

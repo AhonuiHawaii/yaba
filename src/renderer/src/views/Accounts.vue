@@ -36,7 +36,7 @@
             Import via OFX
           </v-btn>
           <v-btn
-            variant="outlined"
+            variant="flat"
             rounded="lg"
             prepend-icon="mdi-pencil-plus-outline"
             @click="manualDialog = true"
@@ -56,7 +56,7 @@
             <div class="d-flex justify-space-between align-center mb-4">
               <v-avatar
                 :color="accountTypeColor(account.ACCTTYPE)"
-                variant="tonal"
+                variant="flat"
                 size="40"
                 rounded="lg"
               >
@@ -470,7 +470,7 @@
                 v-model="editPaymentFrequency"
                 mandatory
                 divided
-                variant="outlined"
+                variant="flat"
                 density="compact"
                 color="primary"
                 class="mb-4"

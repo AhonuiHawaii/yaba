@@ -57,7 +57,7 @@
                 </v-chip>
               </div>
             </v-card>
-            <v-alert v-if="parseError" type="error" variant="tonal" class="mt-4 rounded-lg">
+            <v-alert v-if="parseError" type="error" variant="flat" class="mt-4 rounded-lg">
               {{ parseError }}
             </v-alert>
           </v-card-text>
@@ -88,7 +88,7 @@
                   v-model="m.targetAcctId"
                   :items="accountOptions"
                   label="Map to Account"
-                  variant="outlined"
+                  variant="flat"
                   density="compact"
                   hide-details
                   color="primary"
@@ -109,7 +109,7 @@
         <template #item.3>
           <v-card-text class="pa-6">
             <div v-if="totalExactDuplicates > 0" class="mb-6">
-              <v-alert type="success" variant="tonal" class="rounded-lg">
+              <v-alert type="success" variant="flat" class="rounded-lg">
                 Skipping <strong>{{ totalExactDuplicates }}</strong> exact duplicate transactions
                 that were already imported.
               </v-alert>
@@ -125,7 +125,7 @@
               <v-card
                 v-for="(group, i) in allFuzzyDuplicates"
                 :key="i"
-                variant="outlined"
+                variant="flat"
                 class="mb-4 rounded-lg overflow-hidden border"
               >
                 <v-row no-gutters class="bg-surface-variant">
@@ -207,7 +207,7 @@
               <v-col cols="12" md="5">
                 <div class="text-h6 font-weight-bold mb-4">Rules Engine Impact</div>
 
-                <v-card variant="tonal" color="primary" class="rounded-xl pa-5 mb-6">
+                <v-card variant="flat" color="primary" class="rounded-xl pa-5 mb-6">
                   <div class="d-flex align-center justify-space-between mb-4">
                     <div class="text-h4 font-weight-bold">{{ totalRulesApplied }}</div>
                     <v-avatar color="primary" size="48" variant="flat">
@@ -267,7 +267,7 @@
                     <v-card
                       v-for="(group, name) in groupedUncategorized"
                       :key="name"
-                      variant="outlined"
+                      variant="flat"
                       class="rounded-lg mb-3 border bg-surface"
                     >
                       <div class="pa-4">
@@ -295,7 +295,7 @@
                             item-title="title"
                             item-value="value"
                             label="Assign Category"
-                            variant="outlined"
+                            variant="flat"
                             density="compact"
                             hide-details
                             class="rounded-lg flex-1"
@@ -346,7 +346,7 @@
                 <v-card
                   v-for="(p, i) in previewResults"
                   :key="i"
-                  variant="outlined"
+                  variant="flat"
                   class="rounded-xl pa-5 mb-4 border bg-surface"
                 >
                   <div class="d-flex align-center justify-space-between mb-4">
@@ -388,7 +388,7 @@
                     >
                       <v-icon start>mdi-check-circle</v-icon> Reconciled Perfectly!
                     </v-alert>
-                    <v-alert v-else type="warning" variant="tonal" class="rounded-lg">
+                    <v-alert v-else type="warning" variant="flat" class="rounded-lg">
                       <div class="mb-3">
                         Discrepancy of
                         <strong>{{
@@ -404,7 +404,7 @@
                           v-model="p.targetBalance"
                           label="True Balance"
                           density="compact"
-                          variant="outlined"
+                          variant="flat"
                           hide-details
                           prefix="$"
                           type="number"
@@ -437,7 +437,7 @@
                       }}</span>
                     </div>
 
-                    <v-alert type="info" variant="tonal" class="rounded-lg mb-0">
+                    <v-alert type="info" variant="flat" class="rounded-lg mb-0">
                       <div class="mb-2">
                         Bank did not provide a ledger balance to verify against.
                       </div>
@@ -446,14 +446,14 @@
                           v-model="p.targetBalance"
                           label="Manually Fix Balance"
                           density="compact"
-                          variant="outlined"
+                          variant="flat"
                           hide-details
                           prefix="$"
                           type="number"
                         />
                         <v-btn
                           color="primary"
-                          variant="tonal"
+                          variant="flat"
                           :disabled="!p.targetBalance"
                           @click="p.adjustBalance = true"
                         >

@@ -69,7 +69,7 @@
                     :items="currencies"
                     item-title="label"
                     item-value="code"
-                    variant="outlined"
+                    variant="flat"
                     density="compact"
                     color="primary"
                     hide-details
@@ -88,7 +88,7 @@
                     mandatory
                     density="compact"
                     color="primary"
-                    variant="outlined"
+                    variant="flat"
                     @update:model-value="updateCurrencyPosition"
                   >
                     <v-btn value="before" size="small">{{ currencyPreviewSymbol }}100</v-btn>
@@ -107,7 +107,7 @@
                     mandatory
                     density="compact"
                     color="primary"
-                    variant="outlined"
+                    variant="flat"
                     @update:model-value="updateDateFormat"
                   >
                     <v-btn
@@ -132,7 +132,7 @@
                     mandatory
                     density="compact"
                     color="primary"
-                    variant="outlined"
+                    variant="flat"
                     @update:model-value="updateWeekStart"
                   >
                     <v-btn value="sunday" size="small">Sunday</v-btn>
@@ -151,7 +151,7 @@
                     mandatory
                     density="compact"
                     color="primary"
-                    variant="outlined"
+                    variant="flat"
                     @update:model-value="updateDecimalPlaces"
                   >
                     <v-btn value="0" size="small">0</v-btn>

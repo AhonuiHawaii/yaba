@@ -13,7 +13,7 @@
           <v-card-text class="pt-3 text-body-2" style="line-height: 1.7">
             <v-alert
               type="success"
-              variant="tonal"
+              variant="flat"
               icon="mdi-lan-disconnect"
               class="mb-4"
               border="start"
@@ -76,7 +76,7 @@
 
             <v-alert
               type="success"
-              variant="tonal"
+              variant="flat"
               icon="mdi-shield-check"
               class="mb-3"
               border="start"

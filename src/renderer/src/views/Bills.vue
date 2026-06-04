@@ -86,7 +86,7 @@
                     <v-chip
                       v-if="categoryName(bill.category)"
                       size="x-small"
-                      variant="tonal"
+                      variant="flat"
                       color="teal"
                       rounded="lg"
                       >{{ categoryName(bill.category) }}</v-chip
