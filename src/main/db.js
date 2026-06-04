@@ -1,9 +1,9 @@
 import Database from 'better-sqlite3-multiple-ciphers'
-// import dpapi from 'node-dpapi-prebuilt'
+import dpapi from 'node-dpapi-prebuilt'
 import { app } from 'electron'
 import { join } from 'path'
-import { mkdirSync } from 'fs'
-// import { randomBytes } from 'crypto'
+import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs'
+import { randomBytes } from 'crypto'
 
 /*
   Database initialization
@@ -14,22 +14,22 @@ import { mkdirSync } from 'fs'
 
 const DB_DIR = join(app.getPath('userData'), 'data')
 const DB_PATH = join(DB_DIR, 'budget.db')
-// const KEY_PATH = join(DB_DIR, 'budget.key')
+const KEY_PATH = join(DB_DIR, 'budget.key')
 
 mkdirSync(DB_DIR, { recursive: true })
 
 // // Resolve or create encryption key — DPAPI CurrentUser scope ties it to this Windows account
-// const encryptionKey = (() => {
-//   if (existsSync(KEY_PATH)) {
-//     return dpapi.unprotectData(readFileSync(KEY_PATH), null, 'CurrentUser').toString('utf8')
-//   }
-//   const key = randomBytes(32).toString('hex')
-//   writeFileSync(KEY_PATH, dpapi.protectData(Buffer.from(key), null, 'CurrentUser'))
-//   return key
-// })()
+const encryptionKey = (() => {
+  if (existsSync(KEY_PATH)) {
+    return dpapi.unprotectData(readFileSync(KEY_PATH), null, 'CurrentUser').toString('utf8')
+  }
+  const key = randomBytes(32).toString('hex')
+  writeFileSync(KEY_PATH, dpapi.protectData(Buffer.from(key), null, 'CurrentUser'))
+  return key
+})()
 
 const db = new Database(DB_PATH)
-// db.pragma(`key='${encryptionKey}'`)
+db.pragma(`key='${encryptionKey}'`)
 db.pragma('journal_mode = WAL')
 db.pragma('foreign_keys = ON')
 
