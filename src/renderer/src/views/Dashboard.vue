@@ -237,37 +237,15 @@
           variant="flat"
           border
           hover
-          class="h-100 position-relative overflow-hidden"
+          class="h-100 d-flex flex-column"
           min-height="300"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
-            <v-sparkline
-              :fill="true"
-              :gradient="gradient[0]"
-              :color="sparklineLineColor"
-              :line-width="1"
-              :model-value="sparklineSpending"
-              :padding="0"
-              :smooth="16"
-              auto-draw
-            ></v-sparkline>
-          </div>
-          <v-card-item class="pa-5 pb-0 position-relative" style="z-index: 1">
+          <v-card-item class="pa-5 pb-0">
             <v-card-title class="text-body-1 font-weight-bold">Spending vs budget</v-card-title>
-            <template #append>
-              <v-chip size="x-small" variant="flat">{{ sparklineViewType }}</v-chip>
-            </template>
           </v-card-item>
+          <v-card-text class="pa-5 flex-grow-1">
+            <Bar :data="chartJsData" :options="chartJsOptions" />
+          </v-card-text>
         </v-card>
       </v-col>
 
@@ -415,6 +393,18 @@ import { useUserSettingsStore } from '../stores/userSettings'
 import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import { useTheme } from 'vuetify'
+import { Bar } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale
+} from 'chart.js'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const emit = defineEmits(['navigate'])
 
@@ -647,6 +637,75 @@ const chartData = computed(() => {
     }
   }
   return points
+})
+
+const chartJsData = computed(() => {
+  const isDark = theme.current.value.dark
+  return {
+    labels: ['Spending', 'Budget'],
+    datasets: [
+      {
+        data: [totalSpending.value, totalExpenseBudget.value],
+        backgroundColor: [
+          theme.current.value.colors.primary,
+          isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+        ],
+        borderColor: [
+          'transparent',
+          isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'
+        ],
+        borderWidth: 1,
+        borderRadius: 4,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9
+      }
+    ]
+  }
+})
+
+const chartJsOptions = computed(() => {
+  const isDark = theme.current.value.dark
+  const textColor = isDark ? '#ffffff' : '#000000'
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'y',
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            if (context.parsed.x !== null) {
+              return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+              }).format(context.parsed.x)
+            }
+            return ''
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: gridColor },
+        ticks: {
+          color: textColor,
+          callback: function (value) {
+            return '$' + value
+          }
+        }
+      },
+      y: {
+        grid: { display: false },
+        ticks: { color: textColor }
+      }
+    }
+  }
 })
 
 const sparklineViewType = computed(() => (periodMonths.value.length > 1 ? 'Monthly' : 'Daily'))
