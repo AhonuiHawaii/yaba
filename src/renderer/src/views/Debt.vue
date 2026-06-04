@@ -31,7 +31,8 @@
         <v-col cols="12" md="6">
           <div class="text-h6 font-weight-bold mb-2">Extra Payment Impact Calculator</div>
           <div class="text-body-2 mb-4">
-            How much extra can you put towards your debt each month? Even a small amount makes a huge difference!
+            How much extra can you put towards your debt each month? Even a small amount makes a
+            huge difference!
           </div>
           <v-slider
             :model-value="debtsStore.extraPayment"
@@ -53,9 +54,15 @@
               Debt-free by {{ estimatedPayoffDate }}
             </div>
             <div class="text-body-2 font-weight-medium">
-              You will pay a total of <strong>{{ formatCurrency(activeSimulation.totalInterest) }}</strong> in interest.
+              You will pay a total of
+              <strong>{{ formatCurrency(activeSimulation.totalInterest) }}</strong> in interest.
             </div>
-            <v-chip color="success" variant="flat" class="mt-3 font-weight-bold" prepend-icon="mdi-party-popper">
+            <v-chip
+              color="success"
+              variant="flat"
+              class="mt-3 font-weight-bold"
+              prepend-icon="mdi-party-popper"
+            >
               Keep it up! You're on track.
             </v-chip>
           </div>
@@ -85,7 +92,7 @@
           </div>
         </v-card>
       </v-col>
-      
+
       <v-col cols="12" sm="6" md="3">
         <v-card rounded="xl" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
           <div class="d-flex align-center mb-4">
@@ -159,18 +166,36 @@
     <!-- Per-debt Cards -->
     <v-row v-if="debtCardRows.length > 0">
       <v-col v-for="debt in debtCardRows" :key="debt.id" cols="12" md="6" lg="4">
-        <v-card rounded="xl" variant="outlined" class="pa-5 d-flex flex-column h-100 hover-card bg-surface">
+        <v-card
+          rounded="xl"
+          variant="outlined"
+          class="pa-5 d-flex flex-column h-100 hover-card bg-surface"
+        >
           <div class="d-flex justify-space-between align-start mb-4">
             <div>
               <div class="text-h6 font-weight-bold line-clamp-1">{{ debt.name }}</div>
-              <div class="text-body-2 text-medium-emphasis">{{ debt.rawAccount.ORG || 'Unknown Institution' }}</div>
+              <div class="text-body-2 text-medium-emphasis">
+                {{ debt.rawAccount.ORG || 'Unknown Institution' }}
+              </div>
             </div>
-            <v-btn icon="mdi-dots-horizontal" variant="text" density="comfortable" @click="openEditDialog(debt.rawAccount)" />
+            <v-btn
+              icon="mdi-dots-horizontal"
+              variant="text"
+              density="comfortable"
+              @click="openEditDialog(debt.rawAccount)"
+            />
           </div>
 
           <div class="d-flex justify-space-between align-center mb-4">
-            <div class="text-h5 font-weight-bold text-error">{{ formatCurrency(debt.currentBalance) }}</div>
-            <v-chip variant="tonal" size="small" class="font-weight-bold" :color="debt.isHighApr ? 'error' : 'warning'">
+            <div class="text-h5 font-weight-bold text-error">
+              {{ formatCurrency(debt.currentBalance) }}
+            </div>
+            <v-chip
+              variant="tonal"
+              size="small"
+              class="font-weight-bold"
+              :color="debt.isHighApr ? 'error' : 'warning'"
+            >
               {{ formatPercent(debt.interestRate) }} APR
             </v-chip>
           </div>
@@ -179,7 +204,9 @@
           <div v-if="debt.creditLimit > 0" class="mb-4">
             <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
               <span>Credit Utilization</span>
-              <span :class="getUtilizationColorClass(debt.utilization)">{{ debt.utilization }}%</span>
+              <span :class="getUtilizationColorClass(debt.utilization)"
+                >{{ debt.utilization }}%</span
+              >
             </div>
             <v-progress-linear
               :model-value="debt.utilization"
@@ -187,21 +214,20 @@
               height="6"
               rounded
             />
-            <div class="text-caption text-medium-emphasis mt-1">Limit: {{ formatCurrency(debt.creditLimit) }}</div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              Limit: {{ formatCurrency(debt.creditLimit) }}
+            </div>
           </div>
           <!-- Payoff Progress (if no limit, show starting balance progress) -->
           <div v-else class="mb-4">
-             <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
+            <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
               <span>Payoff Progress</span>
               <span class="text-success">{{ Math.round(debt.progress) }}%</span>
             </div>
-            <v-progress-linear
-              :model-value="debt.progress"
-              color="success"
-              height="6"
-              rounded
-            />
-             <div class="text-caption text-medium-emphasis mt-1">Starting: {{ formatCurrency(debt.startingBalance) }}</div>
+            <v-progress-linear :model-value="debt.progress" color="success" height="6" rounded />
+            <div class="text-caption text-medium-emphasis mt-1">
+              Starting: {{ formatCurrency(debt.startingBalance) }}
+            </div>
           </div>
 
           <v-divider class="my-4" />
@@ -212,18 +238,25 @@
               <div class="font-weight-bold">{{ formatCurrency(debt.monthlyMinimumPayment) }}</div>
             </div>
             <div class="text-center">
-               <div class="text-medium-emphasis text-caption">Est. Interest</div>
-               <div class="font-weight-bold text-warning">{{ formatCurrency(debt.interestPaid) }}</div>
+              <div class="text-medium-emphasis text-caption">Est. Interest</div>
+              <div class="font-weight-bold text-warning">
+                {{ formatCurrency(debt.interestPaid) }}
+              </div>
             </div>
             <div class="text-right">
-               <div class="text-medium-emphasis text-caption">Target Payoff</div>
-               <div class="font-weight-bold text-primary">{{ debt.payoffDate }}</div>
+              <div class="text-medium-emphasis text-caption">Target Payoff</div>
+              <div class="font-weight-bold text-primary">{{ debt.payoffDate }}</div>
             </div>
           </div>
         </v-card>
       </v-col>
     </v-row>
-    <v-card v-else variant="outlined" rounded="xl" class="pa-12 text-center text-medium-emphasis border-dashed">
+    <v-card
+      v-else
+      variant="outlined"
+      rounded="xl"
+      class="pa-12 text-center text-medium-emphasis border-dashed"
+    >
       <v-icon size="64" class="mb-4" color="success">mdi-check-circle-outline</v-icon>
       <div class="text-h6 font-weight-bold">No Debts Found</div>
       <div class="text-body-1">Add a loan or credit card to start tracking your payoff!</div>
@@ -306,9 +339,17 @@
               <div class="font-weight-bold">Automate Tracking</div>
             </div>
             <div class="text-body-2 mb-3">
-              Create a rule to automatically link your payments from checking to this debt account, shrinking your balance effortlessly!
+              Create a rule to automatically link your payments from checking to this debt account,
+              shrinking your balance effortlessly!
             </div>
-            <v-btn color="primary" variant="flat" block rounded="lg" @click="openRuleDialog" prepend-icon="mdi-plus">
+            <v-btn
+              color="primary"
+              variant="flat"
+              block
+              rounded="lg"
+              prepend-icon="mdi-plus"
+              @click="openRuleDialog"
+            >
               Create Payment Rule
             </v-btn>
           </v-card>
@@ -317,7 +358,13 @@
         <v-card-actions class="pa-6">
           <v-spacer />
           <v-btn variant="text" @click="editDialog = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" rounded="lg" @click="saveAccount" :loading="accountsStore.loading">
+          <v-btn
+            color="primary"
+            variant="flat"
+            rounded="lg"
+            :loading="accountsStore.loading"
+            @click="saveAccount"
+          >
             Save Changes
           </v-btn>
         </v-card-actions>
@@ -332,12 +379,15 @@
             <span class="text-h5 font-weight-bold">Create Payment Rule</span>
             <v-btn icon="mdi-close" variant="text" density="compact" @click="ruleDialog = false" />
           </div>
-          <div class="text-body-2 text-medium-emphasis mt-1">Link transactions to {{ editForm.displayName }}</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">
+            Link transactions to {{ editForm.displayName }}
+          </div>
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-6">
           <div class="text-body-2 mb-4">
-            Enter a keyword that appears in your checking account when you pay this debt (e.g. "Capital One", "Chase Credit Card").
+            Enter a keyword that appears in your checking account when you pay this debt (e.g.
+            "Capital One", "Chase Credit Card").
           </div>
           <v-text-field
             v-model="ruleForm.keyword"
@@ -354,13 +404,19 @@
         <v-card-actions class="pa-6">
           <v-spacer />
           <v-btn variant="text" @click="ruleDialog = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" rounded="lg" @click="saveRule" :disabled="!ruleForm.keyword" :loading="rulesStore.loading">
+          <v-btn
+            color="primary"
+            variant="flat"
+            rounded="lg"
+            :disabled="!ruleForm.keyword"
+            :loading="rulesStore.loading"
+            @click="saveRule"
+          >
             Save Rule
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-
   </v-container>
 </template>
 
@@ -427,22 +483,24 @@ const debtRows = computed(() =>
       const paymentFrequency = account.paymentFrequency ?? null
       const minimumPayment = Number(account.minimumPayment) || 0
       const monthlyMinimumPayment = minimumPayment * freqToMonthlyFactor(paymentFrequency)
-      
-      const sb = account.startingBalance !== null && account.startingBalance !== undefined 
-        ? Math.abs(account.startingBalance) 
-        : 0
-      
+
+      const sb =
+        account.startingBalance !== null && account.startingBalance !== undefined
+          ? Math.abs(account.startingBalance)
+          : 0
+
       const creditLimit = Number(account.creditLimit) || 0
-      
+
       // Calculate payments made from transactions via linkedAccount
       // Note: TRNAMT is usually negative for expenses, so Math.abs() gives us the magnitude of the payment.
-      const paymentsObj = txStore.debtPayments.find(p => p.linkedAccount === accountId)
+      const paymentsObj = txStore.debtPayments.find((p) => p.linkedAccount === accountId)
       const paymentsTotal = paymentsObj ? Math.abs(paymentsObj.total) : 0
-      
+
       const currentBalance = Math.max(0, sb - paymentsTotal)
       const progress = sb > 0 ? Math.min(100, Math.max(0, ((sb - currentBalance) / sb) * 100)) : 0
-      
-      const utilization = creditLimit > 0 ? Math.min(100, Math.round((currentBalance / creditLimit) * 100)) : 0
+
+      const utilization =
+        creditLimit > 0 ? Math.min(100, Math.round((currentBalance / creditLimit) * 100)) : 0
 
       return {
         id: accountId,
@@ -666,11 +724,13 @@ onMounted(async () => {
 
 <style scoped>
 .hover-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .hover-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
 }
 .border-dashed {
   border-style: dashed !important;

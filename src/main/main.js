@@ -26,6 +26,8 @@ import {
   applyRules,
   previewRule as dbPreviewRule,
   checkDuplicateFitids,
+  checkFuzzyDuplicates,
+  getAccountBalance,
   getCategories as dbGetCategories,
   createCategory as dbCreateCategory,
   updateCategory as dbUpdateCategory,
@@ -438,7 +440,7 @@ export const checkDuplicates = (fitids) => {
 export const importBatch = async (items) => {
   try {
     const results = []
-    for (const { ofxText, targetAcctId } of items) {
+    for (const { ofxText, targetAcctId, skipFitids = [] } of items) {
       const transactions = await extractTransactionData(ofxText)
       if (!transactions.length) {
         results.push({ total: 0, inserted: 0, skipped: 0 })
@@ -458,6 +460,15 @@ export const importBatch = async (items) => {
           INTU_BID: transactions[0].INTU_BID
         }
         if (accountData.ACCTID) {
+          // Check if account already exists before upserting
+          const existingAccount = getAccount(accountData.ACCTID)
+
+          if (!existingAccount && accountData.BALAMT) {
+            // It's a new account and we have a ledger balance! Auto-calculate starting balance.
+            const sumOfTxns = validTxns.reduce((sum, t) => sum + Number(t.TRNAMT), 0)
+            accountData.startingBalance = Number(accountData.BALAMT) - sumOfTxns
+          }
+
           upsertAccount(accountData)
           realAcctid = accountData.ACCTID
         }
@@ -466,9 +477,12 @@ export const importBatch = async (items) => {
       const remapped = realAcctid
         ? transactions.map((t) => ({ ...t, ACCTID: realAcctid }))
         : transactions
-      const result = createTransactions(remapped)
+      const skipSet = new Set(skipFitids)
+      const validTxns = remapped.filter((t) => !skipSet.has(t.FITID))
 
-      const patches = applyRules(remapped)
+      const result = createTransactions(validTxns)
+
+      const patches = applyRules(validTxns)
       for (const patch of patches) {
         const upd = {}
         if ('category' in patch) upd.category = patch.category
@@ -484,6 +498,99 @@ export const importBatch = async (items) => {
 
       results.push({ ...result, accountId: maskAcctid(realAcctid) })
     }
+    return ok(results)
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+function cleanBankName(name) {
+  if (!name) return ''
+  let cleaned = name
+  cleaned = cleaned.replace(/^SQ\s*\*/i, '')
+  cleaned = cleaned.replace(/^TST\s*\*/i, '')
+  cleaned = cleaned.replace(/^PAYPAL\s*\*/i, '')
+  cleaned = cleaned.replace(/^SP\s*\*/i, '')
+  cleaned = cleaned.replace(/#\d+.*$/i, '')
+  return cleaned.trim()
+}
+
+export const previewImportBatch = async (items) => {
+  try {
+    const results = []
+
+    for (const { ofxText, targetAcctId, skipFitids = [] } of items) {
+      const transactions = await extractTransactionData(ofxText)
+      if (!transactions.length) {
+        results.push({
+          exactDuplicates: [],
+          fuzzyDuplicates: [],
+          rulesApplied: [],
+          uncategorized: [],
+          ledgerBalance: null,
+          dbBalance: 0,
+          txCount: 0
+        })
+        continue
+      }
+
+      const realAcctid = targetAcctId ? resolveAcctid(targetAcctId) : null
+      const accountData = (await extractAccountData(ofxText)) || transactions[0]
+
+      const ledgerBalance = {
+        BALAMT: accountData.BALAMT || null,
+        DTASOF: accountData.DTASOF || null
+      }
+
+      const remapped = realAcctid
+        ? transactions.map((t) => ({ ...t, ACCTID: realAcctid }))
+        : transactions
+
+      // Skip FITIDs explicitly marked by user in Fuzzy resolution
+      const skipSet = new Set(skipFitids)
+      const validTxns = remapped.filter((t) => !skipSet.has(t.FITID))
+
+      const allFitids = validTxns.map((t) => t.FITID)
+      const exactDupList = checkDuplicateFitids(allFitids)
+      const exactDupSet = new Set(exactDupList)
+
+      const remainingTxns = validTxns.filter((t) => !exactDupSet.has(t.FITID))
+
+      const fuzzyMatches = checkFuzzyDuplicates(remainingTxns)
+      const fuzzyImportedSet = new Set(fuzzyMatches.map((m) => m.imported.FITID))
+
+      const freshTxns = remainingTxns.filter((t) => !fuzzyImportedSet.has(t.FITID))
+
+      const patches = applyRules(freshTxns)
+      const patchMap = new Map(patches.map((p) => [p.FITID, p]))
+
+      const rulesApplied = []
+      const uncategorized = []
+
+      for (const txn of freshTxns) {
+        const p = patchMap.get(txn.FITID)
+        const cleanName = cleanBankName(txn.NAME)
+        if (p) {
+          rulesApplied.push({ txn: { ...txn, cleanName }, patch: p })
+        } else {
+          uncategorized.push({ ...txn, cleanName })
+        }
+      }
+
+      const dbBalance = realAcctid ? getAccountBalance(realAcctid) : 0
+
+      results.push({
+        accountId: maskAcctid(realAcctid),
+        txCount: transactions.length,
+        exactDuplicates: exactDupList,
+        fuzzyDuplicates: fuzzyMatches,
+        rulesApplied,
+        uncategorized,
+        ledgerBalance,
+        dbBalance
+      })
+    }
+
     return ok(results)
   } catch (e) {
     return fail(e)

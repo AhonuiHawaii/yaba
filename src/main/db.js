@@ -318,17 +318,23 @@ function deleteTransaction(id, type = 'FITID') {
 function upsertAccount(acct) {
   if (!acct?.ACCTID) throw new Error('ACCTID is required to upsert an account.')
 
+  const data = {
+    ...acct,
+    startingBalance: acct.startingBalance !== undefined ? acct.startingBalance : null
+  }
+
   db.prepare(
     `
-    INSERT INTO Accounts (ACCTID, ACCTTYPE, ORG, INTU_BID, lastImport)
-    VALUES (@ACCTID, @ACCTTYPE, @ORG, @INTU_BID, CURRENT_TIMESTAMP)
+    INSERT INTO Accounts (ACCTID, ACCTTYPE, ORG, INTU_BID, startingBalance, lastImport)
+    VALUES (@ACCTID, @ACCTTYPE, @ORG, @INTU_BID, @startingBalance, CURRENT_TIMESTAMP)
     ON CONFLICT(ACCTID) DO UPDATE SET
-      ACCTTYPE   = excluded.ACCTTYPE,
-      ORG        = excluded.ORG,
-      INTU_BID   = excluded.INTU_BID,
-      lastImport = CURRENT_TIMESTAMP
+      ACCTTYPE        = excluded.ACCTTYPE,
+      ORG             = excluded.ORG,
+      INTU_BID        = excluded.INTU_BID,
+      startingBalance = COALESCE(excluded.startingBalance, startingBalance),
+      lastImport      = CURRENT_TIMESTAMP
   `
-  ).run(acct)
+  ).run(data)
 }
 
 /**
@@ -959,6 +965,61 @@ function checkDuplicateFitids(fitids) {
     .map((r) => r.FITID)
 }
 
+function getDebtPayments() {
+  return db
+    .prepare(
+      'SELECT linkedAccount, SUM(TRNAMT) as total FROM Transactions WHERE linkedAccount IS NOT NULL GROUP BY linkedAccount'
+    )
+    .all()
+}
+
+function checkFuzzyDuplicates(transactions) {
+  if (!transactions || !transactions.length) return []
+  
+  const fuzzyDuplicates = []
+  const stmt = db.prepare('SELECT * FROM Transactions WHERE ACCTID = ? AND TRNAMT = ?')
+  
+  for (const txn of transactions) {
+    if (!txn.ACCTID || !txn.TRNAMT || !txn.DTPOSTED) continue
+    
+    const candidates = stmt.all(txn.ACCTID, txn.TRNAMT)
+    if (!candidates.length) continue
+    
+    const tYear = parseInt(txn.DTPOSTED.substring(0, 4), 10)
+    const tMonth = parseInt(txn.DTPOSTED.substring(4, 6), 10) - 1
+    const tDay = parseInt(txn.DTPOSTED.substring(6, 8), 10)
+    const tDate = new Date(tYear, tMonth, tDay).getTime()
+    
+    for (const cand of candidates) {
+      if (cand.FITID === txn.FITID) continue
+      if (!cand.DTPOSTED) continue
+      
+      const cYear = parseInt(cand.DTPOSTED.substring(0, 4), 10)
+      const cMonth = parseInt(cand.DTPOSTED.substring(4, 6), 10) - 1
+      const cDay = parseInt(cand.DTPOSTED.substring(6, 8), 10)
+      const cDate = new Date(cYear, cMonth, cDay).getTime()
+      
+      const diffDays = Math.abs(tDate - cDate) / (1000 * 60 * 60 * 24)
+      if (diffDays <= 3) {
+        fuzzyDuplicates.push({ imported: txn, existing: cand })
+        break
+      }
+    }
+  }
+  return fuzzyDuplicates
+}
+
+function getAccountBalance(acctid) {
+  const account = getAccount(acctid)
+  if (!account) return null
+  
+  const row = db.prepare('SELECT SUM(TRNAMT) as total FROM Transactions WHERE ACCTID = ?').get(acctid)
+  const sumTransactions = row.total || 0
+  const startingBalance = account.startingBalance || 0
+  
+  return startingBalance + sumTransactions
+}
+
 export default db
 export {
   // Transactions
@@ -998,5 +1059,8 @@ export {
   deleteCategory,
   getBudgets,
   upsertBudget,
-  getCategoryTypes
+  getCategoryTypes,
+  getDebtPayments,
+  checkFuzzyDuplicates,
+  getAccountBalance
 }

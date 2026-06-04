@@ -7,6 +7,7 @@ import {
   importTransactions,
   parseOfxFile,
   checkDuplicates,
+  previewImportBatch,
   importBatch,
   fetchTransactions,
   fetchAllTransactions,
@@ -74,6 +75,7 @@ export const setupIpcHandlers = () => {
   ipcMain.handle('ofx:importTransactions', (_, ofxData) => importTransactions(ofxData))
   ipcMain.handle('ofx:parseFile', (_, ofxText) => parseOfxFile(ofxText))
   ipcMain.handle('ofx:checkDuplicates', (_, fitids) => checkDuplicates(fitids))
+  ipcMain.handle('ofx:previewImportBatch', (_, items) => previewImportBatch(items))
   ipcMain.handle('ofx:importBatch', (_, items) => importBatch(items))
 
   ipcMain.handle('transactions:fetch', (_, filters) => {
@@ -136,7 +138,11 @@ export const setupIpcHandlers = () => {
   ipcMain.handle('rules:fetch', () => fetchRules())
   ipcMain.handle('rules:create', (_, rule) => {
     if (!isObject(rule)) throw new Error('Invalid rule')
-    return addRule(rule)
+    const result = addRule(rule)
+    if (result.success && rule.applyRetroactively) {
+      applyRulesToAll()
+    }
+    return result
   })
   ipcMain.handle('rules:update', (_, id, updates) => {
     if (!isFiniteNumber(id)) throw new Error('Invalid rule ID')
