@@ -157,16 +157,32 @@ const getTransactions = (filters = {}) => {
   if (entries.length === 0) {
     const now = new Date()
     const yyyymm = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
-    return db.prepare('SELECT * FROM Transactions WHERE DTPOSTED LIKE ?').all(`${yyyymm}%`)
+    return db.prepare(`
+      SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType
+      FROM Transactions t
+      LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
+      WHERE t.DTPOSTED LIKE ?
+    `).all(`${yyyymm}%`)
   }
 
-  const clauses = entries.map(([col]) => (DATE_COLUMNS.has(col) ? `${col} LIKE ?` : `${col} = ?`))
+  const clauses = entries.map(([col]) => (DATE_COLUMNS.has(col) ? `t.${col} LIKE ?` : `t.${col} = ?`))
   const values = entries.map(([col, val]) => (DATE_COLUMNS.has(col) ? `${val}%` : val))
 
-  return db.prepare(`SELECT * FROM Transactions WHERE ${clauses.join(' AND ')}`).all(...values)
+  return db.prepare(`
+    SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType
+    FROM Transactions t
+    LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
+    WHERE ${clauses.join(' AND ')}
+  `).all(...values)
 }
 
-const getAllTransactions = () => db.prepare('SELECT * FROM Transactions').all()
+const getAllTransactions = () => {
+  return db.prepare(`
+    SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType
+    FROM Transactions t
+    LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
+  `).all()
+}
 
 // ── Transaction writes ───────────────────────────────────────────────────────
 
@@ -185,28 +201,6 @@ const updateTransaction = (fitid, updates = {}) => {
     .changes
 }
 
-/**
- * Inserts a single transaction. Ignores duplicates on FITID (safe for OFX re-imports).
- * Account metadata must be upserted via upsertAccount() before calling this.
- *
- * @param {Object} txn - Transaction object from ofx.js extractTransactionData.
- * @returns {number} Rows inserted (0 = duplicate, 1 = inserted).
- */
-function createTransaction(txn) {
-  if (!txn) throw new Error('Transaction data is required to create a transaction.')
-  if (!txn.FITID) throw new Error('A valid FITID is required to create a transaction.')
-
-  const stmt = db.prepare(`
-    INSERT OR IGNORE INTO Transactions
-      (FITID, ACCTID, TRNTYPE, DTPOSTED, DTUSER, TRNAMT, NAME, MEMO,
-       CHECKNUM, REFNUM, DTAVAIL, SRVRTID, PAYEEID, EXTDNAME, SIC, ORG, rawTransaction)
-    VALUES
-      (@FITID, @ACCTID, @TRNTYPE, @DTPOSTED, @DTUSER, @TRNAMT, @NAME, COALESCE(NULLIF(@MEMO, ''), @NAME),
-       @CHECKNUM, @REFNUM, @DTAVAIL, @SRVRTID, @PAYEEID, @EXTDNAME, @SIC, @ORG, @rawTransaction)
-  `)
-
-  return stmt.run({ ...txn, rawTransaction: JSON.stringify(txn) }).changes
-}
 
 /**
  * Bulk-inserts an array of transactions inside a single SQLite transaction.
@@ -875,7 +869,6 @@ export {
   // Transactions
   getTransactions,
   getAllTransactions,
-  createTransaction,
   createTransactions,
   updateTransaction,
   deleteTransaction,
