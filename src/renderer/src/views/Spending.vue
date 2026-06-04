@@ -1,61 +1,34 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- ── Header ─────────────────────────────────────────────────────────── -->
-    <div class="d-flex flex-wrap align-start justify-space-between gap-4 mb-6">
-      <div>
-        <div class="text-h5 font-weight-bold">Spending</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <p class="text-h5 font-weight-bold mb-1">Spending</p>
+        <p class="text-body-2 text-medium-emphasis mb-0">
           Where your money goes · {{ periodLabel }}
-        </div>
-      </div>
-      <div class="d-flex align-center gap-3">
-        <!-- Prev / label / Next -->
-        <div class="d-flex align-center">
-          <v-btn
-            icon="mdi-chevron-left"
-            variant="text"
-            density="compact"
-            size="small"
-            @click="prevPeriod"
-          />
-          <span class="text-body-2 font-weight-medium mx-2 text-no-wrap">{{ periodLabel }}</span>
-          <v-btn
-            icon="mdi-chevron-right"
-            variant="text"
-            density="compact"
-            size="small"
-            :disabled="isNextPeriodFuture"
-            @click="nextPeriod"
-          />
-        </div>
-        <!-- Period toggle -->
-        <v-btn-toggle
-          v-model="period"
-          color="primary"
-          mandatory
-          density="compact"
-          rounded="lg"
-          variant="outlined"
-          divided
-        >
-          <v-btn value="month" size="small">Month</v-btn>
-          <v-btn value="quarter" size="small">Quarter</v-btn>
-          <v-btn value="semi" size="small">Semi</v-btn>
-          <v-btn value="annual" size="small">Annual</v-btn>
-        </v-btn-toggle>
-      </div>
-    </div>
+        </p>
+      </v-col>
+      <v-col cols="auto" class="pa-0 d-flex align-center ga-3 flex-wrap">
+        <FilterComponent />
+      </v-col>
+    </v-row>
 
     <!-- ── Stat cards ─────────────────────────────────────────────────────── -->
     <v-row class="mb-4">
       <!-- Total Spent -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-              Total Spent
-            </div>
-            <div class="text-h4 font-weight-bold mb-1">{{ formatCurrency(totalActual) }}</div>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[0]" :line-width="1" :model-value="sparklineSpent" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Total Spent</span>
+              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-currency-usd</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">{{ formatCurrency(totalActual) }}</div>
             <div class="text-caption text-medium-emphasis">{{ periodLabel }}</div>
           </v-card-text>
         </v-card>
@@ -63,12 +36,18 @@
 
       <!-- Avg / Month -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-              Avg / Month
-            </div>
-            <div class="text-h4 font-weight-bold mb-1">{{ formatCurrency(avgPerMonth) }}</div>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[1]" :line-width="1" :model-value="sparklineAvgPerMonth" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Avg / Month</span>
+              <v-avatar color="info" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-calculator</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">{{ formatCurrency(avgPerMonth) }}</div>
             <div class="text-caption text-medium-emphasis">across the period</div>
           </v-card-text>
         </v-card>
@@ -76,12 +55,18 @@
 
       <!-- Top Category -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-              Top Category
-            </div>
-            <div class="text-h4 font-weight-bold mb-1">{{ topCategory?.name ?? '—' }}</div>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[3]" :line-width="1" :model-value="sparklineTopCategory" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Top Category</span>
+              <v-avatar color="secondary" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-star-outline</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1 text-truncate">{{ topCategory?.name ?? '—' }}</div>
             <div class="text-caption text-medium-emphasis">
               {{ topCategory ? formatCurrency(topCategory.actual) : 'No data' }}
             </div>
@@ -91,12 +76,18 @@
 
       <!-- Transactions -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-              Transactions
-            </div>
-            <div class="text-h4 font-weight-bold mb-1">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[2]" :line-width="1" :model-value="sparklineTransactions" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Transactions</span>
+              <v-avatar color="success" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-swap-vertical</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">
               {{ currentTransactions.length.toLocaleString() }}
             </div>
             <div class="text-caption text-medium-emphasis">purchases</div>
@@ -228,6 +219,7 @@ import { useUserBudgetsStore } from '../stores/userBudgets'
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
 import { storeToRefs } from 'pinia'
+import FilterComponent from '../components/filterComponent.vue'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import { useTheme } from 'vuetify'
 
@@ -243,9 +235,7 @@ const ipc = window.electron?.ipcRenderer
 
 // ── Period filter (same as Dashboard) ────────────────────────────────────────
 const _pf = usePeriodFilter()
-const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
-  storeToRefs(_pf)
-const { prevPeriod, nextPeriod } = _pf
+const { period, periodStart, periodLength, periodMonths, periodLabel } = storeToRefs(_pf)
 
 // ── Period bounds ─────────────────────────────────────────────────────────────
 const periodBounds = computed(() => {
@@ -301,6 +291,115 @@ const avgPerMonth = computed(() =>
 )
 
 const topCategory = computed(() => allCombinedSorted.value[0] ?? null)
+
+// ── Sparklines ────────────────────────────────────────────────────────────────
+const sparklineLineColor = computed(() => (theme.current.value.dark ? 'white' : 'black'))
+const gradient = [
+  [theme.current.value.colors.primary, theme.current.value.colors['primary-container']],
+  [theme.current.value.colors.success, theme.current.value.colors['success-container']],
+  [theme.current.value.colors.info, theme.current.value.colors['info-container']],
+  [theme.current.value.colors.secondary, theme.current.value.colors['secondary-container']]
+]
+
+const ensureVariance = (data) => {
+  if (!data || data.length <= 1) return [0, 1]
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  if (min === max) {
+    const arr = [...data]
+    arr[0] = min - (min === 0 ? 1 : Math.abs(min * 0.01))
+    arr[arr.length - 1] = max + (max === 0 ? 1 : Math.abs(max * 0.01))
+    return arr
+  }
+  return data
+}
+
+const sparkData = computed(() => {
+  const points = []
+
+  if (periodMonths.value.length > 1) {
+    for (const m of periodMonths.value) {
+      points.push({ key: m, spent: 0, transactions: 0, topCategorySpent: 0 })
+    }
+    
+    for (const t of currentTransactions.value) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 6) {
+        const monthKey = s.slice(0, 6)
+        const p = points.find((pt) => pt.key === monthKey)
+        if (p && Number(t.TRNAMT) < 0) {
+          const amt = Math.abs(Number(t.TRNAMT))
+          p.spent += amt
+          p.transactions += 1
+          if (topCategory.value && t.category === topCategory.value.id) {
+            p.topCategorySpent += amt
+          }
+        }
+      }
+    }
+  } else {
+    const { start, end } = periodBounds.value
+    let current = new Date(start)
+    while (current <= end) {
+      points.push({
+        date: new Date(current),
+        spent: 0,
+        transactions: 0,
+        topCategorySpent: 0
+      })
+      current.setDate(current.getDate() + 1)
+    }
+    
+    for (const t of currentTransactions.value) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 8) {
+        const tDate = new Date(parseInt(s.slice(0, 4)), parseInt(s.slice(4, 6)) - 1, parseInt(s.slice(6, 8)))
+        const dayIndex = points.findIndex(d => d.date && d.date.getFullYear() === tDate.getFullYear() && d.date.getMonth() === tDate.getMonth() && d.date.getDate() === tDate.getDate())
+        if (dayIndex !== -1 && Number(t.TRNAMT) < 0) {
+          const amt = Math.abs(Number(t.TRNAMT))
+          points[dayIndex].spent += amt
+          points[dayIndex].transactions += 1
+          if (topCategory.value && t.category === topCategory.value.id) {
+            points[dayIndex].topCategorySpent += amt
+          }
+        }
+      }
+    }
+  }
+  return points
+})
+
+const sparklineSpent = computed(() => {
+  let running = 0
+  const data = sparkData.value.map(d => {
+    running += d.spent
+    return periodMonths.value.length > 1 ? d.spent : running
+  })
+  return ensureVariance(data)
+})
+
+const sparklineAvgPerMonth = computed(() => {
+  const arr = Array(sparkData.value.length).fill(avgPerMonth.value)
+  return ensureVariance(arr)
+})
+
+const sparklineTopCategory = computed(() => {
+  let running = 0
+  const data = sparkData.value.map(d => {
+    running += d.topCategorySpent
+    return periodMonths.value.length > 1 ? d.topCategorySpent : running
+  })
+  return ensureVariance(data)
+})
+
+const sparklineTransactions = computed(() => {
+  let running = 0
+  const data = sparkData.value.map(d => {
+    running += d.transactions
+    return periodMonths.value.length > 1 ? d.transactions : running
+  })
+  return ensureVariance(data)
+})
 
 // ── Category icon helper ──────────────────────────────────────────────────────
 const categoryIconMap = {
