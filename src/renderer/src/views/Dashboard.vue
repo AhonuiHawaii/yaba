@@ -1,151 +1,142 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Header -->
-    <div class="d-flex flex-wrap align-start justify-space-between gap-4 mb-6">
-      <div>
-        <div class="text-h5 font-weight-bold">Overview</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <p class="text-h5 font-weight-bold mb-1">Overview</p>
+        <p class="text-body-2 text-medium-emphasis mb-0">
           Where your money went · {{ periodLabel }}
-        </div>
-      </div>
-      <div class="d-flex align-center gap-3">
-        <div class="d-flex align-center">
-          <v-btn
-            icon="mdi-chevron-left"
-            variant="text"
-            density="compact"
-            size="small"
-            @click="prevPeriod"
-          />
-          <span class="text-body-2 font-weight-medium mx-2 text-no-wrap">{{ periodLabel }}</span>
-          <v-btn
-            icon="mdi-chevron-right"
-            variant="text"
-            density="compact"
-            size="small"
-            :disabled="isNextPeriodFuture"
-            @click="nextPeriod"
-          />
-        </div>
-        <v-btn-toggle
-          v-model="period"
-          color="primary"
-          mandatory
-          density="compact"
-          rounded="lg"
-          variant="outlined"
-          divided
-        >
-          <v-btn value="month" size="small">Month</v-btn>
-          <v-btn value="quarter" size="small">Quarter</v-btn>
-          <v-btn value="semi" size="small">Semi</v-btn>
-          <v-btn value="annual" size="small">Annual</v-btn>
-        </v-btn-toggle>
-      </div>
-    </div>
+        </p>
+      </v-col>
+      <v-col cols="auto" class="pa-0">
+        <FilterComponent />
+      </v-col>
+    </v-row>
 
-    <v-alert v-if="dashboardError" type="error" variant="tonal" class="mb-5">
+    <v-alert v-if="dashboardError" type="error" variant="tonal" class="mb-5 rounded-xl border">
       {{ dashboardError }}
     </v-alert>
 
     <!-- Stat cards -->
-    <v-row class="mb-4">
+    <v-row class="mb-5">
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
+        <v-card rounded="xl" elevation="0" variant="flat" border hover>
           <v-card-text class="pa-5">
-            <div class="d-flex justify-space-between align-center mb-3">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Income</span
               >
-              <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
-                <v-icon size="18">mdi-arrow-down-thin</v-icon>
+              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-arrow-down-thin</v-icon>
               </v-avatar>
-            </div>
-            <div class="text-h5 font-weight-bold text-success mb-1">
+            </v-row>
+            <p class="text-h4 font-weight-black text-success mb-1">
               {{ formatCurrency(totalIncome) }}
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              of {{ formatCurrency(incomeBudget) }} planned
-            </div>
+            </p>
+            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0">
+              <v-icon size="14" color="success">mdi-check-circle-outline</v-icon>
+              <span>of {{ formatCurrency(incomeBudget) }} planned</span>
+            </p>
           </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
+        <v-card rounded="xl" elevation="0" variant="flat" border hover>
           <v-card-text class="pa-5">
-            <div class="d-flex justify-space-between align-center mb-3">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Spent</span
               >
-              <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
-                <v-icon size="18">mdi-arrow-up-thin</v-icon>
+              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-arrow-up-thin</v-icon>
               </v-avatar>
-            </div>
-            <div class="text-h5 font-weight-bold mb-1">{{ formatCurrency(totalSpending) }}</div>
-            <div class="text-caption text-medium-emphasis">{{ spendPct }}% of income</div>
+            </v-row>
+            <p class="text-h4 font-weight-black mb-1">
+              {{ formatCurrency(totalSpending) }}
+            </p>
+            <p class="text-caption text-medium-emphasis mb-0">
+              <v-progress-linear
+                :model-value="spendPct"
+                color="primary"
+                height="4"
+                rounded
+                class="mb-1"
+              ></v-progress-linear>
+              {{ spendPct }}% of income
+            </p>
           </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
+        <v-card rounded="xl" elevation="0" variant="flat" border hover>
           <v-card-text class="pa-5">
-            <div class="d-flex justify-space-between align-center mb-3">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Left to budget</span
               >
-              <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
-                <v-icon size="18">mdi-view-grid-outline</v-icon>
+              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-view-grid-outline</v-icon>
               </v-avatar>
-            </div>
-            <div class="text-h5 font-weight-bold mb-1">{{ formatCurrency(leftToBudget) }}</div>
-            <div class="text-caption text-medium-emphasis">assign every dollar</div>
+            </v-row>
+            <p class="text-h4 font-weight-black mb-1">
+              {{ formatCurrency(leftToBudget) }}
+            </p>
+            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0">
+              <v-icon size="14">mdi-information-outline</v-icon>
+              <span>assign every dollar</span>
+            </p>
           </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
+        <v-card rounded="xl" elevation="0" variant="flat" border hover>
           <v-card-text class="pa-5">
-            <div class="d-flex justify-space-between align-center mb-3">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Net Worth</span
               >
-              <v-avatar color="primary" variant="tonal" size="34" rounded="lg">
-                <v-icon size="18">mdi-chart-line</v-icon>
+              <v-avatar color="primary" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-chart-line</v-icon>
               </v-avatar>
-            </div>
-            <div class="text-h5 font-weight-bold mb-1">{{ formatCurrency(netCash) }}</div>
-            <div class="text-caption text-medium-emphasis d-flex align-center gap-1">
-              <v-icon size="12" :color="netPeriodChange >= 0 ? 'success' : 'error'">
-                {{ netPeriodChange >= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
+            </v-row>
+            <p class="text-h4 font-weight-black mb-1">
+              {{ formatCurrency(netCash) }}
+            </p>
+            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0">
+              <v-icon size="16" :color="netPeriodChange >= 0 ? 'success' : 'error'">
+                {{ netPeriodChange >= 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}
               </v-icon>
-              {{ formatCurrency(Math.abs(netPeriodChange)) }} this period
-            </div>
+              <span :class="netPeriodChange >= 0 ? 'text-success' : 'text-error'">
+                {{ formatCurrency(Math.abs(netPeriodChange)) }}
+              </span>
+              <span>this period</span>
+            </p>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
     <!-- Spending chart + Top categories -->
-    <v-row class="mb-4">
+    <v-row class="mb-5">
       <v-col cols="12" lg="7">
-        <v-card rounded="lg" elevation="0" border class="h-100">
+        <v-card rounded="xl" elevation="0" variant="flat" border hover class="h-100">
           <v-card-item class="pa-5 pb-0">
             <v-card-title class="text-body-1 font-weight-bold">Spending vs budget</v-card-title>
             <template #append>
               <v-chip size="x-small" variant="tonal">Last 6 months</v-chip>
             </template>
           </v-card-item>
-          <div style="height: 220px; padding: 8px 16px 12px">
+          <v-card-text class="px-4 pb-3 pt-2" style="height: 220px">
             <Line :data="spendChartData" :options="spendChartOptions" />
-          </div>
+          </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" lg="5">
-        <v-card rounded="lg" elevation="0" border class="h-100">
+        <v-card rounded="xl" elevation="0" variant="flat" border hover class="h-100">
           <v-card-item class="pa-5 pb-3">
             <v-card-title class="text-body-1 font-weight-bold">Top categories</v-card-title>
           </v-card-item>
@@ -157,12 +148,12 @@
               <tbody>
                 <tr v-for="cat in topCategories" :key="cat.id">
                   <td class="py-3">
-                    <div class="d-flex justify-space-between mb-2">
+                    <v-row no-gutters class="mb-2 align-center justify-space-between">
                       <span class="text-body-2">{{ cat.name }}</span>
                       <span class="text-body-2 font-weight-medium">{{
                         formatCurrency(cat.amount)
                       }}</span>
-                    </div>
+                    </v-row>
                     <v-progress-linear
                       :model-value="cat.progress"
                       :color="cat.over ? 'error' : 'primary'"
@@ -180,9 +171,9 @@
     </v-row>
 
     <!-- Needs review + Upcoming bills -->
-    <v-row>
+    <v-row class="mb-5">
       <v-col cols="12" lg="7">
-        <v-card rounded="lg" elevation="0" border>
+        <v-card rounded="xl" elevation="0" variant="flat" border hover class="h-100">
           <v-card-item class="pa-5 pb-2">
             <v-card-title class="text-body-1 font-weight-bold">Needs review</v-card-title>
             <template #append>
@@ -197,19 +188,22 @@
               </v-btn>
             </template>
           </v-card-item>
-          <div v-if="needsReview.length === 0" class="px-5 pb-5 text-body-2 text-medium-emphasis">
+          <p
+            v-if="needsReview.length === 0"
+            class="px-5 pb-5 text-body-2 text-medium-emphasis mb-0"
+          >
             All transactions are categorized.
-          </div>
+          </p>
           <v-table v-else hover density="compact">
             <tbody>
               <tr v-for="tx in needsReview" :key="tx.FITID">
                 <td class="py-2">
-                  <div class="text-body-2 font-weight-medium">
+                  <p class="text-body-2 font-weight-medium mb-0">
                     {{ tx.NAME || tx.MEMO || tx.FITID }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
+                  </p>
+                  <p class="text-caption text-medium-emphasis mb-0">
                     {{ formatTransactionDate(tx.DTPOSTED) }}
-                  </div>
+                  </p>
                 </td>
                 <td class="text-right py-2">
                   <v-chip size="x-small" variant="outlined">
@@ -231,13 +225,16 @@
       </v-col>
 
       <v-col cols="12" lg="5">
-        <v-card rounded="lg" elevation="0" border>
+        <v-card rounded="xl" elevation="0" variant="flat" border hover class="h-100">
           <v-card-item class="pa-5 pb-2">
             <v-card-title class="text-body-1 font-weight-bold">Upcoming bills</v-card-title>
+            <template #append>
+              <v-chip size="x-small" variant="tonal" color="primary">Next 7 days</v-chip>
+            </template>
           </v-card-item>
-          <div v-if="soonItems.length === 0" class="px-5 pb-5 text-body-2 text-medium-emphasis">
+          <p v-if="soonItems.length === 0" class="px-5 pb-5 text-body-2 text-medium-emphasis mb-0">
             No upcoming bills in the next 7 days.
-          </div>
+          </p>
           <v-table v-else hover density="compact">
             <tbody>
               <tr v-for="item in soonItems" :key="item.name">
@@ -247,10 +244,10 @@
                   </v-avatar>
                 </td>
                 <td class="py-2">
-                  <div class="text-body-2 font-weight-medium">{{ item.name }}</div>
-                  <div class="text-caption text-medium-emphasis">
+                  <p class="text-body-2 font-weight-medium mb-0">{{ item.name }}</p>
+                  <p class="text-caption text-medium-emphasis mb-0">
                     Due {{ formatDueDate(item.days) }}
-                  </div>
+                  </p>
                 </td>
                 <td class="text-right py-2">
                   <span class="text-body-2 font-weight-medium">{{
@@ -268,6 +265,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import FilterComponent from '../components/filterComponent.vue'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -311,8 +309,8 @@ const recurringTransactions = ref([])
 
 // ── Period navigation ─────────────────────────────────────────────────────────
 const _pf = usePeriodFilter()
-const { period, periodStart, periodMonths, periodLabel, isNextPeriodFuture } = storeToRefs(_pf)
-const { prevPeriod, nextPeriod, currentMonthValue, offsetMonth } = _pf
+const { periodStart, periodMonths, periodLabel } = storeToRefs(_pf)
+const { currentMonthValue, offsetMonth } = _pf
 
 // ── Period bounds ─────────────────────────────────────────────────────────────
 const periodBounds = computed(() => {
