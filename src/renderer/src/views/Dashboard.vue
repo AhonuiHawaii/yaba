@@ -33,6 +33,18 @@
             <p class="text-h4 font-weight-black text-success mb-1">
               {{ formatCurrency(totalIncome) }}
             </p>
+            <div style="height: 40px" class="mt-n2 mb-2">
+              <v-sparkline
+                :fill="true"
+                :gradient="gradient[1]"
+                :color="sparklineLineColor"
+                :line-width="2"
+                :model-value="sparklineIncome"
+                :padding="2"
+                :smooth="16"
+                auto-draw
+              ></v-sparkline>
+            </div>
             <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0">
               <v-icon size="14" color="success">mdi-check-circle-outline</v-icon>
               <span>of {{ formatCurrency(incomeBudget) }} planned</span>
@@ -132,7 +144,7 @@
           <v-card-text class="px-4 pb-3 pt-2">
             <v-sparkline
               :fill="true"
-              :gradient="sparklineGradient"
+              :gradient="gradient[0]"
               :color="sparklineLineColor"
               :line-width="1"
               :model-value="sparklineSpending"
@@ -441,11 +453,11 @@ const hexToRgba = (hex, alpha) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-const sparklineGradient = computed(() => {
-  const c2 = theme.current.value.colors.primary
-  const c1 = theme.current.value.colors['primary-container']
-  return [c1, c2]
-})
+const gradient = [
+  [theme.current.value.colors.primary, theme.current.value.colors['primary-container']],
+  [theme.current.value.colors.success, theme.current.value.colors['success-container']],
+  [theme.current.value.colors.info, theme.current.value.colors['info-container']]
+]
 
 const sparklineLineColor = computed(() => (theme.current.value.dark ? 'white' : 'black'))
 
@@ -460,18 +472,21 @@ const chartData = computed(() => {
       points.push({
         key: m,
         label: new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'short' }),
-        spending: 0
+        spending: 0,
+        income: 0
       })
     }
 
     for (const t of currentTransactions.value) {
-      if (Number(t.TRNAMT) < 0) {
-        const s = String(t.DTPOSTED || '')
-        if (s.length >= 6) {
-          const monthKey = s.slice(0, 6)
-          const p = points.find((pt) => pt.key === monthKey)
-          if (p) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 6) {
+        const monthKey = s.slice(0, 6)
+        const p = points.find((pt) => pt.key === monthKey)
+        if (p) {
+          if (Number(t.TRNAMT) < 0) {
             p.spending += Math.abs(Number(t.TRNAMT))
+          } else {
+            p.income += Number(t.TRNAMT)
           }
         }
       }
@@ -484,29 +499,32 @@ const chartData = computed(() => {
       points.push({
         date: new Date(current),
         label: current.getDate().toString(),
-        spending: 0
+        spending: 0,
+        income: 0
       })
       current.setDate(current.getDate() + 1)
     }
 
     for (const t of currentTransactions.value) {
-      if (Number(t.TRNAMT) < 0) {
-        const s = String(t.DTPOSTED || '')
-        if (s.length >= 8) {
-          const tDate = new Date(
-            parseInt(s.slice(0, 4)),
-            parseInt(s.slice(4, 6)) - 1,
-            parseInt(s.slice(6, 8))
-          )
-          const dayIndex = points.findIndex(
-            (d) =>
-              d.date &&
-              d.date.getFullYear() === tDate.getFullYear() &&
-              d.date.getMonth() === tDate.getMonth() &&
-              d.date.getDate() === tDate.getDate()
-          )
-          if (dayIndex !== -1) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 8) {
+        const tDate = new Date(
+          parseInt(s.slice(0, 4)),
+          parseInt(s.slice(4, 6)) - 1,
+          parseInt(s.slice(6, 8))
+        )
+        const dayIndex = points.findIndex(
+          (d) =>
+            d.date &&
+            d.date.getFullYear() === tDate.getFullYear() &&
+            d.date.getMonth() === tDate.getMonth() &&
+            d.date.getDate() === tDate.getDate()
+        )
+        if (dayIndex !== -1) {
+          if (Number(t.TRNAMT) < 0) {
             points[dayIndex].spending += Math.abs(Number(t.TRNAMT))
+          } else {
+            points[dayIndex].income += Number(t.TRNAMT)
           }
         }
       }
@@ -517,6 +535,7 @@ const chartData = computed(() => {
 
 const sparklineViewType = computed(() => (periodMonths.value.length > 1 ? 'Monthly' : 'Daily'))
 const sparklineSpending = computed(() => chartData.value.map((d) => d.spending))
+const sparklineIncome = computed(() => chartData.value.map((d) => d.income))
 const sparklineBudget = computed(() => last6MonthlyTotals.value.map((m) => m.budget))
 
 // ── Accounts ──────────────────────────────────────────────────────────────────
