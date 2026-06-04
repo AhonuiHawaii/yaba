@@ -9,13 +9,19 @@
     </div>
 
     <!-- Stepper -->
-    <v-stepper v-model="step" :items="STEPS" rounded="xl" elevation="0" bg-color="transparent">
+    <v-stepper
+      v-model="step"
+      :items="STEPS"
+      rounded="xl"
+      elevation="0"
+      bg-color="primary-container"
+    >
       <!-- STEP 1: UPLOAD -->
       <template #item.1>
         <v-card-text class="pa-8">
           <v-card
             variant="outlined"
-            class="upload-zone d-flex flex-column align-center justify-center pa-10 rounded-xl bg-surface"
+            class="upload-zone d-flex flex-column align-center justify-center pa-10 rounded bg-surface"
             :class="{ 'is-dragging': isDragging, 'has-files': selectedFiles.length }"
             @dragover.prevent="isDragging = true"
             @dragleave.prevent="isDragging = false"
@@ -88,7 +94,10 @@
                 hide-details
                 color="primary"
               />
-              <div v-if="!m.targetAcctId" class="text-caption text-success mt-1 d-flex align-center">
+              <div
+                v-if="!m.targetAcctId"
+                class="text-caption text-success mt-1 d-flex align-center"
+              >
                 <v-icon size="14" start>mdi-plus-circle-outline</v-icon>
                 Will create new account and auto-calculate starting balance
               </div>
@@ -102,14 +111,16 @@
         <v-card-text class="pa-6">
           <div v-if="totalExactDuplicates > 0" class="mb-6">
             <v-alert type="success" variant="tonal" class="rounded-lg">
-              Skipping <strong>{{ totalExactDuplicates }}</strong> exact duplicate transactions that were already imported.
+              Skipping <strong>{{ totalExactDuplicates }}</strong> exact duplicate transactions that
+              were already imported.
             </v-alert>
           </div>
 
           <div v-if="allFuzzyDuplicates.length > 0">
             <div class="text-h6 font-weight-bold mb-2">Fuzzy Duplicates Found</div>
             <div class="text-body-2 text-medium-emphasis mb-6">
-              These transactions have the exact same amount and are within 3 days of existing transactions. Bank IDs often change from Pending to Posted. Review them carefully.
+              These transactions have the exact same amount and are within 3 days of existing
+              transactions. Bank IDs often change from Pending to Posted. Review them carefully.
             </div>
 
             <v-card
@@ -120,19 +131,39 @@
             >
               <v-row no-gutters class="bg-surface-variant">
                 <v-col cols="6" class="pa-3 border-e">
-                  <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">Existing Transaction</div>
-                  <div class="font-weight-medium">{{ group.existing.NAME || group.existing.MEMO }}</div>
+                  <div
+                    class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2"
+                  >
+                    Existing Transaction
+                  </div>
+                  <div class="font-weight-medium">
+                    {{ group.existing.NAME || group.existing.MEMO }}
+                  </div>
                   <div class="d-flex justify-space-between text-body-2 mt-1">
-                    <span class="text-medium-emphasis">{{ formatDateShort(group.existing.DTPOSTED) }}</span>
-                    <span class="font-weight-bold">{{ formatCurrency(group.existing.TRNAMT) }}</span>
+                    <span class="text-medium-emphasis">{{
+                      formatDateShort(group.existing.DTPOSTED)
+                    }}</span>
+                    <span class="font-weight-bold">{{
+                      formatCurrency(group.existing.TRNAMT)
+                    }}</span>
                   </div>
                 </v-col>
                 <v-col cols="6" class="pa-3">
-                  <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">New Import</div>
-                  <div class="font-weight-medium">{{ group.imported.NAME || group.imported.MEMO }}</div>
+                  <div
+                    class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2"
+                  >
+                    New Import
+                  </div>
+                  <div class="font-weight-medium">
+                    {{ group.imported.NAME || group.imported.MEMO }}
+                  </div>
                   <div class="d-flex justify-space-between text-body-2 mt-1">
-                    <span class="text-medium-emphasis">{{ formatDateShort(group.imported.DTPOSTED) }}</span>
-                    <span class="font-weight-bold">{{ formatCurrency(group.imported.TRNAMT) }}</span>
+                    <span class="text-medium-emphasis">{{
+                      formatDateShort(group.imported.DTPOSTED)
+                    }}</span>
+                    <span class="font-weight-bold">{{
+                      formatCurrency(group.imported.TRNAMT)
+                    }}</span>
                   </div>
                 </v-col>
               </v-row>
@@ -141,7 +172,9 @@
                 <v-btn
                   color="primary"
                   size="small"
-                  :variant="fuzzyResolutions[group.imported.FITID] === 'import' ? 'flat' : 'outlined'"
+                  :variant="
+                    fuzzyResolutions[group.imported.FITID] === 'import' ? 'flat' : 'outlined'
+                  "
                   @click="fuzzyResolutions[group.imported.FITID] = 'import'"
                 >
                   Import as New
@@ -181,9 +214,9 @@
                   </v-avatar>
                 </div>
                 <div class="text-body-1 font-weight-medium">Transactions Auto-Categorized</div>
-                
+
                 <v-divider class="my-4" />
-                
+
                 <div class="d-flex flex-wrap gap-2">
                   <v-chip v-if="totalBills > 0" color="warning" size="small" variant="flat">
                     <v-icon start>mdi-receipt-text</v-icon> {{ totalBills }} Bills
@@ -201,15 +234,29 @@
             <!-- Bulk Cleanup Wizard -->
             <v-col cols="12" md="7">
               <div class="text-h6 font-weight-bold mb-4">Bulk Clean Up</div>
-              
-              <div v-if="Object.keys(groupedUncategorized).length === 0" class="text-center pa-8 bg-surface rounded-xl border">
+
+              <div
+                v-if="Object.keys(groupedUncategorized).length === 0"
+                class="text-center pa-8 bg-surface rounded-xl border"
+              >
                 <v-icon size="48" color="success" class="mb-4">mdi-party-popper</v-icon>
                 <div class="text-h6 font-weight-bold">Everything is categorized!</div>
-                <div class="text-body-2 text-medium-emphasis">No uncategorized transactions remaining.</div>
+                <div class="text-body-2 text-medium-emphasis">
+                  No uncategorized transactions remaining.
+                </div>
               </div>
 
               <div v-else>
-                <v-card
+                <div v-if="!showBulkCleanupList" class="text-center pa-8 bg-surface rounded-xl border">
+                  <v-icon size="48" color="primary" class="mb-4">mdi-broom</v-icon>
+                  <div class="text-h6 font-weight-bold">{{ Object.keys(groupedUncategorized).length }} groups need categories</div>
+                  <div class="text-body-2 text-medium-emphasis mb-4">Adding categories is optional, but it helps keep your budget organized.</div>
+                  <v-btn color="primary" variant="flat" @click="showBulkCleanupList = true">
+                    Review Uncategorized
+                  </v-btn>
+                </div>
+                <template v-else>
+                  <v-card
                   v-for="(group, name) in groupedUncategorized"
                   :key="name"
                   variant="outlined"
@@ -222,8 +269,13 @@
                         {{ group.count }} txns
                       </v-chip>
                     </div>
-                    
-                    <div class="d-flex align-center gap-3 mt-3">
+
+                    <div v-if="!group.showCategory" class="mt-3">
+                      <v-btn variant="text" size="small" color="primary" @click="group.showCategory = true">
+                        + Assign Category
+                      </v-btn>
+                    </div>
+                    <div v-else class="d-flex align-center gap-3 mt-3">
                       <v-select
                         v-model="group.categoryId"
                         :items="categoryOptions"
@@ -235,6 +287,7 @@
                         hide-details
                         class="rounded-lg flex-1"
                         color="primary"
+                        autofocus
                       />
                       <template v-if="group.categoryId">
                         <v-checkbox
@@ -258,6 +311,7 @@
                     </div>
                   </div>
                 </v-card>
+                </template>
               </div>
             </v-col>
           </v-row>
@@ -269,40 +323,73 @@
         <v-card-text class="pa-6">
           <div class="text-center mb-8">
             <div class="text-h5 font-weight-bold">Ready to Import</div>
-            <div class="text-body-2 text-medium-emphasis">Review your final account balances before saving.</div>
+            <div class="text-body-2 text-medium-emphasis">
+              Review your final account balances before saving.
+            </div>
           </div>
 
           <v-row justify="center">
             <v-col cols="12" md="8">
-              <v-card v-for="(p, i) in previewResults" :key="i" variant="outlined" class="rounded-xl pa-5 mb-4 border bg-surface">
+              <v-card
+                v-for="(p, i) in previewResults"
+                :key="i"
+                variant="outlined"
+                class="rounded-xl pa-5 mb-4 border bg-surface"
+              >
                 <div class="d-flex align-center justify-space-between mb-4">
                   <div class="text-h6 font-weight-bold">{{ accountLabel(p.accountId) }}</div>
-                  <v-chip color="primary" variant="flat">Importing {{ p.rulesApplied.length + p.uncategorized.length }} txns</v-chip>
+                  <v-chip color="primary" variant="flat"
+                    >Importing {{ p.rulesApplied.length + p.uncategorized.length }} txns</v-chip
+                  >
                 </div>
-                
-                <div v-if="p.ledgerBalance && p.ledgerBalance.BALAMT" class="bg-surface-variant rounded-lg pa-4">
+
+                <div
+                  v-if="p.ledgerBalance && p.ledgerBalance.BALAMT"
+                  class="bg-surface-variant rounded-lg pa-4"
+                >
                   <div class="d-flex justify-space-between align-center mb-2">
-                    <span class="text-body-2 text-medium-emphasis">App Balance (After Import):</span>
-                    <span class="font-weight-bold text-h6">{{ formatCurrency(p.dbBalance + sumImporting(p)) }}</span>
+                    <span class="text-body-2 text-medium-emphasis"
+                      >App Balance (After Import):</span
+                    >
+                    <span class="font-weight-bold text-h6">{{
+                      formatCurrency(p.dbBalance + sumImporting(p))
+                    }}</span>
                   </div>
                   <div class="d-flex justify-space-between align-center mb-4">
                     <span class="text-body-2 text-medium-emphasis">
                       Bank Balance (As of {{ formatDateShort(p.ledgerBalance.DTASOF) }}):
                     </span>
-                    <span class="font-weight-bold text-h6">{{ formatCurrency(p.ledgerBalance.BALAMT) }}</span>
+                    <span class="font-weight-bold text-h6">{{
+                      formatCurrency(p.ledgerBalance.BALAMT)
+                    }}</span>
                   </div>
-                  
-                  <v-alert v-if="Math.abs((p.dbBalance + sumImporting(p)) - Number(p.ledgerBalance.BALAMT)) < 0.01" type="success" variant="flat" class="font-weight-bold rounded-lg text-center">
+
+                  <v-alert
+                    v-if="
+                      Math.abs(p.dbBalance + sumImporting(p) - Number(p.ledgerBalance.BALAMT)) <
+                      0.01
+                    "
+                    type="success"
+                    variant="flat"
+                    class="font-weight-bold rounded-lg text-center"
+                  >
                     <v-icon start>mdi-check-circle</v-icon> Reconciled Perfectly!
                   </v-alert>
                   <v-alert v-else type="warning" variant="tonal" class="rounded-lg">
-                    Discrepancy of <strong>{{ formatCurrency(Math.abs((p.dbBalance + sumImporting(p)) - Number(p.ledgerBalance.BALAMT))) }}</strong>. You may be missing historical transactions.
+                    Discrepancy of
+                    <strong>{{
+                      formatCurrency(
+                        Math.abs(p.dbBalance + sumImporting(p) - Number(p.ledgerBalance.BALAMT))
+                      )
+                    }}</strong
+                    >. You may be missing historical transactions.
                   </v-alert>
                 </div>
                 <div v-else class="text-center pa-6 bg-surface-variant rounded-lg">
                   <v-icon size="32" color="medium-emphasis" class="mb-2">mdi-bank-off</v-icon>
                   <div class="text-body-2 text-medium-emphasis">
-                    Bank did not provide a ledger balance for this account, so we cannot verify reconciliation.
+                    Bank did not provide a ledger balance for this account, so we cannot verify
+                    reconciliation.
                   </div>
                 </div>
               </v-card>
@@ -316,24 +403,64 @@
         <v-card-actions class="pa-6 pt-0">
           <v-btn v-if="step > 1" variant="text" size="large" @click="step--">Back</v-btn>
           <v-spacer />
-          
-          <v-btn v-if="step === 1" color="primary" variant="flat" size="large" rounded="lg" :disabled="!selectedFiles.length" :loading="parsing" @click="doParse">
+
+          <v-btn
+            v-if="step === 1"
+            color="primary"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            :disabled="!selectedFiles.length"
+            :loading="parsing"
+            @click="doParse"
+          >
             Match Accounts <v-icon end>mdi-arrow-right</v-icon>
           </v-btn>
 
-          <v-btn v-else-if="step === 2" color="primary" variant="flat" size="large" rounded="lg" :loading="fetchingPreview" @click="goToDuplicates">
+          <v-btn
+            v-else-if="step === 2"
+            color="primary"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            :loading="fetchingPreview"
+            @click="goToDuplicates"
+          >
             Check Duplicates <v-icon end>mdi-arrow-right</v-icon>
           </v-btn>
 
-          <v-btn v-else-if="step === 3" color="primary" variant="flat" size="large" rounded="lg" :loading="fetchingPreview" @click="goToRules">
+          <v-btn
+            v-else-if="step === 3"
+            color="primary"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            :loading="fetchingPreview"
+            @click="goToRules"
+          >
             Review Rules & Cleanup <v-icon end>mdi-arrow-right</v-icon>
           </v-btn>
-          
-          <v-btn v-else-if="step === 4" color="primary" variant="flat" size="large" rounded="lg" @click="step = 5">
+
+          <v-btn
+            v-else-if="step === 4"
+            color="primary"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            @click="step = 5"
+          >
             Next: Finalize <v-icon end>mdi-arrow-right</v-icon>
           </v-btn>
-          
-          <v-btn v-else-if="step === 5" color="success" variant="flat" size="large" rounded="lg" :loading="importing" @click="doImport">
+
+          <v-btn
+            v-else-if="step === 5"
+            color="success"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            :loading="importing"
+            @click="doImport"
+          >
             Complete Import <v-icon end>mdi-check</v-icon>
           </v-btn>
         </v-card-actions>
@@ -372,6 +499,7 @@ const parseError = ref(null)
 const parsing = ref(false)
 const fetchingPreview = ref(false)
 const importing = ref(false)
+const showBulkCleanupList = ref(false)
 
 const fileInput = ref(null)
 
@@ -443,13 +571,12 @@ async function doParse() {
       if (!res.success) throw new Error(res.error || 'Failed to parse OFX file.')
 
       const acctData = res.data.account
-      
+
       let matchedTarget = null
       if (acctData && acctData.ACCTID) {
         const last4 = acctData.ACCTID.replace(/[^a-zA-Z0-9]/g, '')
-        matchedTarget = accountsStore.accounts.find(
-          (a) => a.ACCTID && a.ACCTID.endsWith(last4)
-        )?.ACCTID || null
+        matchedTarget =
+          accountsStore.accounts.find((a) => a.ACCTID && a.ACCTID.endsWith(last4))?.ACCTID || null
       }
 
       newMappings.push({
@@ -472,18 +599,20 @@ async function doParse() {
 async function goToDuplicates() {
   fetchingPreview.value = true
   try {
-    const batchData = mappings.value.map(m => ({
+    const batchData = mappings.value.map((m) => ({
       ofxText: rawOfxData.value[m.filename],
       targetAcctId: m.targetAcctId
     }))
-    
+
     // We pass any current fuzzy skip choices to the preview API
-    const skips = Object.keys(fuzzyResolutions.value).filter(id => fuzzyResolutions.value[id] === 'skip')
-    
+    const skips = Object.keys(fuzzyResolutions.value).filter(
+      (id) => fuzzyResolutions.value[id] === 'skip'
+    )
+
     const res = await ipc.invoke('ofx:previewImportBatch', batchData, skips)
     if (res.success) {
       previewResults.value = res.data
-      
+
       // Initialize fuzzy resolutions state
       for (const pr of previewResults.value) {
         for (const fd of pr.fuzzyDuplicates) {
@@ -492,7 +621,7 @@ async function goToDuplicates() {
           }
         }
       }
-      
+
       step.value = 3
     } else {
       throw new Error(res.error)
@@ -506,7 +635,7 @@ async function goToDuplicates() {
 }
 
 const allFuzzyDuplicates = computed(() => {
-  return previewResults.value.flatMap(p => p.fuzzyDuplicates)
+  return previewResults.value.flatMap((p) => p.fuzzyDuplicates)
 })
 
 const totalExactDuplicates = computed(() => {
@@ -515,7 +644,7 @@ const totalExactDuplicates = computed(() => {
 
 async function goToRules() {
   // We need to re-fetch preview because fuzzy resolutions might have changed
-  await goToDuplicates() 
+  await goToDuplicates()
   buildGroupedUncategorized()
   step.value = 4
 }
@@ -526,19 +655,19 @@ const totalRulesApplied = computed(() => {
 
 const totalBills = computed(() => {
   return previewResults.value.reduce((s, p) => {
-    return s + p.rulesApplied.filter(t => t.patch && t.patch.bill).length
+    return s + p.rulesApplied.filter((t) => t.patch && t.patch.bill).length
   }, 0)
 })
 
 const totalSubs = computed(() => {
   return previewResults.value.reduce((s, p) => {
-    return s + p.rulesApplied.filter(t => t.patch && t.patch.subscription).length
+    return s + p.rulesApplied.filter((t) => t.patch && t.patch.subscription).length
   }, 0)
 })
 
 const totalDebt = computed(() => {
   return previewResults.value.reduce((s, p) => {
-    return s + p.rulesApplied.filter(t => t.patch && t.patch.linkAccount).length
+    return s + p.rulesApplied.filter((t) => t.patch && t.patch.linkAccount).length
   }, 0)
 })
 
@@ -547,7 +676,15 @@ function buildGroupedUncategorized() {
   for (const pr of previewResults.value) {
     for (const u of pr.uncategorized) {
       const n = u.cleanName || u.NAME
-      if (!groups[n]) groups[n] = { count: 0, sampleAmt: u.TRNAMT, categoryId: null, retroactive: false, loading: false }
+      if (!groups[n])
+        groups[n] = {
+          count: 0,
+          sampleAmt: u.TRNAMT,
+          categoryId: null,
+          retroactive: false,
+          loading: false,
+          showCategory: false
+        }
       groups[n].count++
     }
   }
@@ -556,7 +693,7 @@ function buildGroupedUncategorized() {
 
 // We need a flattened category list for the dropdown
 const categoryOptions = computed(() => {
-  return categoriesStore.categories.map(cat => ({
+  return categoriesStore.categories.map((cat) => ({
     title: cat.name,
     value: cat.id
   }))
@@ -567,18 +704,14 @@ async function applyBulkRule(name, groupState) {
   try {
     const rule = {
       name: `Auto: ${name}`,
-      criteria: [
-        { field: 'NAME', operator: 'contains', value: name }
-      ],
-      actions: [
-        { type: 'category', value: groupState.categoryId }
-      ]
+      criteria: [{ field: 'NAME', operator: 'contains', value: name }],
+      actions: [{ type: 'category', value: groupState.categoryId }]
     }
-    
+
     // Create rule in DB
     const res = await ipc.invoke('rules:create', rule, groupState.retroactive)
     if (!res.success) throw new Error(res.error)
-    
+
     // Refresh memory pipeline
     await rulesStore.fetchRules()
     await goToDuplicates()
@@ -614,13 +747,15 @@ function formatDateShort(dt) {
 async function doImport() {
   importing.value = true
   try {
-    const batchData = mappings.value.map(m => ({
+    const batchData = mappings.value.map((m) => ({
       ofxText: rawOfxData.value[m.filename],
       targetAcctId: m.targetAcctId
     }))
-    
-    const skips = Object.keys(fuzzyResolutions.value).filter(id => fuzzyResolutions.value[id] === 'skip')
-    
+
+    const skips = Object.keys(fuzzyResolutions.value).filter(
+      (id) => fuzzyResolutions.value[id] === 'skip'
+    )
+
     const res = await ipc.invoke('ofx:importBatch', batchData, skips)
     if (res.success) {
       await accountsStore.fetchAccounts()
@@ -643,7 +778,8 @@ async function doImport() {
   transition: all 0.2s ease;
   cursor: pointer;
 }
-.upload-zone:hover, .upload-zone.is-dragging {
+.upload-zone:hover,
+.upload-zone.is-dragging {
   background-color: rgba(var(--v-theme-primary), 0.08);
 }
 .upload-zone.has-files {
