@@ -9,7 +9,6 @@ const ipc = window.electron.ipcRenderer
 /** Account types treated as assets by default (when accountCategory is not set). */
 export const ASSET_TYPES = new Set(['Checking', 'Savings', 'Money Market'])
 
-
 /**
  * Resolve whether a single account row should be treated as an asset,
  * honouring the explicit accountCategory override when present.

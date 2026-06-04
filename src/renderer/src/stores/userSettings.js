@@ -49,7 +49,6 @@ const DEFAULT_DECIMAL_PLACES = '2'
 const DATE_FORMAT_KEY = 'budget.dateFormat'
 const DEFAULT_DATE_FORMAT = 'MM/DD/YYYY'
 
-
 export const useUserSettingsStore = defineStore('userSettings', () => {
   const theme = ref(localStorage.getItem(THEME_KEY) || DEFAULT_THEME)
   const currency = ref(localStorage.getItem(CURRENCY_KEY) || DEFAULT_CURRENCY)

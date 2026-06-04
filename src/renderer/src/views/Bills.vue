@@ -74,7 +74,9 @@
                   <!-- Bill name -->
                   <div class="d-flex align-center ga-3">
                     <div class="min-width-0">
-                      <div class="text-body-2 font-weight-medium text-truncate">{{ bill.name }}</div>
+                      <div class="text-body-2 font-weight-medium text-truncate">
+                        {{ bill.name }}
+                      </div>
                       <div class="text-caption text-medium-emphasis">Monthly</div>
                     </div>
                   </div>
@@ -87,7 +89,8 @@
                       variant="tonal"
                       color="teal"
                       rounded="sm"
-                    >{{ categoryName(bill.category) }}</v-chip>
+                      >{{ categoryName(bill.category) }}</v-chip
+                    >
                     <span v-else class="text-caption text-medium-emphasis">—</span>
                   </div>
 
@@ -99,7 +102,11 @@
                   <!-- Due date with picker -->
                   <div class="d-flex align-center ga-1">
                     <span class="text-body-2 text-medium-emphasis">
-                      {{ editingKey === bill.name && editingDate ? formatEditDate(editingDate) : bill.nextDueLabel }}
+                      {{
+                        editingKey === bill.name && editingDate
+                          ? formatEditDate(editingDate)
+                          : bill.nextDueLabel
+                      }}
                     </span>
                     <v-btn
                       v-if="editingKey !== bill.name"
@@ -123,7 +130,9 @@
                         <v-date-picker v-model="editingDate" hide-header>
                           <template #actions>
                             <v-btn variant="text" @click="pickerOpen = false">Cancel</v-btn>
-                            <v-btn color="primary" variant="flat" @click="pickerOpen = false">OK</v-btn>
+                            <v-btn color="primary" variant="flat" @click="pickerOpen = false"
+                              >OK</v-btn
+                            >
                           </template>
                         </v-date-picker>
                       </v-menu>
@@ -145,13 +154,24 @@
 
                   <!-- Amount -->
                   <div class="text-right">
-                    <span class="text-body-2 font-weight-bold">{{ formatCurrency(bill.typicalAmount) }}</span>
+                    <span class="text-body-2 font-weight-bold">{{
+                      formatCurrency(bill.typicalAmount)
+                    }}</span>
                   </div>
 
                   <!-- Status -->
                   <div>
-                    <v-chip v-if="bill.isPaid" size="x-small" color="success" variant="flat" rounded="sm">Paid</v-chip>
-                    <v-chip v-else size="x-small" color="primary" variant="flat" rounded="sm">Upcoming</v-chip>
+                    <v-chip
+                      v-if="bill.isPaid"
+                      size="x-small"
+                      color="success"
+                      variant="flat"
+                      rounded="sm"
+                      >Paid</v-chip
+                    >
+                    <v-chip v-else size="x-small" color="primary" variant="flat" rounded="sm"
+                      >Upcoming</v-chip
+                    >
                   </div>
                 </div>
                 <v-divider v-if="i < billItems.length - 1" />
@@ -336,7 +356,9 @@ async function commitDueDate(bill) {
     const iso = editingDate.value.toISOString().slice(0, 10)
     dueDateOverrides.value = { ...dueDateOverrides.value, [bill.name]: iso }
     const dueDateInt = parseInt(iso.replace(/-/g, ''), 10)
-    await window.electron.ipcRenderer.invoke('transactions:edit', bill.lastFITID, { dueDate: dueDateInt })
+    await window.electron.ipcRenderer.invoke('transactions:edit', bill.lastFITID, {
+      dueDate: dueDateInt
+    })
   }
   editingKey.value = null
   editingDate.value = null
@@ -373,7 +395,15 @@ const billGroups = computed(() => {
 
     const key = tx.NAME || 'Unknown'
     if (!map.has(key)) {
-      map.set(key, { name: key, amounts: [], days: [], months: new Set(), category: tx.category, lastPosted: null, lastFITID: null })
+      map.set(key, {
+        name: key,
+        amounts: [],
+        days: [],
+        months: new Set(),
+        category: tx.category,
+        lastPosted: null,
+        lastFITID: null
+      })
     }
     const g = map.get(key)
     const amt = Math.abs(Number(tx.TRNAMT))
@@ -423,10 +453,23 @@ const billGroups = computed(() => {
         const y = parseInt(g.lastPosted.slice(0, 4), 10)
         const mo = parseInt(g.lastPosted.slice(4, 6), 10) - 1
         const d = parseInt(g.lastPosted.slice(6, 8), 10)
-        lastPaidLabel = new Date(y, mo, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        lastPaidLabel = new Date(y, mo, d).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        })
       }
 
-      return { name: g.name, category: g.category, typicalAmount, typicalDay, isPaid, nextDueLabel, nextCharge, lastPaidLabel, lastFITID: g.lastFITID }
+      return {
+        name: g.name,
+        category: g.category,
+        typicalAmount,
+        typicalDay,
+        isPaid,
+        nextDueLabel,
+        nextCharge,
+        lastPaidLabel,
+        lastFITID: g.lastFITID
+      }
     })
     .sort((a, b) => {
       if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1
@@ -448,9 +491,24 @@ const summaryCards = computed(() => {
   const paidCount = billItems.value.filter((b) => b.isPaid).length
   const upcomingCount = billItems.value.filter((b) => !b.isPaid).length
   return [
-    { title: 'Due this month', value: formatCurrency(totalDue.value), subtitle: `${billItems.value.length} bill${billItems.value.length !== 1 ? 's' : ''}`, valueClass: '' },
-    { title: 'Paid', value: formatCurrency(totalPaid.value), subtitle: `${paidCount} paid`, valueClass: 'text-success' },
-    { title: 'Upcoming', value: formatCurrency(totalUpcoming.value), subtitle: `${upcomingCount} remaining`, valueClass: '' }
+    {
+      title: 'Due this month',
+      value: formatCurrency(totalDue.value),
+      subtitle: `${billItems.value.length} bill${billItems.value.length !== 1 ? 's' : ''}`,
+      valueClass: ''
+    },
+    {
+      title: 'Paid',
+      value: formatCurrency(totalPaid.value),
+      subtitle: `${paidCount} paid`,
+      valueClass: 'text-success'
+    },
+    {
+      title: 'Upcoming',
+      value: formatCurrency(totalUpcoming.value),
+      subtitle: `${upcomingCount} remaining`,
+      valueClass: ''
+    }
   ]
 })
 
