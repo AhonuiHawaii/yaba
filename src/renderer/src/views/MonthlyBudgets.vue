@@ -134,7 +134,7 @@
             </thead>
             <tbody>
               <!-- Empty state -->
-              <tr v-if="section.rows.length === 0 && addingType !== section.type">
+              <tr v-if="section.rows.length === 0">
                 <td colspan="6" class="text-center text-caption text-medium-emphasis py-3">
                   No {{ section.label.toLowerCase() }} categories yet.
                 </td>
@@ -317,11 +317,12 @@ const actualsByCategory = computed(() => {
   const map = new Map()
   for (const t of transactions.value) {
     const trnAmt = Number(t.TRNAMT)
-    const entries = [
-      { id: t.category, amt: trnAmt },
-      { id: t.splitCategory1, amt: Number(t.splitAmount1) || 0 },
-      { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }
-    ]
+    const entries = t.splitCategory2
+      ? [
+          { id: t.category, amt: Number(t.splitAmount1) || 0 },
+          { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }
+        ]
+      : [{ id: t.category, amt: trnAmt }]
     for (const { id, amt } of entries) {
       if (!id) continue
       if (incomeIds.value.has(id)) {
@@ -407,11 +408,12 @@ async function copyLastPeriod() {
     const prevActuals = new Map()
     for (const t of prevTxs) {
       const trnAmt = Number(t.TRNAMT)
-      const entries = [
-        { id: t.category, amt: trnAmt },
-        { id: t.splitCategory1, amt: Number(t.splitAmount1) || 0 },
-        { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }
-      ]
+      const entries = t.splitCategory2
+        ? [
+            { id: t.category, amt: Number(t.splitAmount1) || 0 },
+            { id: t.splitCategory2, amt: Number(t.splitAmount2) || 0 }
+          ]
+        : [{ id: t.category, amt: trnAmt }]
       for (const { id, amt } of entries) {
         if (!id) continue
         if (incomeIds.value.has(id)) {
@@ -477,6 +479,7 @@ function openEditCategory(row) {
   categoryDialogMode.value = 'edit'
   categoryDialogId.value = row.id
   categoryDialogName.value = row.name
+  categoryDialogType.value = row.type
   categoryDialog.value = true
 }
 
