@@ -231,25 +231,43 @@
     <!-- Spending chart + Top categories -->
     <v-row class="mb-5">
       <v-col cols="12" lg="7">
-        <v-card rounded="lg" elevation="0" variant="flat" border hover class="h-100">
-          <v-card-item class="pa-5 pb-0">
-            <v-card-title class="text-body-1 font-weight-bold">Spending vs budget</v-card-title>
-            <template #append>
-              <v-chip size="x-small" variant="tonal">{{ sparklineViewType }}</v-chip>
-            </template>
-          </v-card-item>
-          <v-card-text class="px-4 pb-3 pt-2">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="h-100 position-relative overflow-hidden"
+          min-height="300"
+        >
+          <div
+            style="
+              position: absolute;
+              bottom: -5px;
+              left: 0;
+              width: 100%;
+              z-index: 0;
+              pointer-events: none;
+              opacity: 0.6;
+            "
+          >
             <v-sparkline
               :fill="true"
               :gradient="gradient[0]"
               :color="sparklineLineColor"
               :line-width="1"
               :model-value="sparklineSpending"
-              :padding="4"
+              :padding="0"
               :smooth="16"
               auto-draw
             ></v-sparkline>
-          </v-card-text>
+          </div>
+          <v-card-item class="pa-5 pb-0 position-relative" style="z-index: 1">
+            <v-card-title class="text-body-1 font-weight-bold">Spending vs budget</v-card-title>
+            <template #append>
+              <v-chip size="x-small" variant="tonal">{{ sparklineViewType }}</v-chip>
+            </template>
+          </v-card-item>
         </v-card>
       </v-col>
 
