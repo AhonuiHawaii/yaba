@@ -1,16 +1,12 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import db from './dexie'
 
 export const useUserBudgetsStore = defineStore('userBudgets', () => {
   const budgets = ref([])
+  const types = ref([])
   const loadingCount = ref(0)
   const loading = computed(() => loadingCount.value > 0)
   const error = ref(null)
-
-  const types = computed(() =>
-    [...new Set(budgets.value.map((b) => b.type).filter(Boolean))].sort()
-  )
 
   function setError(err) {
     error.value = err?.message ?? String(err)
@@ -20,11 +16,27 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
     loadingCount.value++
     error.value = null
     try {
-      budgets.value = await db.budgets.toArray()
+      const res = await window.electron.ipcRenderer.invoke('budgets:fetch')
+      if (res.success) {
+        budgets.value = res.data
+      } else {
+        setError(res.error)
+      }
     } catch (err) {
       setError(err)
     } finally {
       loadingCount.value--
+    }
+  }
+
+  async function fetchTypes() {
+    try {
+      const res = await window.electron.ipcRenderer.invoke('budgets:fetchTypes')
+      if (res.success) {
+        types.value = res.data
+      }
+    } catch (err) {
+      setError(err)
     }
   }
 
@@ -36,23 +48,12 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
     loadingCount.value++
     error.value = null
     try {
-      const existing = budgets.value.find((b) => b.categoryId === categoryId && b.month === month)
-      const normalizedAmount = Number(amount) || 0
-      const now = new Date().toISOString()
-
-      if (existing) {
-        await db.budgets.update(existing.id, { amount: normalizedAmount, updatedAt: now })
+      const res = await window.electron.ipcRenderer.invoke('budgets:upsert', categoryId, amount, month)
+      if (res.success) {
+        await fetchBudgets()
       } else {
-        await db.budgets.add({
-          id: crypto.randomUUID(),
-          categoryId,
-          month,
-          amount: normalizedAmount,
-          createdAt: now,
-          updatedAt: now
-        })
+        setError(res.error)
       }
-      await fetchBudgets()
     } catch (err) {
       setError(err)
     } finally {
@@ -61,15 +62,10 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
   }
 
   async function addType(name) {
-    const id = crypto.randomUUID()
-    await db.budgets.add({
-      id,
-      type: name,
-      amount: 0,
-      month: null,
-      createdAt: new Date().toISOString()
-    })
-    await fetchBudgets()
+    if (!types.value.includes(name)) {
+      types.value.push(name)
+      types.value.sort()
+    }
   }
 
   function clearError() {
@@ -78,6 +74,7 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
 
   // Initial load
   fetchBudgets()
+  fetchTypes()
 
   return {
     budgets,
@@ -85,6 +82,7 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
     loading,
     error,
     fetchBudgets,
+    fetchTypes,
     getBudget,
     upsertBudget,
     addType,

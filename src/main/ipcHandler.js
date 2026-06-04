@@ -36,7 +36,14 @@ import {
   fetchCustomRecurring,
   addCustomRecurring,
   editCustomRecurring,
-  removeCustomRecurring
+  removeCustomRecurring,
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  removeCategory,
+  fetchBudgets,
+  upsertBudget,
+  fetchCategoryTypes
 } from './main.js'
 
 const isNonEmptyString = (v) => typeof v === 'string' && v.trim().length > 0
@@ -171,6 +178,31 @@ export const setupIpcHandlers = () => {
     if (!isFiniteNumber(id)) throw new Error('Invalid ID')
     return removeCustomRecurring(id)
   })
+
+  ipcMain.handle('categories:fetch', () => fetchCategories())
+  ipcMain.handle('categories:create', (_, data) => {
+    if (!isObject(data) || !isNonEmptyString(data.name) || !isNonEmptyString(data.type)) {
+      throw new Error('Invalid category data')
+    }
+    return createCategory(data)
+  })
+  ipcMain.handle('categories:update', (_, id, updates) => {
+    if (!isNonEmptyString(id)) throw new Error('Invalid Category ID')
+    if (!isObject(updates)) throw new Error('Invalid updates')
+    return updateCategory(id, updates)
+  })
+  ipcMain.handle('categories:delete', (_, id) => {
+    if (!isNonEmptyString(id)) throw new Error('Invalid Category ID')
+    return removeCategory(id)
+  })
+
+  ipcMain.handle('budgets:fetch', () => fetchBudgets())
+  ipcMain.handle('budgets:upsert', (_, categoryId, amount, month) => {
+    if (!isNonEmptyString(categoryId)) throw new Error('Invalid Category ID')
+    if (!isYyyymm(month)) throw new Error('Invalid month format')
+    return upsertBudget(categoryId, amount, month)
+  })
+  ipcMain.handle('budgets:fetchTypes', () => fetchCategoryTypes())
 
   ipcMain.handle('backup:dbSize', () => {
     try {

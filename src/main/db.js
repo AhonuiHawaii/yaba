@@ -95,6 +95,35 @@ db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_dtposted ON Transactions(DT
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_acctid   ON Transactions(ACCTID)`)
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_category ON Transactions(category)`)
 
+// ── Categories & Budgets ──────────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS Categories (
+    id        TEXT PRIMARY KEY,
+    name      TEXT NOT NULL,
+    type      TEXT NOT NULL,
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`)
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS Budgets (
+    categoryId TEXT NOT NULL,
+    month      TEXT NOT NULL,
+    amount     REAL NOT NULL,
+    createdAt  TEXT DEFAULT CURRENT_TIMESTAMP,
+    updatedAt  TEXT DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (categoryId, month)
+  )
+`)
+
+// Clean up orphaned categories in Transactions & CategoryRules (from old Dexie state)
+db.exec(`
+  UPDATE Transactions SET category = NULL WHERE category IS NOT NULL AND category NOT IN (SELECT id FROM Categories);
+  UPDATE Transactions SET splitCategory2 = NULL WHERE splitCategory2 IS NOT NULL AND splitCategory2 NOT IN (SELECT id FROM Categories);
+  DELETE FROM CategoryRules WHERE category IS NOT NULL AND category NOT IN (SELECT id FROM Categories);
+`)
+
 // ── Column sets ──────────────────────────────────────────────────────────────
 
 /*
@@ -158,9 +187,13 @@ const getTransactions = (filters = {}) => {
     const now = new Date()
     const yyyymm = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
     return db.prepare(`
-      SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType
+      SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType,
+             c.name as categoryName, c.type as categoryType,
+             c2.name as splitCategory2Name, c2.type as splitCategory2Type
       FROM Transactions t
       LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
+      LEFT JOIN Categories c ON t.category = c.id
+      LEFT JOIN Categories c2 ON t.splitCategory2 = c2.id
       WHERE t.DTPOSTED LIKE ?
     `).all(`${yyyymm}%`)
   }
@@ -169,18 +202,26 @@ const getTransactions = (filters = {}) => {
   const values = entries.map(([col, val]) => (DATE_COLUMNS.has(col) ? `${val}%` : val))
 
   return db.prepare(`
-    SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType
+    SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType,
+           c.name as categoryName, c.type as categoryType,
+           c2.name as splitCategory2Name, c2.type as splitCategory2Type
     FROM Transactions t
     LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
+    LEFT JOIN Categories c ON t.category = c.id
+    LEFT JOIN Categories c2 ON t.splitCategory2 = c2.id
     WHERE ${clauses.join(' AND ')}
   `).all(...values)
 }
 
 const getAllTransactions = () => {
   return db.prepare(`
-    SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType
+    SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType,
+           c.name as categoryName, c.type as categoryType,
+           c2.name as splitCategory2Name, c2.type as splitCategory2Type
     FROM Transactions t
     LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
+    LEFT JOIN Categories c ON t.category = c.id
+    LEFT JOIN Categories c2 ON t.splitCategory2 = c2.id
   `).all()
 }
 
@@ -394,6 +435,61 @@ function deleteAccount(acctid) {
     db.prepare('DELETE FROM Transactions WHERE ACCTID = ?').run(acctid)
     return db.prepare('DELETE FROM Accounts WHERE ACCTID = ?').run(acctid).changes
   })()
+}
+
+// ── Categories & Budgets API ──────────────────────────────────────────────────
+
+function getCategories() {
+  return db.prepare('SELECT * FROM Categories ORDER BY name ASC').all()
+}
+
+function createCategory(data) {
+  const id = crypto.randomUUID()
+  db.prepare('INSERT INTO Categories (id, name, type) VALUES (@id, @name, @type)').run({
+    id,
+    name: data.name,
+    type: data.type
+  })
+  return db.prepare('SELECT * FROM Categories WHERE id = ?').get(id)
+}
+
+function updateCategory(id, updates) {
+  const ALLOWED = new Set(['name', 'type'])
+  const entries = Object.entries(updates).filter(([col]) => ALLOWED.has(col))
+  if (entries.length === 0) return 0
+
+  const setClause = entries.map(([col]) => `${col} = ?`).concat('updatedAt = CURRENT_TIMESTAMP').join(', ')
+  const values = entries.map(([, val]) => val)
+
+  return db.prepare(`UPDATE Categories SET ${setClause} WHERE id = ?`).run(...values, id).changes
+}
+
+function deleteCategory(id) {
+  return db.transaction(() => {
+    db.prepare('DELETE FROM Categories WHERE id = ?').run(id)
+    db.prepare('DELETE FROM Budgets WHERE categoryId = ?').run(id)
+    db.prepare('UPDATE Transactions SET category = NULL WHERE category = ?').run(id)
+    db.prepare('UPDATE Transactions SET splitCategory2 = NULL WHERE splitCategory2 = ?').run(id)
+    db.prepare('DELETE FROM CategoryRules WHERE category = ?').run(id)
+  })()
+}
+
+function getBudgets() {
+  return db.prepare('SELECT * FROM Budgets').all()
+}
+
+function upsertBudget(categoryId, amount, month) {
+  return db.prepare(`
+    INSERT INTO Budgets (categoryId, month, amount)
+    VALUES (@categoryId, @month, @amount)
+    ON CONFLICT(categoryId, month) DO UPDATE SET
+      amount = excluded.amount,
+      updatedAt = CURRENT_TIMESTAMP
+  `).run({ categoryId, month, amount: Number(amount) || 0 }).changes
+}
+
+function getCategoryTypes() {
+  return db.prepare('SELECT DISTINCT type FROM Categories ORDER BY type ASC').all().map(r => r.type)
 }
 
 // ── Category Rules ───────────────────────────────────────────────────────────
@@ -670,24 +766,25 @@ function getMonthlySummary(yyyymm) {
   return db
     .prepare(
       `
-    SELECT transactionType, SUM(amount) AS total FROM (
-      SELECT transactionType, TRNAMT AS amount
+    SELECT COALESCE(c.type, sub.transactionType) as transactionType, SUM(sub.amount) AS total FROM (
+      SELECT transactionType, category, TRNAMT AS amount
       FROM Transactions
-      WHERE DTPOSTED LIKE ? AND splitCategory1 IS NULL
+      WHERE DTPOSTED LIKE ? AND splitAmount1 IS NULL
 
       UNION ALL
 
-      SELECT transactionType, splitAmount1 AS amount
+      SELECT transactionType, category, splitAmount1 AS amount
       FROM Transactions
-      WHERE DTPOSTED LIKE ? AND splitCategory1 IS NOT NULL
+      WHERE DTPOSTED LIKE ? AND splitAmount1 IS NOT NULL
 
       UNION ALL
 
-      SELECT transactionType, splitAmount2 AS amount
+      SELECT transactionType, splitCategory2 AS category, splitAmount2 AS amount
       FROM Transactions
       WHERE DTPOSTED LIKE ? AND splitCategory2 IS NOT NULL
-    )
-    GROUP BY transactionType
+    ) sub
+    LEFT JOIN Categories c ON sub.category = c.id
+    GROUP BY COALESCE(c.type, sub.transactionType)
   `
     )
     .all(month, month, month)
@@ -695,31 +792,32 @@ function getMonthlySummary(yyyymm) {
 
 /**
  * @param {string} yyyymm - e.g. '202605'
- * @returns {{ category: string, total: number }[]}
+ * @returns {{ category: string, categoryName: string, categoryType: string, total: number }[]}
  */
 function getCategoryTotals(yyyymm) {
   const month = `${yyyymm}%`
   return db
     .prepare(
       `
-    SELECT category, SUM(amount) AS total FROM (
+    SELECT sub.category, c.name as categoryName, c.type as categoryType, SUM(sub.amount) AS total FROM (
       SELECT category, TRNAMT AS amount
       FROM Transactions
-      WHERE DTPOSTED LIKE ? AND splitCategory1 IS NULL AND category IS NOT NULL
+      WHERE DTPOSTED LIKE ? AND splitAmount1 IS NULL AND category IS NOT NULL
 
       UNION ALL
 
-      SELECT splitCategory1 AS category, splitAmount1 AS amount
+      SELECT category, splitAmount1 AS amount
       FROM Transactions
-      WHERE DTPOSTED LIKE ? AND splitCategory1 IS NOT NULL
+      WHERE DTPOSTED LIKE ? AND splitAmount1 IS NOT NULL
 
       UNION ALL
 
       SELECT splitCategory2 AS category, splitAmount2 AS amount
       FROM Transactions
       WHERE DTPOSTED LIKE ? AND splitCategory2 IS NOT NULL
-    )
-    GROUP BY category
+    ) sub
+    LEFT JOIN Categories c ON sub.category = c.id
+    GROUP BY sub.category
   `
     )
     .all(month, month, month)

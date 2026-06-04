@@ -31,7 +31,14 @@ import {
   updateCustomRecurring as dbUpdateCustomRecurring,
   deleteCustomRecurring as dbDeleteCustomRecurring,
   matchesCustomEntry,
-  checkDuplicateFitids
+  checkDuplicateFitids,
+  getCategories as dbGetCategories,
+  createCategory as dbCreateCategory,
+  updateCategory as dbUpdateCategory,
+  deleteCategory as dbDeleteCategory,
+  getBudgets as dbGetBudgets,
+  upsertBudget as dbUpsertBudget,
+  getCategoryTypes as dbGetCategoryTypes
 } from './db.js'
 
 /*
@@ -359,6 +366,68 @@ export const removeCustomRecurring = (id) => {
     const changes = dbDeleteCustomRecurring(id)
     if (!changes) return fail(new Error(`No custom recurring entry found with id: ${id}`))
     return ok({ id, changes })
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+// Categories & Budgets
+
+export const fetchCategories = () => {
+  try {
+    return ok(dbGetCategories())
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const createCategory = (data) => {
+  try {
+    return ok(dbCreateCategory(data))
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const updateCategory = (id, updates) => {
+  try {
+    const changes = dbUpdateCategory(id, updates)
+    if (!changes) return fail(new Error(`No category found with id: ${id}`))
+    return ok({ id, changes })
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const removeCategory = (id) => {
+  try {
+    dbDeleteCategory(id)
+    return ok({ id, deleted: true })
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const fetchBudgets = () => {
+  try {
+    return ok(dbGetBudgets())
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const upsertBudget = (categoryId, amount, month) => {
+  try {
+    const changes = dbUpsertBudget(categoryId, amount, month)
+    return ok({ categoryId, month, changes })
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const fetchCategoryTypes = () => {
+  try {
+    return ok(dbGetCategoryTypes())
   } catch (e) {
     return fail(e)
   }
