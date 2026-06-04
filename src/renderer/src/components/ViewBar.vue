@@ -62,7 +62,7 @@ const toggleTheme = () => {
 </script>
 
 <template>
-  <v-toolbar density="compact" elevation="0" border="b" color="surface-variant">
+  <v-toolbar density="compact" elevation="0" border="none" color="surface-variant">
     <v-app-bar-nav-icon @click="emit('toggle-drawer')" />
 
     <v-toolbar-title>
@@ -71,18 +71,11 @@ const toggleTheme = () => {
 
     <v-spacer />
 
-    <v-text-field
-      placeholder="Search transactions"
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      density="compact"
-      hide-details
-      rounded="lg"
-      style="max-width: 260px"
-      class="mr-2"
-      color="primary"
-    />
-
+    <span
+      class="text-medium-emphasis align-self-center mr-1"
+      style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px"
+      >Accent:</span
+    >
     <v-menu :close-on-content-click="false" location="bottom end">
       <template #activator="{ props: menuProps }">
         <v-btn

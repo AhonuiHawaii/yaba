@@ -58,11 +58,9 @@ const handleClose = () => window.api.window.close()
   /* Overlay creates the OSX highlight/shadow effect on top of the color */
   background: linear-gradient(
     to bottom,
-    rgba(var(--v-theme-primary-darken-1), .3) 0%,
+    rgba(var(--v-theme-primary-darken-1), 0.3) 0%,
     rgba(var(--v-theme-primary-container), 1) 100%
   ) !important;
-
-
 
   user-select: none;
 }
