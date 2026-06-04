@@ -647,3 +647,71 @@ async function loadDashboard() {
 onMounted(loadDashboard)
 watch(periodStart, loadDashboard)
 </script>
+
+<style scoped>
+.v-container {
+  position: relative;
+}
+
+/* Ambient glow effects */
+.v-container::before {
+  content: '';
+  position: fixed;
+  top: -15%;
+  left: -10%;
+  width: 60vw;
+  height: 60vh;
+  background: radial-gradient(
+    circle,
+    rgba(var(--v-theme-primary), 0.12) 0%,
+    rgba(var(--v-theme-background), 0) 65%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+}
+
+.v-container::after {
+  content: '';
+  position: fixed;
+  bottom: -15%;
+  right: -10%;
+  width: 50vw;
+  height: 50vh;
+  background: radial-gradient(
+    circle,
+    rgba(var(--v-theme-secondary), 0.12) 0%,
+    rgba(var(--v-theme-background), 0) 65%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+}
+
+/* Ensure container children sit above the glow */
+.v-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Premium Frosted Glass Cards */
+.v-card {
+  transition:
+    transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+    box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background: rgba(var(--v-theme-surface), 0.5) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth Hover Animation */
+.v-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -12px rgba(var(--v-theme-primary), 0.2) !important;
+  border-color: rgba(var(--v-theme-primary), 0.15);
+}
+</style>
