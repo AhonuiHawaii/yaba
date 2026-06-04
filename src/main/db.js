@@ -1023,5 +1023,13 @@ export {
   updateCustomRecurring,
   deleteCustomRecurring,
   matchesCustomEntry,
-  checkDuplicateFitids
+  checkDuplicateFitids,
+  // Categories & Budgets
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  getBudgets,
+  upsertBudget,
+  getCategoryTypes
 }
