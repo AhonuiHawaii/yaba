@@ -137,7 +137,8 @@ const VALID_COLUMNS = new Set([
   'splitAmount2',
   'ORG',
   'notes',
-  'recurring'
+  'recurring',
+  'dueDate'
 ])
 
 // OFX date columns — use LIKE prefix matching so partial dates work

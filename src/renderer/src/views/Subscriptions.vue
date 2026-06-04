@@ -32,6 +32,7 @@
           :subscriptions="subscriptions"
           :loading="loading"
           @cancel="handleCancel"
+          @save-due-date="handleSaveDueDate"
         />
       </v-tabs-window-item>
 
@@ -143,6 +144,7 @@ const settingsDialog = ref(false)
 const settingsCategoryId = ref(settingsStore.subscriptionCategory)
 const allTransactions = ref([])
 const rules = ref([])
+const dueDateOverrides = ref({})
 
 const categoryOptions = computed(() => categoriesStore.categories)
 
@@ -195,6 +197,15 @@ async function submitAdd() {
   addDialog.value = false
 }
 
+async function handleSaveDueDate({ sub, date }) {
+  if (!date || !sub.lastFITID) return
+  dueDateOverrides.value = { ...dueDateOverrides.value, [sub.name]: date }
+  const dueDateInt = parseInt(date.replace(/-/g, ''), 10)
+  await window.electron.ipcRenderer.invoke('transactions:edit', sub.lastFITID, {
+    dueDate: dueDateInt
+  })
+}
+
 async function handleCancel(sub) {
   if (!sub.ruleId) return
   await window.electron.ipcRenderer.invoke('customRecurring:delete', sub.ruleId)
@@ -233,13 +244,6 @@ function buildSub(name, txs, ruleId = null) {
     daysSinceCharge = Math.floor((Date.now() - d.getTime()) / 86400000)
   }
   const unused = daysSinceCharge !== null && daysSinceCharge > 35
-  let nextCharge = null
-  if (typicalDay) {
-    const now = new Date()
-    const thisMonth = new Date(now.getFullYear(), now.getMonth(), typicalDay)
-    nextCharge =
-      thisMonth >= now ? thisMonth : new Date(now.getFullYear(), now.getMonth() + 1, typicalDay)
-  }
   const sortedMonths = [...months].sort()
   let billing = 'Monthly'
   if (sortedMonths.length >= 2) {
@@ -250,14 +254,29 @@ function buildSub(name, txs, ruleId = null) {
       1
     if (months.size <= 2 && span >= 10) billing = 'Yearly'
   }
+  const storedDueDate = sorted[sorted.length - 1]?.dueDate
+  let nextCharge = null
+  if (storedDueDate) {
+    const s = String(storedDueDate)
+    nextCharge = new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8))
+  } else if (lastDate?.length >= 8) {
+    const last = new Date(+lastDate.slice(0, 4), +lastDate.slice(4, 6) - 1, +lastDate.slice(6, 8))
+    nextCharge =
+      billing === 'Yearly'
+        ? new Date(last.getFullYear() + 1, last.getMonth(), last.getDate())
+        : new Date(last.getFullYear(), last.getMonth() + 1, last.getDate())
+  }
   return {
     name,
     category: sorted.map((t) => t.category).filter(Boolean)[0] ?? null,
     billing,
     nextCharge,
     nextChargeLabel: nextCharge
-      ? nextCharge.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      ? settingsStore.formatDate(
+          `${nextCharge.getFullYear()}${String(nextCharge.getMonth() + 1).padStart(2, '0')}${String(nextCharge.getDate()).padStart(2, '0')}`
+        )
       : '—',
+    lastBilledLabel: lastDate?.length >= 8 ? settingsStore.formatDate(lastDate) : '—',
     currentAmount,
     typicalAmount: median(amounts),
     priceUp,
@@ -266,8 +285,18 @@ function buildSub(name, txs, ruleId = null) {
     daysSinceCharge,
     monthCount: months.size,
     typicalDay,
-    status: priceUp ? 'priceUp' : unused ? 'unused' : 'active',
+    status: (() => {
+      if (priceUp) return 'priceUp'
+      if (unused) return 'unused'
+      if (!nextCharge) return 'active'
+      const now = Date.now()
+      const due = nextCharge.getTime()
+      if (due < now) return 'overdue'
+      if ((due - now) / 86400000 <= 7) return 'dueSoon'
+      return 'active'
+    })(),
     lastFour: txs[0]?.ACCTID ? String(txs[0].ACCTID).slice(-4) : null,
+    lastFITID: sorted[sorted.length - 1]?.FITID ?? null,
     ruleId,
     initials: getInitials(name),
     fromRule: ruleId != null && !txs.length
@@ -331,6 +360,15 @@ const subscriptions = computed(() => {
   }
   for (const [name, txs] of byName) {
     result.push(buildSub(name, txs, null))
+  }
+
+  for (const sub of result) {
+    const override = dueDateOverrides.value[sub.name]
+    if (override) {
+      const d = new Date(override)
+      sub.nextCharge = d
+      sub.nextChargeLabel = settingsStore.formatDate(override.replace(/-/g, ''))
+    }
   }
 
   return result.sort((a, b) => (a.typicalDay ?? 99) - (b.typicalDay ?? 99))

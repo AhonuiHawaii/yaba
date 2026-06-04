@@ -117,7 +117,7 @@
             </div>
             <div v-if="selected.category" class="d-flex justify-space-between mb-2">
               <span class="text-body-2 font-weight-medium">Category</span>
-              <span class="text-body-2 text-medium-emphasis">{{ selected.category }}</span>
+              <span class="text-body-2 text-medium-emphasis">{{ categoryName(selected.category) }}</span>
             </div>
             <div class="d-flex justify-space-between mb-2">
               <span class="text-body-2 font-weight-medium">Billing</span>
@@ -145,12 +145,18 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { useUserCategoriesStore } from '../stores/userCategories'
 
 const props = defineProps({
   subscriptions: { type: Array, default: () => [] }
 })
 
 const { formatCurrency } = useUserSettingsStore()
+const categoriesStore = useUserCategoriesStore()
+
+function categoryName(id) {
+  return categoriesStore.categoryById[id]?.name ?? id ?? null
+}
 
 // ── Month navigation ──────────────────────────────────────────────────────────
 

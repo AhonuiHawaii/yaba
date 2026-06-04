@@ -30,10 +30,10 @@
           <span>Service</span>
           <span>Category</span>
           <span>Billing</span>
-          <span>Next charge</span>
+          <span>Due Date</span>
+          <span>Last billed</span>
           <span class="text-right">Amount</span>
           <span>Status</span>
-          <span></span>
         </div>
         <v-divider />
 
@@ -49,15 +49,6 @@
           <div class="sub-row">
             <!-- Service -->
             <div class="d-flex align-center ga-3">
-              <v-avatar
-                color="primary"
-                variant="tonal"
-                size="36"
-                rounded="sm"
-                class="flex-shrink-0"
-              >
-                <span class="text-caption font-weight-bold">{{ sub.initials }}</span>
-              </v-avatar>
               <div class="min-width-0">
                 <div class="text-body-2 font-weight-medium text-truncate">{{ sub.name }}</div>
                 <div class="text-caption text-medium-emphasis">
@@ -79,7 +70,7 @@
             <!-- Category -->
             <div>
               <v-chip v-if="sub.category" size="x-small" variant="tonal" color="teal" rounded="sm">
-                {{ sub.category }}
+                {{ categoryName(sub.category) }}
               </v-chip>
               <span v-else class="text-caption text-medium-emphasis">—</span>
             </div>
@@ -90,8 +81,57 @@
             </div>
 
             <!-- Next charge -->
+            <div class="d-flex align-center ga-1">
+              <span class="text-body-2 text-medium-emphasis">
+                {{
+                  editingKey === sub.name && editingDate
+                    ? formatEditDate(editingDate)
+                    : sub.nextChargeLabel
+                }}
+              </span>
+              <!-- Pencil: enters edit mode -->
+              <v-btn
+                v-if="editingKey !== sub.name"
+                icon="mdi-pencil-outline"
+                size="x-small"
+                variant="text"
+                density="compact"
+                @click="startEdit(sub)"
+              />
+              <template v-else>
+                <!-- Calendar: opens date picker -->
+                <v-menu v-model="pickerOpen" :close-on-content-click="false">
+                  <template #activator="{ props: menuProps }">
+                    <v-btn
+                      icon="mdi-calendar"
+                      size="x-small"
+                      variant="text"
+                      density="compact"
+                      v-bind="menuProps"
+                    />
+                  </template>
+                  <v-date-picker v-model="editingDate" hide-header>
+                    <template #actions>
+                      <v-btn variant="text" @click="pickerOpen = false">Cancel</v-btn>
+                      <v-btn color="primary" variant="flat" @click="pickerOpen = false">Save</v-btn>
+                    </template>
+                  </v-date-picker>
+                </v-menu>
+                <!-- Checkmark: commits to DB -->
+                <v-btn
+                  icon="mdi-check"
+                  size="x-small"
+                  variant="text"
+                  density="compact"
+                  color="success"
+                  @click="commitDueDate(sub)"
+                />
+              </template>
+            </div>
+
+            <!-- Last billed -->
             <div>
-              <span class="text-body-2 text-medium-emphasis">{{ sub.nextChargeLabel }}</span>
+              <span class="text-body-2 text-medium-emphasis">{{ sub.lastBilledLabel }}</span>
             </div>
 
             <!-- Amount -->
@@ -108,7 +148,25 @@
             <!-- Status -->
             <div>
               <v-chip
-                v-if="sub.status === 'priceUp'"
+                v-if="sub.status === 'overdue'"
+                size="x-small"
+                color="error"
+                variant="flat"
+                rounded="sm"
+              >
+                Overdue
+              </v-chip>
+              <v-chip
+                v-else-if="sub.status === 'dueSoon'"
+                size="x-small"
+                color="warning"
+                variant="flat"
+                rounded="sm"
+              >
+                Due soon
+              </v-chip>
+              <v-chip
+                v-else-if="sub.status === 'priceUp'"
                 size="x-small"
                 color="orange"
                 variant="flat"
@@ -116,39 +174,9 @@
               >
                 Price up
               </v-chip>
-              <v-chip
-                v-else-if="sub.status === 'unused'"
-                size="x-small"
-                color="amber-darken-2"
-                variant="flat"
-                rounded="sm"
-              >
-                Unused?
-              </v-chip>
               <v-chip v-else size="x-small" color="success" variant="flat" rounded="sm">
-                Active
+                Paid
               </v-chip>
-            </div>
-
-            <!-- Action -->
-            <div>
-              <v-btn
-                v-if="sub.status === 'unused'"
-                size="x-small"
-                variant="outlined"
-                rounded="sm"
-                color="amber-darken-2"
-                @click="emit('cancel', sub)"
-                >Review</v-btn
-              >
-              <v-btn
-                v-else
-                size="x-small"
-                variant="outlined"
-                rounded="sm"
-                @click="emit('cancel', sub)"
-                >Cancel</v-btn
-              >
             </div>
           </div>
           <v-divider v-if="i < subscriptions.length - 1" />
@@ -159,17 +187,48 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { useUserCategoriesStore } from '../stores/userCategories'
 
 const props = defineProps({
   subscriptions: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false }
 })
-const emit = defineEmits(['cancel'])
+const emit = defineEmits(['save-due-date'])
+
+const editingKey = ref(null)
+const editingDate = ref(null)
+const pickerOpen = ref(false)
+
+function formatEditDate(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return settingsStore.formatDate(`${y}${m}${d}`)
+}
+
+function startEdit(sub) {
+  editingKey.value = sub.name
+  editingDate.value = sub.nextCharge ? new Date(sub.nextCharge) : new Date()
+}
+
+function commitDueDate(sub) {
+  if (editingDate.value) {
+    emit('save-due-date', { sub, date: editingDate.value.toISOString().slice(0, 10) })
+  }
+  editingKey.value = null
+  editingDate.value = null
+  pickerOpen.value = false
+}
 
 const settingsStore = useUserSettingsStore()
 const { formatCurrency } = settingsStore
+const categoriesStore = useUserCategoriesStore()
+
+function categoryName(id) {
+  return categoriesStore.categoryById[id]?.name ?? id ?? null
+}
 
 const activeCount = computed(() => props.subscriptions.filter((s) => s.status === 'active').length)
 
@@ -225,7 +284,7 @@ const summaryCards = computed(() => [
 
 .sub-row {
   display: grid;
-  grid-template-columns: 1fr 128px 80px 110px 96px 106px 86px;
+  grid-template-columns: 1fr 128px 80px 120px 110px 96px 106px;
   align-items: center;
   column-gap: 12px;
   padding: 12px 16px;
