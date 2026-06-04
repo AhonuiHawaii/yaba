@@ -1,59 +1,34 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- ── Header ─────────────────────────────────────────────────────────── -->
-    <div class="d-flex flex-wrap align-start justify-space-between gap-4 mb-6">
-      <div>
-        <div class="text-h5 font-weight-bold">Income</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">What you earn · {{ periodLabel }}</div>
-      </div>
-      <div class="d-flex align-center gap-3">
-        <!-- Prev / label / Next -->
-        <div class="d-flex align-center">
-          <v-btn
-            icon="mdi-chevron-left"
-            variant="text"
-            density="compact"
-            size="small"
-            @click="prevPeriod"
-          />
-          <span class="text-body-2 font-weight-medium mx-2 text-no-wrap">{{ periodLabel }}</span>
-          <v-btn
-            icon="mdi-chevron-right"
-            variant="text"
-            density="compact"
-            size="small"
-            :disabled="isNextPeriodFuture"
-            @click="nextPeriod"
-          />
-        </div>
-        <!-- Period toggle -->
-        <v-btn-toggle
-          v-model="period"
-          color="primary"
-          mandatory
-          density="compact"
-          rounded="lg"
-          variant="outlined"
-          divided
-        >
-          <v-btn value="month" size="small">Month</v-btn>
-          <v-btn value="quarter" size="small">Quarter</v-btn>
-          <v-btn value="semi" size="small">Semi</v-btn>
-          <v-btn value="annual" size="small">Annual</v-btn>
-        </v-btn-toggle>
-      </div>
-    </div>
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <p class="text-h5 font-weight-bold mb-1">Income</p>
+        <p class="text-body-2 text-medium-emphasis mb-0">
+          What you earn · {{ periodLabel }}
+        </p>
+      </v-col>
+      <v-col cols="auto" class="pa-0 d-flex align-center ga-3 flex-wrap">
+        <FilterComponent />
+      </v-col>
+    </v-row>
 
     <!-- ── Stat cards ─────────────────────────────────────────────────────── -->
     <v-row class="mb-4">
       <!-- Total Income -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-              Total Income
-            </div>
-            <div class="text-h4 font-weight-bold text-success mb-1">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[1]" :line-width="1" :model-value="sparklineTotalIncome" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Total Income</span>
+              <v-avatar color="success" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-arrow-down-thin</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black text-success mb-1">
               {{ formatCurrency(totalIncome) }}
             </div>
             <div class="text-caption text-medium-emphasis">{{ periodLabel }}</div>
@@ -63,12 +38,18 @@
 
       <!-- Avg / Month -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-              Avg / Month
-            </div>
-            <div class="text-h4 font-weight-bold mb-1">{{ formatCurrency(avgPerMonth) }}</div>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[2]" :line-width="1" :model-value="sparklineAvgPerMonth" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Avg / Month</span>
+              <v-avatar color="info" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-calculator</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">{{ formatCurrency(avgPerMonth) }}</div>
             <div class="text-caption text-medium-emphasis">across the period</div>
           </v-card-text>
         </v-card>
@@ -76,12 +57,18 @@
 
       <!-- Largest Source -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-              Largest Source
-            </div>
-            <div class="text-h4 font-weight-bold mb-1">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[3]" :line-width="1" :model-value="sparklineLargestSource" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Largest Source</span>
+              <v-avatar color="secondary" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-star-outline</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">
               {{ largestSourcePct }}
             </div>
             <div class="text-caption text-medium-emphasis text-truncate">
@@ -93,12 +80,18 @@
 
       <!-- Savings Rate -->
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="lg" elevation="0" border>
-          <v-card-text class="pa-5">
-            <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-              Savings Rate
-            </div>
-            <div class="text-h4 font-weight-bold text-success mb-1">{{ savingsRatePct }}</div>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="position-relative overflow-hidden">
+          <div style="position: absolute; bottom: -5px; left: 0; width: 100%; z-index: 0; pointer-events: none; opacity: 0.6;">
+            <v-sparkline :fill="true" :gradient="gradient[1]" :line-width="1" :model-value="sparklineSavingsRate" :color="sparklineLineColor" :padding="0" :smooth="16" auto-draw></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis">Savings Rate</span>
+              <v-avatar color="success" variant="tonal" size="38" rounded="lg">
+                <v-icon size="20">mdi-piggy-bank-outline</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black text-success mb-1">{{ savingsRatePct }}</div>
             <div class="text-caption text-medium-emphasis">income kept</div>
           </v-card-text>
         </v-card>
@@ -227,6 +220,7 @@ import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
 import { storeToRefs } from 'pinia'
+import FilterComponent from '../components/filterComponent.vue'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import { useTheme } from 'vuetify'
 
@@ -241,9 +235,7 @@ const ipc = window.electron?.ipcRenderer
 
 // ── Period filter ─────────────────────────────────────────────────────────────
 const _pf = usePeriodFilter()
-const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
-  storeToRefs(_pf)
-const { prevPeriod, nextPeriod } = _pf
+const { period, periodStart, periodLength, periodMonths, periodLabel } = storeToRefs(_pf)
 
 // ── Period bounds ─────────────────────────────────────────────────────────────
 const periodBounds = computed(() => {
@@ -316,6 +308,127 @@ const savingsRatePct = computed(() => {
   if (!totalIncome.value) return '0%'
   const rate = Math.max(0, (totalIncome.value - totalSpending.value) / totalIncome.value)
   return `${Math.round(rate * 100)}%`
+})
+
+// ── Sparklines ────────────────────────────────────────────────────────────────
+const sparklineLineColor = computed(() => (theme.current.value.dark ? 'white' : 'black'))
+const gradient = [
+  [theme.current.value.colors.primary, theme.current.value.colors['primary-container']],
+  [theme.current.value.colors.success, theme.current.value.colors['success-container']],
+  [theme.current.value.colors.info, theme.current.value.colors['info-container']],
+  [theme.current.value.colors.secondary, theme.current.value.colors['secondary-container']]
+]
+
+const ensureVariance = (data) => {
+  if (!data || data.length <= 1) return [0, 1]
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  if (min === max) {
+    const arr = [...data]
+    arr[0] = min - (min === 0 ? 1 : Math.abs(min * 0.01))
+    arr[arr.length - 1] = max + (max === 0 ? 1 : Math.abs(max * 0.01))
+    return arr
+  }
+  return data
+}
+
+const sparkData = computed(() => {
+  const points = []
+
+  if (periodMonths.value.length > 1) {
+    for (const m of periodMonths.value) {
+      points.push({ key: m, income: 0, spending: 0, largestSourceIncome: 0 })
+    }
+    
+    for (const t of currentTransactions.value) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 6) {
+        const monthKey = s.slice(0, 6)
+        const p = points.find((pt) => pt.key === monthKey)
+        if (p) {
+          const amt = Number(t.TRNAMT)
+          if (amt > 0) {
+            p.income += amt
+            const key = resolveCategoryLabel(t.category) || t.NAME || t.MEMO || 'Other'
+            if (largestSource.value && key === largestSource.value.name) {
+              p.largestSourceIncome += amt
+            }
+          } else {
+            p.spending += Math.abs(amt)
+          }
+        }
+      }
+    }
+  } else {
+    const { start, end } = periodBounds.value
+    let current = new Date(start)
+    while (current <= end) {
+      points.push({
+        date: new Date(current),
+        income: 0,
+        spending: 0,
+        largestSourceIncome: 0
+      })
+      current.setDate(current.getDate() + 1)
+    }
+    
+    for (const t of currentTransactions.value) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 8) {
+        const tDate = new Date(parseInt(s.slice(0, 4)), parseInt(s.slice(4, 6)) - 1, parseInt(s.slice(6, 8)))
+        const dayIndex = points.findIndex(d => d.date && d.date.getFullYear() === tDate.getFullYear() && d.date.getMonth() === tDate.getMonth() && d.date.getDate() === tDate.getDate())
+        if (dayIndex !== -1) {
+          const amt = Number(t.TRNAMT)
+          if (amt > 0) {
+            points[dayIndex].income += amt
+            const key = resolveCategoryLabel(t.category) || t.NAME || t.MEMO || 'Other'
+            if (largestSource.value && key === largestSource.value.name) {
+              points[dayIndex].largestSourceIncome += amt
+            }
+          } else {
+            points[dayIndex].spending += Math.abs(amt)
+          }
+        }
+      }
+    }
+  }
+  return points
+})
+
+const sparklineTotalIncome = computed(() => {
+  let running = 0
+  const data = sparkData.value.map(d => {
+    running += d.income
+    return periodMonths.value.length > 1 ? d.income : running
+  })
+  return ensureVariance(data)
+})
+
+const sparklineAvgPerMonth = computed(() => {
+  const arr = Array(sparkData.value.length).fill(avgPerMonth.value)
+  return ensureVariance(arr)
+})
+
+const sparklineLargestSource = computed(() => {
+  let running = 0
+  const data = sparkData.value.map(d => {
+    running += d.largestSourceIncome
+    return periodMonths.value.length > 1 ? d.largestSourceIncome : running
+  })
+  return ensureVariance(data)
+})
+
+const sparklineSavingsRate = computed(() => {
+  let runningIncome = 0
+  let runningSpending = 0
+  const data = sparkData.value.map(d => {
+    runningIncome += d.income
+    runningSpending += d.spending
+    const i = periodMonths.value.length > 1 ? d.income : runningIncome
+    const s = periodMonths.value.length > 1 ? d.spending : runningSpending
+    return i > 0 ? Math.max(0, (i - s) / i) : 0
+  })
+  return ensureVariance(data)
 })
 
 // ── Source icon helper ────────────────────────────────────────────────────────
