@@ -89,8 +89,8 @@
           </div>
 
           <div class="text-body-2 text-medium-emphasis mb-5">
-            Save a snapshot of your transactions, accounts and budgets to a single encrypted
-            `.yaba` file.
+            Save a snapshot of your transactions, accounts and budgets to a single encrypted `.yaba`
+            file.
           </div>
 
           <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
@@ -170,7 +170,6 @@
           </v-sheet>
 
           <v-spacer />
-
         </v-card>
       </v-col>
     </v-row>
