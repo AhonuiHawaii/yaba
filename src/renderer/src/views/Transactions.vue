@@ -131,7 +131,7 @@
         </v-dialog>
 
         <!-- Filter bar -->
-        <v-sheet color="primary-container" border class="d-flex align-center ga-3 px-4 py-3 mb-4">
+        <v-card rounded="lg" border class="d-flex align-center ga-3 px-4 py-3 mb-4">
           <v-text-field
             v-model="search"
             prepend-inner-icon="mdi-magnify"
@@ -172,7 +172,7 @@
             max-width="200"
             color="primary"
           />
-        </v-sheet>
+        </v-card>
 
         <!-- Bulk Action Bar -->
         <v-slide-y-transition>

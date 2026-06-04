@@ -7,14 +7,14 @@
         <div class="text-caption text-medium-emphasis">Recurring charges tracked by your rules</div>
       </div>
       <v-spacer />
-      <v-btn color="primary" rounded="sm" prepend-icon="mdi-plus" @click="openAdd">
+      <v-btn color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAdd">
         Add manually
       </v-btn>
     </div>
 
     <!-- Tabs -->
     <v-tabs v-model="activeTab" class="px-5 mb-4" color="primary">
-      <v-tab value="list" prepend-icon="mdi-format-list-bulleted">List</v-tab>
+      <v-tab value="list" prepend-icon="mdi-format-list-bulleted">Main</v-tab>
       <v-tab value="calendar" prepend-icon="mdi-calendar-month-outline">Calendar</v-tab>
     </v-tabs>
 
@@ -30,13 +30,13 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="calendar">
-        <Calendar :subscriptions="subscriptions" />
+        <Calendar displayType="subscriptions" />
       </v-tabs-window-item>
     </v-tabs-window>
 
     <!-- Add manually dialog -->
     <v-dialog v-model="addDialog" max-width="440" :persistent="addLoading">
-      <v-card rounded="sm">
+      <v-card rounded="lg">
         <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">Add subscription</v-card-title>
         <v-divider />
         <v-card-text class="pa-5">
@@ -44,7 +44,7 @@
             v-model="addForm.name"
             label="Payee / service name"
             variant="solo"
-            rounded="sm"
+            rounded="lg"
             autofocus
             class="mb-4"
             hint="Transactions containing this text will be tracked"
@@ -56,20 +56,20 @@
             :items="operatorOptions"
             label="Match type"
             variant="solo"
-            rounded="sm"
+            rounded="lg"
             class="mb-4"
             color="primary"
           />
         </v-card-text>
         <v-card-actions class="pa-5 pt-0">
           <v-spacer />
-          <v-btn variant="text" rounded="sm" :disabled="addLoading" @click="addDialog = false"
+          <v-btn variant="text" rounded="lg" :disabled="addLoading" @click="addDialog = false"
             >Cancel</v-btn
           >
           <v-btn
             color="primary"
             variant="flat"
-            rounded="sm"
+            rounded="lg"
             :disabled="!addForm.name.trim()"
             :loading="addLoading"
             @click="submitAdd"
@@ -80,7 +80,7 @@
     </v-dialog>
 
     <!-- Cancel/untrack snackbar -->
-    <v-snackbar v-model="snackbar.show" :timeout="3000" rounded="sm" :color="snackbar.color">
+    <v-snackbar v-model="snackbar.show" :timeout="3000" rounded="lg" :color="snackbar.color">
       {{ snackbar.text }}
     </v-snackbar>
   </div>

@@ -23,11 +23,72 @@
   color: inherit !important;
 }
 
+.v-container {
+  position: relative;
+}
+
+/* Ambient glow effects */
+.v-container::before {
+  content: '';
+  position: fixed;
+  top: -15%;
+  left: -10%;
+  width: 60vw;
+  height: 60vh;
+  background: radial-gradient(
+    circle,
+    rgba(var(--v-theme-primary), 0.05) 0%,
+    rgba(var(--v-theme-background), 0) 55%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+}
+
+.v-container::after {
+  content: '';
+  position: fixed;
+  bottom: -15%;
+  right: -10%;
+  width: 50vw;
+  height: 50vh;
+  background: radial-gradient(
+    circle,
+    rgba(var(--v-theme-secondary), 0.05) 0%,
+    rgba(var(--v-theme-background), 0) 55%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+}
+
+/* Ensure container children sit above the glow */
+.v-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Subtle Gradient Sheen for MD3 Cards (Bottom-Right Start) */
 .v-card {
-  background-color: rgba(var(--v-theme-primary-container)) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  color: rgb(var(--v-theme-on-primary-container)) !important;
-  /* Optional: Adds a subtle border to make the glass edge pop */
-  border: 1px solid rgba(var(--v-theme-primary), 0.2) !important;
+  /* Starts with the primary tint at bottom-right (315deg), fading to transparent at top-left */
+  background-image: linear-gradient(
+    315deg,
+    rgba(var(--v-theme-primary), 0.03) 0%,
+    rgba(255, 255, 255, 0) 100%
+  ) !important;
+  /* Add subtle MD3 outline border */
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08) !important;
+  transition: border-color 0.3s ease !important;
+}
+
+.v-card:hover {
+  background-image: linear-gradient(
+    315deg,
+    rgba(var(--v-theme-primary), 0.08) 0%,
+    rgba(255, 255, 255, 0) 100%
+  ) !important;
+  /* Subtle border highlight on hover to match the gradient sheen */
+  border-color: rgba(var(--v-theme-primary), 0.15) !important;
 }

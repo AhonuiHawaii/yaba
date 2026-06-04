@@ -20,7 +20,7 @@
     <!-- Stat cards -->
     <v-row class="mb-5">
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="xl" elevation="0" variant="flat" border hover>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover>
           <v-card-text class="pa-5">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
@@ -42,7 +42,7 @@
       </v-col>
 
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="xl" elevation="0" variant="flat" border hover>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover>
           <v-card-text class="pa-5">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
@@ -70,7 +70,7 @@
       </v-col>
 
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="xl" elevation="0" variant="flat" border hover>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover>
           <v-card-text class="pa-5">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
@@ -92,7 +92,7 @@
       </v-col>
 
       <v-col cols="12" sm="6" lg="3">
-        <v-card rounded="xl" elevation="0" variant="flat" border hover>
+        <v-card rounded="lg" elevation="0" variant="flat" border hover>
           <v-card-text class="pa-5">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
@@ -122,21 +122,30 @@
     <!-- Spending chart + Top categories -->
     <v-row class="mb-5">
       <v-col cols="12" lg="7">
-        <v-card rounded="xl" elevation="0" variant="flat" border hover class="h-100">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="h-100">
           <v-card-item class="pa-5 pb-0">
             <v-card-title class="text-body-1 font-weight-bold">Spending vs budget</v-card-title>
             <template #append>
-              <v-chip size="x-small" variant="tonal">Last 6 months</v-chip>
+              <v-chip size="x-small" variant="tonal">{{ sparklineViewType }}</v-chip>
             </template>
           </v-card-item>
-          <v-card-text class="px-4 pb-3 pt-2" style="height: 220px">
-            <Line :data="spendChartData" :options="spendChartOptions" />
+          <v-card-text class="px-4 pb-3 pt-2">
+            <v-sparkline
+              :fill="true"
+              :gradient="sparklineGradient"
+              :color="sparklineLineColor"
+              :line-width="1"
+              :model-value="sparklineSpending"
+              :padding="4"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" lg="5">
-        <v-card rounded="xl" elevation="0" variant="flat" border hover class="h-100">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="h-100">
           <v-card-item class="pa-5 pb-3">
             <v-card-title class="text-body-1 font-weight-bold">Top categories</v-card-title>
           </v-card-item>
@@ -173,7 +182,7 @@
     <!-- Needs review + Upcoming bills -->
     <v-row class="mb-5">
       <v-col cols="12" lg="7">
-        <v-card rounded="xl" elevation="0" variant="flat" border hover class="h-100">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="h-100">
           <v-card-item class="pa-5 pb-2">
             <v-card-title class="text-body-1 font-weight-bold">Needs review</v-card-title>
             <template #append>
@@ -225,7 +234,7 @@
       </v-col>
 
       <v-col cols="12" lg="5">
-        <v-card rounded="xl" elevation="0" variant="flat" border hover class="h-100">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="h-100">
           <v-card-item class="pa-5 pb-2">
             <v-card-title class="text-body-1 font-weight-bold">Upcoming bills</v-card-title>
             <template #append>
@@ -267,17 +276,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import FilterComponent from '../components/filterComponent.vue'
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Filler,
-  Tooltip
-} from 'chart.js'
-import { Line } from 'vue-chartjs'
-import {
   useUserAccountsStore,
   accountTypeIcon,
   accountTypeColor,
@@ -290,8 +288,6 @@ import { useUserSettingsStore } from '../stores/userSettings'
 import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import { useTheme } from 'vuetify'
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip)
 
 const emit = defineEmits(['navigate'])
 
@@ -445,81 +441,83 @@ const hexToRgba = (hex, alpha) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-const spendChartData = computed(() => {
-  const primaryColor = theme.current.value.colors.primary || '#5c6bc0'
-  const surfaceColor = theme.current.value.colors.surface || '#ffffff'
-
-  const labels = last6MonthlyTotals.value.map((m) => {
-    const y = parseInt(m.month.slice(0, 4))
-    const mo = parseInt(m.month.slice(4, 6)) - 1
-    return new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'short' })
-  })
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Spending',
-        data: last6MonthlyTotals.value.map((m) => m.spending),
-        borderColor: primaryColor,
-        backgroundColor: hexToRgba(primaryColor, 0.12),
-        fill: true,
-        tension: 0.4,
-        pointRadius: 3,
-        pointBackgroundColor: surfaceColor,
-        pointBorderColor: primaryColor,
-        pointBorderWidth: 2,
-        borderWidth: 2,
-        spanGaps: false
-      },
-      {
-        label: 'Budget',
-        data: last6MonthlyTotals.value.map((m) => m.budget),
-        borderColor: hexToRgba(primaryColor, 0.35),
-        backgroundColor: 'transparent',
-        fill: false,
-        tension: 0.4,
-        pointRadius: 0,
-        borderWidth: 1.5,
-        borderDash: [5, 5],
-        spanGaps: false
-      }
-    ]
-  }
+const sparklineGradient = computed(() => {
+  const c2 = theme.current.value.colors.primary
+  const c1 = theme.current.value.colors['primary-container']
+  return [c1, c2]
 })
 
-const spendChartOptions = computed(() => {
-  const outlineColor = theme.current.value.colors.outline || '#9e9e9e'
-  const tickColor = hexToRgba(outlineColor, 0.6)
-  const gridColor = hexToRgba(outlineColor, 0.15)
+const sparklineLineColor = computed(() => (theme.current.value.dark ? 'white' : 'black'))
 
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: 300 },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: { label: (ctx) => ` ${formatCurrency(ctx.parsed.y)}` }
+const chartData = computed(() => {
+  const points = []
+
+  if (periodMonths.value.length > 1) {
+    // Group by month
+    for (const m of periodMonths.value) {
+      const y = parseInt(m.slice(0, 4))
+      const mo = parseInt(m.slice(4, 6)) - 1
+      points.push({
+        key: m,
+        label: new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'short' }),
+        spending: 0
+      })
+    }
+
+    for (const t of currentTransactions.value) {
+      if (Number(t.TRNAMT) < 0) {
+        const s = String(t.DTPOSTED || '')
+        if (s.length >= 6) {
+          const monthKey = s.slice(0, 6)
+          const p = points.find((pt) => pt.key === monthKey)
+          if (p) {
+            p.spending += Math.abs(Number(t.TRNAMT))
+          }
+        }
       }
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        border: { display: false },
-        ticks: { color: tickColor, font: { size: 11 } }
-      },
-      y: {
-        grid: { color: gridColor },
-        border: { display: false },
-        ticks: {
-          color: tickColor,
-          font: { size: 11 },
-          callback: (v) => (v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}`)
+    }
+  } else {
+    // Group by day
+    const { start, end } = periodBounds.value
+    let current = new Date(start)
+    while (current <= end) {
+      points.push({
+        date: new Date(current),
+        label: current.getDate().toString(),
+        spending: 0
+      })
+      current.setDate(current.getDate() + 1)
+    }
+
+    for (const t of currentTransactions.value) {
+      if (Number(t.TRNAMT) < 0) {
+        const s = String(t.DTPOSTED || '')
+        if (s.length >= 8) {
+          const tDate = new Date(
+            parseInt(s.slice(0, 4)),
+            parseInt(s.slice(4, 6)) - 1,
+            parseInt(s.slice(6, 8))
+          )
+          const dayIndex = points.findIndex(
+            (d) =>
+              d.date &&
+              d.date.getFullYear() === tDate.getFullYear() &&
+              d.date.getMonth() === tDate.getMonth() &&
+              d.date.getDate() === tDate.getDate()
+          )
+          if (dayIndex !== -1) {
+            points[dayIndex].spending += Math.abs(Number(t.TRNAMT))
+          }
         }
       }
     }
   }
+  return points
 })
+
+const sparklineViewType = computed(() => (periodMonths.value.length > 1 ? 'Monthly' : 'Daily'))
+const sparklineSpending = computed(() => chartData.value.map((d) => d.spending))
+const sparklineBudget = computed(() => last6MonthlyTotals.value.map((m) => m.budget))
 
 // ── Accounts ──────────────────────────────────────────────────────────────────
 const txSummaryMap = computed(() => {
@@ -647,71 +645,3 @@ async function loadDashboard() {
 onMounted(loadDashboard)
 watch(periodStart, loadDashboard)
 </script>
-
-<style scoped>
-.v-container {
-  position: relative;
-}
-
-/* Ambient glow effects */
-.v-container::before {
-  content: '';
-  position: fixed;
-  top: -15%;
-  left: -10%;
-  width: 60vw;
-  height: 60vh;
-  background: radial-gradient(
-    circle,
-    rgba(var(--v-theme-primary), 0.12) 0%,
-    rgba(var(--v-theme-background), 0) 65%
-  );
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  filter: blur(40px);
-}
-
-.v-container::after {
-  content: '';
-  position: fixed;
-  bottom: -15%;
-  right: -10%;
-  width: 50vw;
-  height: 50vh;
-  background: radial-gradient(
-    circle,
-    rgba(var(--v-theme-secondary), 0.12) 0%,
-    rgba(var(--v-theme-background), 0) 65%
-  );
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  filter: blur(40px);
-}
-
-/* Ensure container children sit above the glow */
-.v-container > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* Premium Frosted Glass Cards */
-.v-card {
-  transition:
-    transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
-    box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  background: rgba(var(--v-theme-surface), 0.5) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.1);
-}
-
-/* Smooth Hover Animation */
-.v-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 32px -12px rgba(var(--v-theme-primary), 0.2) !important;
-  border-color: rgba(var(--v-theme-primary), 0.15);
-}
-</style>

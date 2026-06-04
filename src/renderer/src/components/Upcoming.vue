@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="pa-4">
-    <v-sheet rounded="sm" elevation="2" class="pa-4">
+    <v-sheet rounded="lg" elevation="2" class="pa-4">
       <div v-if="loading" class="d-flex justify-center pa-8">
         <v-progress-circular indeterminate color="primary" />
       </div>
@@ -20,13 +20,13 @@
             Next 7 Days
           </div>
           <v-list class="pa-0 mb-4" density="compact">
-            <v-list-item v-for="item in soonItems" :key="item.name" rounded="sm" class="mb-1 px-3">
+            <v-list-item v-for="item in soonItems" :key="item.name" rounded="lg" class="mb-1 px-3">
               <template #prepend>
                 <v-avatar
                   :color="item.urgencyColor"
                   variant="tonal"
                   size="32"
-                  rounded="sm"
+                  rounded="lg"
                   class="mr-3"
                 >
                   <span class="text-caption font-weight-bold">{{ item.initials }}</span>
@@ -44,7 +44,7 @@
 
               <template #append>
                 <div class="d-flex align-center gap-3">
-                  <v-chip :color="item.urgencyColor" size="x-small" variant="flat" rounded="sm">
+                  <v-chip :color="item.urgencyColor" size="x-small" variant="flat" rounded="lg">
                     {{ item.dueLabel }}
                   </v-chip>
                   <span
@@ -65,9 +65,9 @@
             Coming Later
           </div>
           <v-list class="pa-0" density="compact">
-            <v-list-item v-for="item in laterItems" :key="item.name" rounded="sm" class="mb-1 px-3">
+            <v-list-item v-for="item in laterItems" :key="item.name" rounded="lg" class="mb-1 px-3">
               <template #prepend>
-                <v-avatar color="secondary" variant="tonal" size="32" rounded="sm" class="mr-3">
+                <v-avatar color="secondary" variant="tonal" size="32" rounded="lg" class="mr-3">
                   <span class="text-caption font-weight-bold">{{ item.initials }}</span>
                 </v-avatar>
               </template>

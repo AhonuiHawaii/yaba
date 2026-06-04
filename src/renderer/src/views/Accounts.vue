@@ -9,7 +9,7 @@
       <v-btn
         color="primary"
         variant="flat"
-        rounded="sm"
+        rounded="lg"
         prepend-icon="mdi-upload"
         @click="emit('navigate', 'Import')"
       >
@@ -18,7 +18,7 @@
     </div>
 
     <!-- Empty state -->
-    <v-card v-if="store.accounts.length === 0" rounded="sm" elevation="1">
+    <v-card variant="flat" v-if="store.accounts.length === 0" rounded="lg" elevation="1">
       <v-card-text class="pa-12 text-center">
         <v-icon size="60" class="mb-4 text-disabled">mdi-bank-off-outline</v-icon>
         <div class="text-h6 font-weight-medium mb-2">No accounts yet</div>
@@ -29,7 +29,7 @@
           <v-btn
             color="primary"
             variant="flat"
-            rounded="sm"
+            rounded="lg"
             prepend-icon="mdi-download-outline"
             @click="emit('navigate', 'Import')"
           >
@@ -37,7 +37,7 @@
           </v-btn>
           <v-btn
             variant="outlined"
-            rounded="sm"
+            rounded="lg"
             prepend-icon="mdi-pencil-plus-outline"
             @click="manualDialog = true"
           >
@@ -50,7 +50,7 @@
     <!-- Account cards grid -->
     <v-row v-else>
       <v-col v-for="account in store.accounts" :key="account.ACCTID" cols="12" sm="6" md="4">
-        <v-card rounded="sm" elevation="1" class="h-100">
+        <v-card rounded="lg" elevation="1" class="h-100">
           <v-card-text class="pa-4">
             <!-- Top row: icon + chip + menu -->
             <div class="d-flex justify-space-between align-center mb-4">
@@ -82,7 +82,7 @@
                       density="compact"
                     />
                   </template>
-                  <v-list density="compact" rounded="sm" min-width="140">
+                  <v-list density="compact" rounded="lg" min-width="140">
                     <v-list-item
                       prepend-icon="mdi-pencil-outline"
                       title="Edit"
@@ -153,7 +153,7 @@
 
     <!-- Add Manual Account Modal -->
     <v-dialog v-model="manualDialog" max-width="500">
-      <v-card rounded="sm">
+      <v-card rounded="lg">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center gap-3">
@@ -176,7 +176,7 @@
             placeholder="e.g. Affirm — Sofa"
             variant="solo-filled"
             density="comfortable"
-            rounded="sm"
+            rounded="lg"
             hide-details="auto"
             class="mb-4"
             autofocus
@@ -188,7 +188,7 @@
             placeholder="e.g. Affirm"
             variant="solo-filled"
             density="comfortable"
-            rounded="sm"
+            rounded="lg"
             hide-details="auto"
             class="mb-4"
             color="primary"
@@ -199,7 +199,7 @@
             label="Type"
             variant="solo-filled"
             density="comfortable"
-            rounded="sm"
+            rounded="lg"
             hide-details="auto"
             class="mb-4"
             color="primary"
@@ -210,7 +210,7 @@
             type="number"
             variant="solo-filled"
             density="comfortable"
-            rounded="sm"
+            rounded="lg"
             hide-details="auto"
             class="mb-4"
             color="primary"
@@ -223,7 +223,7 @@
             placeholder="0.00"
             variant="solo-filled"
             density="comfortable"
-            rounded="sm"
+            rounded="lg"
             hide-details="auto"
             class="mb-4"
             :prefix="userSettings.currencySymbol"
@@ -260,7 +260,7 @@
                   clearable
                   variant="solo-filled"
                   density="comfortable"
-                  rounded="sm"
+                  rounded="lg"
                   color="primary"
                   hide-details="auto"
                   append-inner-icon="mdi-calendar"
@@ -294,7 +294,7 @@
                     clearable
                     variant="solo-filled"
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     color="primary"
                     hide-details="auto"
                     append-inner-icon="mdi-calendar"
@@ -321,7 +321,7 @@
                 min="1"
                 variant="solo-filled"
                 density="comfortable"
-                rounded="sm"
+                rounded="lg"
                 hide-details="auto"
                 color="primary"
               />
@@ -337,7 +337,7 @@
                 clearable
                 variant="solo-filled"
                 density="comfortable"
-                rounded="sm"
+                rounded="lg"
                 color="primary"
                 hide-details="auto"
                 append-inner-icon="mdi-calendar"
@@ -367,7 +367,7 @@
             type="error"
             density="compact"
             class="mb-2 text-caption w-100"
-            rounded="sm"
+            rounded="lg"
           >
             {{ store.error }}
           </v-alert>
@@ -376,7 +376,7 @@
             <v-btn variant="text" @click="manualDialog = false">Cancel</v-btn>
             <v-btn
               variant="flat"
-              rounded="sm"
+              rounded="lg"
               :loading="store.loading"
               :disabled="!manualForm.displayName"
               @click="saveManualAccount"
@@ -390,7 +390,7 @@
 
     <!-- Edit Account Modal -->
     <v-dialog v-model="editNameDialog" max-width="400">
-      <v-card rounded="sm">
+      <v-card rounded="lg">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center gap-3">
@@ -412,7 +412,7 @@
             label="Account name"
             variant="solo-filled"
             density="comfortable"
-            rounded="sm"
+            rounded="lg"
             color="primary"
             hide-details="auto"
             class="mb-4"
@@ -427,7 +427,7 @@
             placeholder="0.00"
             variant="solo-filled"
             density="comfortable"
-            rounded="sm"
+            rounded="lg"
             hide-details="auto"
             class="mb-4"
             color="primary"
@@ -443,7 +443,7 @@
             label="Account Role"
             variant="solo-filled"
             density="comfortable"
-            rounded="sm"
+            rounded="lg"
             hide-details="auto"
             class="mb-4"
             hint="Override how this account is classified in Net Worth. 'Default' uses the account type."
@@ -456,7 +456,7 @@
               type="number"
               variant="solo-filled"
               density="comfortable"
-              rounded="sm"
+              rounded="lg"
               color="primary"
               hide-details="auto"
               class="mb-4"
@@ -493,7 +493,7 @@
                     clearable
                     variant="solo-filled"
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     color="primary"
                     hide-details="auto"
                     append-inner-icon="mdi-calendar"
@@ -527,7 +527,7 @@
                       clearable
                       variant="solo-filled"
                       density="comfortable"
-                      rounded="sm"
+                      rounded="lg"
                       color="primary"
                       hide-details="auto"
                       append-inner-icon="mdi-calendar"
@@ -554,7 +554,7 @@
                   min="1"
                   variant="solo-filled"
                   density="comfortable"
-                  rounded="sm"
+                  rounded="lg"
                   hide-details="auto"
                   color="primary"
                 />
@@ -570,7 +570,7 @@
                   clearable
                   variant="solo-filled"
                   density="comfortable"
-                  rounded="sm"
+                  rounded="lg"
                   color="primary"
                   hide-details="auto"
                   append-inner-icon="mdi-calendar"
@@ -601,13 +601,13 @@
             type="error"
             density="compact"
             class="mb-2 text-caption"
-            rounded="sm"
+            rounded="lg"
           >
             {{ store.error }}
           </v-alert>
           <v-spacer />
           <v-btn variant="text" @click="editNameDialog = false">Cancel</v-btn>
-          <v-btn variant="flat" rounded="sm" :loading="store.loading" @click="saveEditName">
+          <v-btn variant="flat" rounded="lg" :loading="store.loading" @click="saveEditName">
             Save
           </v-btn>
         </v-card-actions>
@@ -615,8 +615,8 @@
     </v-dialog>
 
     <!-- Remove Confirmation Dialog -->
-    <v-dialog v-model="removeDialog" max-width="400" rounded="sm">
-      <v-card rounded="sm">
+    <v-dialog v-model="removeDialog" max-width="400" rounded="lg">
+      <v-card rounded="lg">
         <v-card-title class="text-h6 pa-6 pb-4">Remove Account</v-card-title>
         <v-card-text class="pa-6 pt-0 text-body-2 text-medium-emphasis">
           Remove
@@ -630,7 +630,7 @@
             type="error"
             density="compact"
             class="mb-2 text-caption w-100"
-            rounded="sm"
+            rounded="lg"
           >
             {{ store.error }}
           </v-alert>
@@ -639,7 +639,7 @@
             <v-btn
               color="error"
               variant="flat"
-              rounded="sm"
+              rounded="lg"
               :loading="store.loading"
               @click="doRemove"
               >Remove</v-btn

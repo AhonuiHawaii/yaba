@@ -10,7 +10,7 @@
         <v-card
           v-for="card in summaryCards"
           :key="card.title"
-          rounded="sm"
+          rounded="lg"
           elevation="1"
           class="pa-4"
         >
@@ -23,7 +23,7 @@
       </div>
 
       <!-- Table -->
-      <v-card rounded="sm" elevation="1">
+      <v-card rounded="lg" elevation="1">
         <div
           class="sub-row sub-row--header text-caption text-uppercase font-weight-bold text-medium-emphasis"
         >
@@ -69,7 +69,7 @@
 
             <!-- Category -->
             <div>
-              <v-chip v-if="sub.category" size="x-small" variant="tonal" color="teal" rounded="sm">
+              <v-chip v-if="sub.category" size="x-small" variant="tonal" color="teal" rounded="lg">
                 {{ categoryName(sub.category) }}
               </v-chip>
               <span v-else class="text-caption text-medium-emphasis">—</span>
@@ -152,7 +152,7 @@
                 size="x-small"
                 color="error"
                 variant="flat"
-                rounded="sm"
+                rounded="lg"
               >
                 Overdue
               </v-chip>
@@ -161,7 +161,7 @@
                 size="x-small"
                 color="warning"
                 variant="flat"
-                rounded="sm"
+                rounded="lg"
               >
                 Due soon
               </v-chip>
@@ -170,11 +170,11 @@
                 size="x-small"
                 color="orange"
                 variant="flat"
-                rounded="sm"
+                rounded="lg"
               >
                 Price up
               </v-chip>
-              <v-chip v-else size="x-small" color="success" variant="flat" rounded="sm">
+              <v-chip v-else size="x-small" color="success" variant="flat" rounded="lg">
                 Paid
               </v-chip>
             </div>

@@ -12,7 +12,7 @@
 
     <!-- Tabs -->
     <v-tabs v-model="activeTab" class="px-5 mb-4" color="primary">
-      <v-tab value="list" prepend-icon="mdi-format-list-bulleted">List</v-tab>
+      <v-tab value="list" prepend-icon="mdi-format-list-bulleted">Main</v-tab>
       <v-tab value="calendar" prepend-icon="mdi-calendar-month-outline">Calendar</v-tab>
     </v-tabs>
 
@@ -30,7 +30,7 @@
             <v-card
               v-for="card in summaryCards"
               :key="card.title"
-              rounded="sm"
+              rounded="lg"
               elevation="1"
               class="pa-4"
             >
@@ -44,7 +44,7 @@
 
           <!-- Bills table -->
           <div class="px-5 pb-6">
-            <v-card rounded="sm" elevation="1">
+            <v-card rounded="lg" elevation="1">
               <div
                 class="bill-row bill-row--header text-caption text-uppercase font-weight-bold text-medium-emphasis"
               >
@@ -88,7 +88,7 @@
                       size="x-small"
                       variant="tonal"
                       color="teal"
-                      rounded="sm"
+                      rounded="lg"
                       >{{ categoryName(bill.category) }}</v-chip
                     >
                     <span v-else class="text-caption text-medium-emphasis">—</span>
@@ -166,10 +166,10 @@
                       size="x-small"
                       color="success"
                       variant="flat"
-                      rounded="sm"
+                      rounded="lg"
                       >Paid</v-chip
                     >
-                    <v-chip v-else size="x-small" color="primary" variant="flat" rounded="sm"
+                    <v-chip v-else size="x-small" color="primary" variant="flat" rounded="lg"
                       >Upcoming</v-chip
                     >
                   </div>
@@ -183,139 +183,7 @@
 
       <!-- ── CALENDAR VIEW ── -->
       <v-tabs-window-item value="calendar">
-        <div class="px-5 pb-6">
-          <v-sheet rounded="sm" elevation="2" class="pa-4">
-            <!-- Navigation -->
-            <div class="d-flex align-center gap-3 mb-6">
-              <v-btn
-                icon="mdi-chevron-left"
-                variant="text"
-                density="comfortable"
-                @click="prevMonth"
-              />
-              <span class="text-h6 font-weight-bold cal-title">{{ monthTitle }}</span>
-              <v-btn
-                icon="mdi-chevron-right"
-                variant="text"
-                density="comfortable"
-                @click="nextMonth"
-              />
-              <v-btn size="small" variant="flat" rounded="sm" @click="goToday">Today</v-btn>
-              <v-spacer />
-              <div class="d-flex align-center gap-3">
-                <span class="text-caption text-medium-emphasis d-flex align-center gap-1">
-                  <v-icon size="12" color="primary">mdi-circle</v-icon> Upcoming
-                </span>
-                <span class="text-caption text-medium-emphasis d-flex align-center gap-1">
-                  <v-icon size="12" color="success">mdi-circle</v-icon> Paid
-                </span>
-              </div>
-            </div>
-
-            <!-- Day-of-week headers -->
-            <div class="cal-grid mb-1">
-              <div
-                v-for="d in ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']"
-                :key="d"
-                class="text-caption text-center text-uppercase font-weight-bold text-medium-emphasis py-2"
-              >
-                {{ d }}
-              </div>
-            </div>
-
-            <!-- Calendar cells -->
-            <div class="cal-grid">
-              <div
-                v-for="day in calendarDays"
-                :key="day.key"
-                class="cal-cell"
-                :class="{ 'cal-cell--other': !day.currentMonth, 'cal-cell--today': day.isToday }"
-              >
-                <div
-                  class="cal-day-num text-caption font-weight-bold mb-1"
-                  :class="day.isToday ? 'text-primary' : 'text-medium-emphasis'"
-                >
-                  <v-avatar
-                    v-if="day.isToday"
-                    color="primary"
-                    size="20"
-                    class="text-caption font-weight-bold"
-                  >
-                    {{ day.date.getDate() }}
-                  </v-avatar>
-                  <span v-else>{{ day.date.getDate() }}</span>
-                </div>
-
-                <template v-if="day.currentMonth">
-                  <v-chip
-                    v-for="evt in calEventsByDay.get(day.key) || []"
-                    :key="evt.name"
-                    :color="evt.isPast ? 'success' : 'primary'"
-                    size="x-small"
-                    variant="flat"
-                    class="cal-chip mb-1 cursor-pointer"
-                    @click.stop="openCalEvent(evt)"
-                  >
-                    <span class="cal-chip-label"
-                      >{{ evt.name }} · {{ formatCurrency(evt.typicalAmount) }}</span
-                    >
-                  </v-chip>
-                </template>
-              </div>
-            </div>
-
-            <!-- Event detail dialog -->
-            <v-dialog v-model="calDialogOpen" max-width="400">
-              <v-card v-if="selectedCalEvent" rounded="sm">
-                <v-card-title class="pa-6 pb-4">
-                  <div class="d-flex align-center justify-space-between">
-                    <div class="d-flex align-center gap-3">
-                      <v-icon color="primary" size="20">mdi-calendar-month</v-icon>
-                      <span class="text-h6 font-weight-bold">{{ selectedCalEvent.name }}</span>
-                    </div>
-                    <v-btn
-                      icon="mdi-close"
-                      variant="text"
-                      density="compact"
-                      @click="calDialogOpen = false"
-                    />
-                  </div>
-                </v-card-title>
-                <v-divider />
-                <v-card-text class="pa-6">
-                  <div class="d-flex align-center justify-space-between mb-3">
-                    <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
-                      Typical Amount
-                    </div>
-                    <div class="text-h6 font-weight-bold text-primary">
-                      {{ formatCurrency(selectedCalEvent.typicalAmount) }}
-                    </div>
-                  </div>
-                  <v-divider class="mb-3" />
-                  <div class="d-flex align-center justify-space-between mb-2">
-                    <span class="text-body-2 font-weight-medium">Next due</span>
-                    <span class="text-body-2 text-medium-emphasis">{{
-                      selectedCalEvent.nextDueLabel
-                    }}</span>
-                  </div>
-                  <div
-                    v-if="selectedCalEvent.category"
-                    class="d-flex align-center justify-space-between"
-                  >
-                    <span class="text-body-2 font-weight-medium">Category</span>
-                    <span class="text-body-2 text-medium-emphasis">{{
-                      categoryName(selectedCalEvent.category)
-                    }}</span>
-                  </div>
-                </v-card-text>
-                <v-card-actions class="pa-6 pt-0">
-                  <v-spacer />
-                  <v-btn variant="tonal" rounded="sm" @click="calDialogOpen = false">Close</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-          </v-sheet>
-        </div>
+        <Calendar displayType="bills" />
       </v-tabs-window-item>
     </v-tabs-window>
   </div>
@@ -325,6 +193,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserSettingsStore } from '../stores/userSettings'
 import { useUserCategoriesStore } from '../stores/userCategories'
+import Calendar from '../components/Calendar.vue'
 
 const { formatCurrency } = useUserSettingsStore()
 const categoriesStore = useUserCategoriesStore()
@@ -512,104 +381,6 @@ const summaryCards = computed(() => {
   ]
 })
 
-// ── Calendar navigation ───────────────────────────────────────────────────────
-
-const today = new Date()
-
-function currentMonthValue() {
-  const d = new Date()
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-function offsetMonth(yyyymm, delta) {
-  const year = Number(yyyymm.slice(0, 4))
-  const month = Number(yyyymm.slice(4)) - 1
-  const d = new Date(year, month + delta, 1)
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-
-const selectedMonth = ref(currentMonthValue())
-const viewYear = computed(() => Number(selectedMonth.value.slice(0, 4)))
-const viewMonth = computed(() => Number(selectedMonth.value.slice(4, 6)) - 1)
-const monthTitle = computed(() =>
-  new Date(viewYear.value, viewMonth.value, 1).toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric'
-  })
-)
-
-function prevMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, -1)
-}
-function nextMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, 1)
-}
-function goToday() {
-  selectedMonth.value = currentMonthValue()
-}
-
-// ── Calendar grid ─────────────────────────────────────────────────────────────
-
-function dateKey(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
-
-const calendarDays = computed(() => {
-  const y = viewYear.value
-  const m = viewMonth.value
-  const firstDow = new Date(y, m, 1).getDay()
-  const daysInMonth = new Date(y, m + 1, 0).getDate()
-  const daysInPrevMonth = new Date(y, m, 0).getDate()
-  const todayKey = dateKey(today)
-  const days = []
-
-  for (let i = firstDow - 1; i >= 0; i--) {
-    const date = new Date(y, m - 1, daysInPrevMonth - i)
-    days.push({ date, key: dateKey(date), currentMonth: false, isToday: false })
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(y, m, d)
-    const key = dateKey(date)
-    days.push({ date, key, currentMonth: true, isToday: key === todayKey })
-  }
-  const trailing = 42 - days.length
-  for (let d = 1; d <= trailing; d++) {
-    const date = new Date(y, m + 1, d)
-    days.push({ date, key: dateKey(date), currentMonth: false, isToday: false })
-  }
-  return days
-})
-
-const calEventsByDay = computed(() => {
-  const y = viewYear.value
-  const m = viewMonth.value
-  const daysInMonth = new Date(y, m + 1, 0).getDate()
-  const isCurrentMonth = y === today.getFullYear() && m === today.getMonth()
-  const map = new Map()
-
-  for (const bill of billGroups.value) {
-    const day = bill.typicalDay
-    if (!day || day < 1 || day > daysInMonth) continue
-    const key = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-    const isPast = isCurrentMonth ? day < today.getDate() : new Date(y, m, day) < today
-    const nextDueLabel = new Date(y, m, day).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    })
-    if (!map.has(key)) map.set(key, [])
-    map.get(key).push({ ...bill, isPast, nextDueLabel })
-  }
-  return map
-})
-
-const calDialogOpen = ref(false)
-const selectedCalEvent = ref(null)
-
-function openCalEvent(evt) {
-  selectedCalEvent.value = evt
-  calDialogOpen.value = true
-}
-
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 onMounted(fetchAll)
@@ -636,51 +407,5 @@ onMounted(fetchAll)
 
 .min-width-0 {
   min-width: 0;
-}
-
-.cal-title {
-  min-width: 200px;
-  text-align: center;
-}
-
-.cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-}
-
-.cal-cell {
-  min-height: 110px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 6px;
-  padding: 6px;
-  overflow: hidden;
-}
-
-.cal-cell--other {
-  opacity: 0.3;
-}
-
-.cal-cell--today {
-  border-color: rgba(var(--v-theme-primary), 0.6);
-  background: rgba(var(--v-theme-primary), 0.04);
-}
-
-.cal-day-num {
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.cal-chip {
-  display: flex;
-  width: 100%;
-  max-width: 100%;
-}
-
-.cal-chip-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
 }
 </style>

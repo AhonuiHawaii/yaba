@@ -123,7 +123,7 @@
               <v-chip
                 size="x-small"
                 variant="tonal"
-                rounded="sm"
+                rounded="lg"
                 class="font-weight-bold text-uppercase"
               >
                 {{ cond.value }}
@@ -216,7 +216,7 @@
                 variant="solo"
                 inset
                 density="comfortable"
-                rounded="sm"
+                rounded="lg"
                 hide-details
                 color="primary"
                 class="mb-6"
@@ -252,7 +252,7 @@
                     variant="solo"
                     inset
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     hide-details
                     style="max-width: 150px"
                   />
@@ -264,7 +264,7 @@
                     variant="solo"
                     inset
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     hide-details
                     style="max-width: 150px"
                   />
@@ -274,7 +274,7 @@
                     variant="solo"
                     inset
                     density="comfortable"
-                    rounded="sm"
+                    rounded="lg"
                     hide-details
                     class="flex-grow-1"
                   />
@@ -305,7 +305,7 @@
                       variant="solo"
                       inset
                       density="comfortable"
-                      rounded="sm"
+                      rounded="lg"
                       hide-details
                       clearable
                       color="primary"
@@ -321,7 +321,7 @@
                       variant="solo"
                       inset
                       density="comfortable"
-                      rounded="sm"
+                      rounded="lg"
                       hide-details
                       clearable
                       color="primary"
@@ -334,7 +334,7 @@
                       variant="solo"
                       inset
                       density="comfortable"
-                      rounded="sm"
+                      rounded="lg"
                       clearable
                       hide-details
                       color="primary"
@@ -420,7 +420,7 @@
           <v-btn variant="text" @click="closeRuleDialog">Cancel</v-btn>
           <v-btn
             variant="flat"
-            rounded="sm"
+            rounded="lg"
             color="primary"
             :loading="store.loading"
             :disabled="!isValidForm"

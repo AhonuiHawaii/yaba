@@ -25,246 +25,260 @@
       </div>
     </div>
 
-    <!-- Impact Calculator / Banner -->
-    <v-card rounded="xl" color="primary" variant="tonal" class="pa-6 mb-8 border" elevation="0">
-      <v-row align="center">
-        <v-col cols="12" md="6">
-          <div class="text-h6 font-weight-bold mb-2">Extra Payment Impact Calculator</div>
-          <div class="text-body-2 mb-4">
-            How much extra can you put towards your debt each month? Even a small amount makes a
-            huge difference!
-          </div>
-          <v-slider
-            :model-value="debtsStore.extraPayment"
-            :min="0"
-            :max="2000"
-            :step="50"
-            thumb-label="always"
-            color="primary"
-            @update:model-value="debtsStore.setExtraPayment"
-          >
-            <template #thumb-label="{ modelValue }">
-              {{ formatCurrency(modelValue) }}
-            </template>
-          </v-slider>
-        </v-col>
-        <v-col cols="12" md="6" class="text-md-right mt-4 mt-md-0">
-          <div v-if="activeSimulation.totalMonths > 0">
-            <div class="text-h5 font-weight-bold text-primary mb-1">
-              Debt-free by {{ estimatedPayoffDate }}
+    <!-- Tabs -->
+    <v-tabs v-model="activeTab" class="mb-6" color="primary">
+      <v-tab value="list" prepend-icon="mdi-format-list-bulleted">Main</v-tab>
+      <v-tab value="calendar" prepend-icon="mdi-calendar-month-outline">Calendar</v-tab>
+    </v-tabs>
+
+    <div v-show="activeTab === 'list'">
+      <!-- Impact Calculator / Banner -->
+      <v-card rounded="lg" class="pa-6 mb-8">
+        <v-row align="center">
+          <v-col cols="12" md="6">
+            <div class="text-h6 font-weight-bold mb-2">Extra Payment Impact Calculator</div>
+            <div class="text-body-2 mb-4">
+              How much extra can you put towards your debt each month? Even a small amount makes a
+              huge difference!
             </div>
-            <div class="text-body-2 font-weight-medium">
-              You will pay a total of
-              <strong>{{ formatCurrency(activeSimulation.totalInterest) }}</strong> in interest.
-            </div>
-            <v-chip
-              color="success"
-              variant="flat"
-              class="mt-3 font-weight-bold"
-              prepend-icon="mdi-party-popper"
+            <v-slider
+              :model-value="debtsStore.extraPayment"
+              :min="0"
+              :max="2000"
+              :step="50"
+              thumb-label="always"
+              color="primary"
+              @update:model-value="debtsStore.setExtraPayment"
             >
-              Keep it up! You're on track.
-            </v-chip>
-          </div>
-          <div v-else class="text-h6 font-weight-bold text-success">
-            You are completely debt free!
-          </div>
+              <template #thumb-label="{ modelValue }">
+                {{ formatCurrency(modelValue) }}
+              </template>
+            </v-slider>
+          </v-col>
+          <v-col cols="12" md="6" class="text-md-right mt-4 mt-md-0">
+            <div v-if="activeSimulation.totalMonths > 0">
+              <div class="text-h5 font-weight-bold text-primary mb-1">
+                Debt-free by {{ estimatedPayoffDate }}
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                You will pay a total of
+                <strong>{{ formatCurrency(activeSimulation.totalInterest) }}</strong> in interest.
+              </div>
+              <v-chip
+                color="success"
+                variant="flat"
+                class="mt-3 font-weight-bold"
+                prepend-icon="mdi-party-popper"
+              >
+                Keep it up! You're on track.
+              </v-chip>
+            </div>
+            <div v-else class="text-h6 font-weight-bold text-success">
+              You are completely debt free!
+            </div>
+          </v-col>
+        </v-row>
+      </v-card>
+
+      <!-- Summary Cards -->
+      <v-row class="mb-8">
+        <v-col cols="12" sm="6" md="3">
+          <v-card rounded="lg" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
+            <div class="d-flex align-center mb-4">
+              <v-avatar color="error" variant="tonal" size="48" class="mr-4">
+                <v-icon>mdi-credit-card-remove-outline</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                  Total Debt
+                </div>
+                <div class="text-h4 font-weight-bold text-error">
+                  {{ formatCurrency(totalDebt) }}
+                </div>
+              </div>
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card rounded="lg" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
+            <div class="d-flex align-center mb-4">
+              <v-avatar color="success" variant="tonal" size="48" class="mr-4">
+                <v-icon>mdi-check-decagram-outline</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                  Total Paid Off
+                </div>
+                <div class="text-h4 font-weight-bold text-success">
+                  {{ formatCurrency(paidOff) }}
+                </div>
+              </div>
+            </div>
+            <div class="mt-auto">
+              <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
+                <span>Progress to debt-free</span>
+                <span>{{ paidOffPercent }}%</span>
+              </div>
+              <v-progress-linear
+                :model-value="overallProgress"
+                color="success"
+                height="8"
+                rounded
+              />
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card rounded="lg" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
+            <div class="d-flex align-center mb-4">
+              <v-avatar color="primary" variant="tonal" size="48" class="mr-4">
+                <v-icon>mdi-calendar-month-outline</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                  Min. Payment
+                </div>
+                <div class="text-h4 font-weight-bold">
+                  {{ formatCurrency(monthlyPayment) }}
+                </div>
+              </div>
+            </div>
+            <div class="text-body-2 text-medium-emphasis mt-auto">
+              Plus extra <strong>{{ formatCurrency(debtsStore.extraPayment) }}</strong>
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card rounded="lg" class="pa-6 d-flex flex-column h-100 bg-surface">
+            <div class="d-flex align-center mb-4">
+              <v-avatar color="warning" variant="tonal" size="48" class="mr-4">
+                <v-icon>mdi-cash-remove</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                  Total Est. Interest
+                </div>
+                <div class="text-h4 font-weight-bold text-warning">
+                  {{ formatCurrency(activeSimulation.totalInterest) }}
+                </div>
+              </div>
+            </div>
+            <div class="text-body-2 text-medium-emphasis mt-auto">
+              Paid over {{ activeSimulation.totalMonths }} months
+            </div>
+          </v-card>
         </v-col>
       </v-row>
-    </v-card>
 
-    <!-- Summary Cards -->
-    <v-row class="mb-8">
-      <v-col cols="12" sm="6" md="3">
-        <v-card rounded="xl" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
-          <div class="d-flex align-center mb-4">
-            <v-avatar color="error" variant="tonal" size="48" class="mr-4">
-              <v-icon>mdi-credit-card-remove-outline</v-icon>
-            </v-avatar>
-            <div>
-              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
-                Total Debt
+      <div class="text-h5 font-weight-bold mb-4">Your Debts</div>
+
+      <!-- Per-debt Cards -->
+      <v-row v-if="debtCardRows.length > 0">
+        <v-col v-for="debt in debtCardRows" :key="debt.id" cols="12" md="6" lg="4">
+          <v-card rounded="lg" class="pa-5 d-flex flex-column h-100 hover-card bg-surface">
+            <div class="d-flex justify-space-between align-start mb-4">
+              <div>
+                <div class="text-h6 font-weight-bold line-clamp-1">{{ debt.name }}</div>
+                <div class="text-body-2 text-medium-emphasis">
+                  {{ debt.rawAccount.ORG || 'Unknown Institution' }}
+                </div>
               </div>
-              <div class="text-h4 font-weight-bold text-error">
-                {{ formatCurrency(totalDebt) }}
-              </div>
+              <v-btn
+                icon="mdi-dots-horizontal"
+                variant="text"
+                density="comfortable"
+                @click="openEditDialog(debt.rawAccount)"
+              />
             </div>
-          </div>
-        </v-card>
-      </v-col>
 
-      <v-col cols="12" sm="6" md="3">
-        <v-card rounded="xl" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
-          <div class="d-flex align-center mb-4">
-            <v-avatar color="success" variant="tonal" size="48" class="mr-4">
-              <v-icon>mdi-check-decagram-outline</v-icon>
-            </v-avatar>
-            <div class="flex-grow-1">
-              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
-                Total Paid Off
+            <div class="d-flex justify-space-between align-center mb-4">
+              <div class="text-h5 font-weight-bold text-error">
+                {{ formatCurrency(debt.currentBalance) }}
               </div>
-              <div class="text-h4 font-weight-bold text-success">
-                {{ formatCurrency(paidOff) }}
-              </div>
-            </div>
-          </div>
-          <div class="mt-auto">
-            <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
-              <span>Progress to debt-free</span>
-              <span>{{ paidOffPercent }}%</span>
-            </div>
-            <v-progress-linear :model-value="overallProgress" color="success" height="8" rounded />
-          </div>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" md="3">
-        <v-card rounded="xl" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
-          <div class="d-flex align-center mb-4">
-            <v-avatar color="primary" variant="tonal" size="48" class="mr-4">
-              <v-icon>mdi-calendar-month-outline</v-icon>
-            </v-avatar>
-            <div>
-              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
-                Min. Payment
-              </div>
-              <div class="text-h4 font-weight-bold">
-                {{ formatCurrency(monthlyPayment) }}
-              </div>
-            </div>
-          </div>
-          <div class="text-body-2 text-medium-emphasis mt-auto">
-            Plus extra <strong>{{ formatCurrency(debtsStore.extraPayment) }}</strong>
-          </div>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" md="3">
-        <v-card rounded="xl" variant="outlined" class="pa-6 d-flex flex-column h-100 bg-surface">
-          <div class="d-flex align-center mb-4">
-            <v-avatar color="warning" variant="tonal" size="48" class="mr-4">
-              <v-icon>mdi-cash-remove</v-icon>
-            </v-avatar>
-            <div>
-              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
-                Total Est. Interest
-              </div>
-              <div class="text-h4 font-weight-bold text-warning">
-                {{ formatCurrency(activeSimulation.totalInterest) }}
-              </div>
-            </div>
-          </div>
-          <div class="text-body-2 text-medium-emphasis mt-auto">
-            Paid over {{ activeSimulation.totalMonths }} months
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <div class="text-h5 font-weight-bold mb-4">Your Debts</div>
-
-    <!-- Per-debt Cards -->
-    <v-row v-if="debtCardRows.length > 0">
-      <v-col v-for="debt in debtCardRows" :key="debt.id" cols="12" md="6" lg="4">
-        <v-card
-          rounded="xl"
-          variant="outlined"
-          class="pa-5 d-flex flex-column h-100 hover-card bg-surface"
-        >
-          <div class="d-flex justify-space-between align-start mb-4">
-            <div>
-              <div class="text-h6 font-weight-bold line-clamp-1">{{ debt.name }}</div>
-              <div class="text-body-2 text-medium-emphasis">
-                {{ debt.rawAccount.ORG || 'Unknown Institution' }}
-              </div>
-            </div>
-            <v-btn
-              icon="mdi-dots-horizontal"
-              variant="text"
-              density="comfortable"
-              @click="openEditDialog(debt.rawAccount)"
-            />
-          </div>
-
-          <div class="d-flex justify-space-between align-center mb-4">
-            <div class="text-h5 font-weight-bold text-error">
-              {{ formatCurrency(debt.currentBalance) }}
-            </div>
-            <v-chip
-              variant="tonal"
-              size="small"
-              class="font-weight-bold"
-              :color="debt.isHighApr ? 'error' : 'warning'"
-            >
-              {{ formatPercent(debt.interestRate) }} APR
-            </v-chip>
-          </div>
-
-          <!-- Credit Utilization (if limit exists) -->
-          <div v-if="debt.creditLimit > 0" class="mb-4">
-            <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
-              <span>Credit Utilization</span>
-              <span :class="getUtilizationColorClass(debt.utilization)"
-                >{{ debt.utilization }}%</span
+              <v-chip
+                variant="tonal"
+                size="small"
+                class="font-weight-bold"
+                :color="debt.isHighApr ? 'error' : 'warning'"
               >
+                {{ formatPercent(debt.interestRate) }} APR
+              </v-chip>
             </div>
-            <v-progress-linear
-              :model-value="debt.utilization"
-              :color="getUtilizationColor(debt.utilization)"
-              height="6"
-              rounded
-            />
-            <div class="text-caption text-medium-emphasis mt-1">
-              Limit: {{ formatCurrency(debt.creditLimit) }}
-            </div>
-          </div>
-          <!-- Payoff Progress (if no limit, show starting balance progress) -->
-          <div v-else class="mb-4">
-            <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
-              <span>Payoff Progress</span>
-              <span class="text-success">{{ Math.round(debt.progress) }}%</span>
-            </div>
-            <v-progress-linear :model-value="debt.progress" color="success" height="6" rounded />
-            <div class="text-caption text-medium-emphasis mt-1">
-              Starting: {{ formatCurrency(debt.startingBalance) }}
-            </div>
-          </div>
 
-          <v-divider class="my-4" />
-
-          <div class="d-flex justify-space-between align-center mt-auto">
-            <div class="text-body-2">
-              <div class="text-medium-emphasis text-caption">Min. Payment</div>
-              <div class="font-weight-bold">{{ formatCurrency(debt.monthlyMinimumPayment) }}</div>
-            </div>
-            <div class="text-center">
-              <div class="text-medium-emphasis text-caption">Est. Interest</div>
-              <div class="font-weight-bold text-warning">
-                {{ formatCurrency(debt.interestPaid) }}
+            <!-- Credit Utilization (if limit exists) -->
+            <div v-if="debt.creditLimit > 0" class="mb-4">
+              <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
+                <span>Credit Utilization</span>
+                <span :class="getUtilizationColorClass(debt.utilization)"
+                  >{{ debt.utilization }}%</span
+                >
+              </div>
+              <v-progress-linear
+                :model-value="debt.utilization"
+                :color="getUtilizationColor(debt.utilization)"
+                height="6"
+                rounded
+              />
+              <div class="text-caption text-medium-emphasis mt-1">
+                Limit: {{ formatCurrency(debt.creditLimit) }}
               </div>
             </div>
-            <div class="text-right">
-              <div class="text-medium-emphasis text-caption">Target Payoff</div>
-              <div class="font-weight-bold text-primary">{{ debt.payoffDate }}</div>
+            <!-- Payoff Progress (if no limit, show starting balance progress) -->
+            <div v-else class="mb-4">
+              <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
+                <span>Payoff Progress</span>
+                <span class="text-success">{{ Math.round(debt.progress) }}%</span>
+              </div>
+              <v-progress-linear :model-value="debt.progress" color="success" height="6" rounded />
+              <div class="text-caption text-medium-emphasis mt-1">
+                Starting: {{ formatCurrency(debt.startingBalance) }}
+              </div>
             </div>
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-card
-      v-else
-      variant="outlined"
-      rounded="xl"
-      class="pa-12 text-center text-medium-emphasis border-dashed"
-    >
-      <v-icon size="64" class="mb-4" color="success">mdi-check-circle-outline</v-icon>
-      <div class="text-h6 font-weight-bold">No Debts Found</div>
-      <div class="text-body-1">Add a loan or credit card to start tracking your payoff!</div>
-    </v-card>
+
+            <v-divider class="my-4" />
+
+            <div class="d-flex justify-space-between align-center mt-auto">
+              <div class="text-body-2">
+                <div class="text-medium-emphasis text-caption">Min. Payment</div>
+                <div class="font-weight-bold">{{ formatCurrency(debt.monthlyMinimumPayment) }}</div>
+              </div>
+              <div class="text-center">
+                <div class="text-medium-emphasis text-caption">Est. Interest</div>
+                <div class="font-weight-bold text-warning">
+                  {{ formatCurrency(debt.interestPaid) }}
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-medium-emphasis text-caption">Target Payoff</div>
+                <div class="font-weight-bold text-primary">{{ debt.payoffDate }}</div>
+              </div>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
+      <v-card
+        v-else
+        variant="outlined"
+        rounded="lg"
+        class="pa-12 text-center text-medium-emphasis border-dashed"
+      >
+        <v-icon size="64" class="mb-4" color="success">mdi-check-circle-outline</v-icon>
+        <div class="text-h6 font-weight-bold">No Debts Found</div>
+        <div class="text-body-1">Add a loan or credit card to start tracking your payoff!</div>
+      </v-card>
+    </div>
+
+    <!-- ── CALENDAR VIEW ── -->
+    <div v-if="activeTab === 'calendar'">
+      <Calendar displayType="debt" />
+    </div>
 
     <!-- Edit Debt Dialog -->
     <v-dialog v-model="editDialog" max-width="500">
-      <v-card rounded="xl">
+      <v-card rounded="lg">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
             <span class="text-h5 font-weight-bold">Edit Debt Details</span>
@@ -373,7 +387,7 @@
 
     <!-- Create Payment Rule Dialog -->
     <v-dialog v-model="ruleDialog" max-width="500">
-      <v-card rounded="xl">
+      <v-card rounded="lg">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
             <span class="text-h5 font-weight-bold">Create Payment Rule</span>
@@ -421,6 +435,7 @@
 </template>
 
 <script setup>
+import Calendar from '../components/Calendar.vue'
 import { computed, ref, onMounted } from 'vue'
 import { useUserAccountsStore } from '../stores/userAccounts'
 import { useUserDebtsStore } from '../stores/userDebts'
@@ -434,6 +449,8 @@ const txStore = useUserTransactionsStore()
 const rulesStore = useUserRulesStore()
 const userSettings = useUserSettingsStore()
 const { formatCurrency } = userSettings
+
+const activeTab = ref('list')
 
 const strategyOptions = [
   { title: 'Snowball (Smallest balance first)', value: 'snowball' },
