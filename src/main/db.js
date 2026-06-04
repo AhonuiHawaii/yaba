@@ -186,7 +186,9 @@ const getTransactions = (filters = {}) => {
   if (entries.length === 0) {
     const now = new Date()
     const yyyymm = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
-    return db.prepare(`
+    return db
+      .prepare(
+        `
       SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType,
              c.name as categoryName, c.type as categoryType,
              c2.name as splitCategory2Name, c2.type as splitCategory2Type
@@ -195,13 +197,19 @@ const getTransactions = (filters = {}) => {
       LEFT JOIN Categories c ON t.category = c.id
       LEFT JOIN Categories c2 ON t.splitCategory2 = c2.id
       WHERE t.DTPOSTED LIKE ?
-    `).all(`${yyyymm}%`)
+    `
+      )
+      .all(`${yyyymm}%`)
   }
 
-  const clauses = entries.map(([col]) => (DATE_COLUMNS.has(col) ? `t.${col} LIKE ?` : `t.${col} = ?`))
+  const clauses = entries.map(([col]) =>
+    DATE_COLUMNS.has(col) ? `t.${col} LIKE ?` : `t.${col} = ?`
+  )
   const values = entries.map(([col, val]) => (DATE_COLUMNS.has(col) ? `${val}%` : val))
 
-  return db.prepare(`
+  return db
+    .prepare(
+      `
     SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType,
            c.name as categoryName, c.type as categoryType,
            c2.name as splitCategory2Name, c2.type as splitCategory2Type
@@ -210,11 +218,15 @@ const getTransactions = (filters = {}) => {
     LEFT JOIN Categories c ON t.category = c.id
     LEFT JOIN Categories c2 ON t.splitCategory2 = c2.id
     WHERE ${clauses.join(' AND ')}
-  `).all(...values)
+  `
+    )
+    .all(...values)
 }
 
 const getAllTransactions = () => {
-  return db.prepare(`
+  return db
+    .prepare(
+      `
     SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType,
            c.name as categoryName, c.type as categoryType,
            c2.name as splitCategory2Name, c2.type as splitCategory2Type
@@ -222,7 +234,9 @@ const getAllTransactions = () => {
     LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
     LEFT JOIN Categories c ON t.category = c.id
     LEFT JOIN Categories c2 ON t.splitCategory2 = c2.id
-  `).all()
+  `
+    )
+    .all()
 }
 
 // ── Transaction writes ───────────────────────────────────────────────────────
@@ -241,7 +255,6 @@ const updateTransaction = (fitid, updates = {}) => {
   return db.prepare(`UPDATE Transactions SET ${setClause} WHERE FITID = ?`).run(...values, fitid)
     .changes
 }
-
 
 /**
  * Bulk-inserts an array of transactions inside a single SQLite transaction.
@@ -458,7 +471,10 @@ function updateCategory(id, updates) {
   const entries = Object.entries(updates).filter(([col]) => ALLOWED.has(col))
   if (entries.length === 0) return 0
 
-  const setClause = entries.map(([col]) => `${col} = ?`).concat('updatedAt = CURRENT_TIMESTAMP').join(', ')
+  const setClause = entries
+    .map(([col]) => `${col} = ?`)
+    .concat('updatedAt = CURRENT_TIMESTAMP')
+    .join(', ')
   const values = entries.map(([, val]) => val)
 
   return db.prepare(`UPDATE Categories SET ${setClause} WHERE id = ?`).run(...values, id).changes
@@ -479,17 +495,24 @@ function getBudgets() {
 }
 
 function upsertBudget(categoryId, amount, month) {
-  return db.prepare(`
+  return db
+    .prepare(
+      `
     INSERT INTO Budgets (categoryId, month, amount)
     VALUES (@categoryId, @month, @amount)
     ON CONFLICT(categoryId, month) DO UPDATE SET
       amount = excluded.amount,
       updatedAt = CURRENT_TIMESTAMP
-  `).run({ categoryId, month, amount: Number(amount) || 0 }).changes
+  `
+    )
+    .run({ categoryId, month, amount: Number(amount) || 0 }).changes
 }
 
 function getCategoryTypes() {
-  return db.prepare('SELECT DISTINCT type FROM Categories ORDER BY type ASC').all().map(r => r.type)
+  return db
+    .prepare('SELECT DISTINCT type FROM Categories ORDER BY type ASC')
+    .all()
+    .map((r) => r.type)
 }
 
 // ── Category Rules ───────────────────────────────────────────────────────────

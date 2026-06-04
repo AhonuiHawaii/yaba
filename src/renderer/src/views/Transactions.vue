@@ -249,7 +249,9 @@
             </template>
 
             <template #item.ACCTID="{ item }">
-              <span class="text-body-2 text-medium-emphasis">{{ item.accountName || accountName(item.ACCTID) }}</span>
+              <span class="text-body-2 text-medium-emphasis">{{
+                item.accountName || accountName(item.ACCTID)
+              }}</span>
             </template>
 
             <template #item.category="{ item }">

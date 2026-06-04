@@ -41,14 +41,21 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
   }
 
   function getBudget(categoryId, month = null) {
-    return budgets.value.find((b) => b.categoryId === categoryId && (month ? b.month === month : true))
+    return budgets.value.find(
+      (b) => b.categoryId === categoryId && (month ? b.month === month : true)
+    )
   }
 
   async function upsertBudget(categoryId, amount, month) {
     loadingCount.value++
     error.value = null
     try {
-      const res = await window.electron.ipcRenderer.invoke('budgets:upsert', categoryId, amount, month)
+      const res = await window.electron.ipcRenderer.invoke(
+        'budgets:upsert',
+        categoryId,
+        amount,
+        month
+      )
       if (res.success) {
         await fetchBudgets()
       } else {
