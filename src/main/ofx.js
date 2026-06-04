@@ -25,7 +25,7 @@ async function extractAccountData(ofxData) {
   // Check for bank account info
   const bankMsgs = OFX.BANKMSGSRSV1 || {}
   const ccMsgs = OFX.CREDITCARDMSGSRSV1 || {}
-  
+
   const stmtrs = (bankMsgs.STMTTRNRS || {}).STMTRS || {}
   const ccstmtrs = (ccMsgs.CCSTMTTRNRS || {}).CCSTMTRS || {}
 

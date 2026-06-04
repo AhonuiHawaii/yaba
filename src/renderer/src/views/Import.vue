@@ -247,70 +247,82 @@
               </div>
 
               <div v-else>
-                <div v-if="!showBulkCleanupList" class="text-center pa-8 bg-surface rounded-xl border">
+                <div
+                  v-if="!showBulkCleanupList"
+                  class="text-center pa-8 bg-surface rounded-xl border"
+                >
                   <v-icon size="48" color="primary" class="mb-4">mdi-broom</v-icon>
-                  <div class="text-h6 font-weight-bold">{{ Object.keys(groupedUncategorized).length }} groups need categories</div>
-                  <div class="text-body-2 text-medium-emphasis mb-4">Adding categories is optional, but it helps keep your budget organized.</div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ Object.keys(groupedUncategorized).length }} groups need categories
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis mb-4">
+                    Adding categories is optional, but it helps keep your budget organized.
+                  </div>
                   <v-btn color="primary" variant="flat" @click="showBulkCleanupList = true">
                     Review Uncategorized
                   </v-btn>
                 </div>
                 <template v-else>
                   <v-card
-                  v-for="(group, name) in groupedUncategorized"
-                  :key="name"
-                  variant="outlined"
-                  class="rounded-lg mb-3 border bg-surface"
-                >
-                  <div class="pa-4">
-                    <div class="d-flex align-center justify-space-between mb-2">
-                      <div class="font-weight-bold">{{ name }}</div>
-                      <v-chip size="small" color="surface-variant" variant="flat">
-                        {{ group.count }} txns
-                      </v-chip>
-                    </div>
+                    v-for="(group, name) in groupedUncategorized"
+                    :key="name"
+                    variant="outlined"
+                    class="rounded-lg mb-3 border bg-surface"
+                  >
+                    <div class="pa-4">
+                      <div class="d-flex align-center justify-space-between mb-2">
+                        <div class="font-weight-bold">{{ name }}</div>
+                        <v-chip size="small" color="surface-variant" variant="flat">
+                          {{ group.count }} txns
+                        </v-chip>
+                      </div>
 
-                    <div v-if="!group.showCategory" class="mt-3">
-                      <v-btn variant="text" size="small" color="primary" @click="group.showCategory = true">
-                        + Assign Category
-                      </v-btn>
-                    </div>
-                    <div v-else class="d-flex align-center gap-3 mt-3">
-                      <v-select
-                        v-model="group.categoryId"
-                        :items="categoryOptions"
-                        item-title="title"
-                        item-value="value"
-                        label="Assign Category"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        class="rounded-lg flex-1"
-                        color="primary"
-                        autofocus
-                      />
-                      <template v-if="group.categoryId">
-                        <v-checkbox
-                          v-model="group.retroactive"
-                          label="Retroactive"
-                          hide-details
-                          density="compact"
-                          color="primary"
-                          class="text-caption"
-                        />
+                      <div v-if="!group.showCategory" class="mt-3">
                         <v-btn
-                          color="primary"
-                          variant="flat"
+                          variant="text"
                           size="small"
-                          :loading="group.loading"
-                          @click="applyBulkRule(name, group)"
+                          color="primary"
+                          @click="group.showCategory = true"
                         >
-                          Apply
+                          + Assign Category
                         </v-btn>
-                      </template>
+                      </div>
+                      <div v-else class="d-flex align-center gap-3 mt-3">
+                        <v-select
+                          v-model="group.categoryId"
+                          :items="categoryOptions"
+                          item-title="title"
+                          item-value="value"
+                          label="Assign Category"
+                          variant="outlined"
+                          density="compact"
+                          hide-details
+                          class="rounded-lg flex-1"
+                          color="primary"
+                          autofocus
+                        />
+                        <template v-if="group.categoryId">
+                          <v-checkbox
+                            v-model="group.retroactive"
+                            label="Retroactive"
+                            hide-details
+                            density="compact"
+                            color="primary"
+                            class="text-caption"
+                          />
+                          <v-btn
+                            color="primary"
+                            variant="flat"
+                            size="small"
+                            :loading="group.loading"
+                            @click="applyBulkRule(name, group)"
+                          >
+                            Apply
+                          </v-btn>
+                        </template>
+                      </div>
                     </div>
-                  </div>
-                </v-card>
+                  </v-card>
                 </template>
               </div>
             </v-col>
@@ -364,14 +376,28 @@
                     }}</span>
                   </div>
 
-                  <v-alert v-if="Math.abs((p.dbBalance + sumImporting(p)) - Number(p.ledgerBalance.BALAMT)) < 0.01" type="success" variant="flat" class="font-weight-bold rounded-lg text-center">
+                  <v-alert
+                    v-if="
+                      Math.abs(p.dbBalance + sumImporting(p) - Number(p.ledgerBalance.BALAMT)) <
+                      0.01
+                    "
+                    type="success"
+                    variant="flat"
+                    class="font-weight-bold rounded-lg text-center"
+                  >
                     <v-icon start>mdi-check-circle</v-icon> Reconciled Perfectly!
                   </v-alert>
                   <v-alert v-else type="warning" variant="tonal" class="rounded-lg">
                     <div class="mb-3">
-                      Discrepancy of <strong>{{ formatCurrency(Math.abs((p.dbBalance + sumImporting(p)) - Number(p.ledgerBalance.BALAMT))) }}</strong>. You may be missing historical transactions.
+                      Discrepancy of
+                      <strong>{{
+                        formatCurrency(
+                          Math.abs(p.dbBalance + sumImporting(p) - Number(p.ledgerBalance.BALAMT))
+                        )
+                      }}</strong
+                      >. You may be missing historical transactions.
                     </div>
-                    
+
                     <div v-if="!p.adjustBalance" class="d-flex align-center gap-2">
                       <v-text-field
                         v-model="p.targetBalance"
@@ -388,17 +414,29 @@
                       </v-btn>
                     </div>
                     <div v-else class="text-success font-weight-bold d-flex align-center">
-                      <v-icon start>mdi-check</v-icon> Starting balance will be adjusted to ${{ p.targetBalance }}.
-                      <v-btn variant="text" size="small" class="ml-2" @click="p.adjustBalance = false">Undo</v-btn>
+                      <v-icon start>mdi-check</v-icon> Starting balance will be adjusted to ${{
+                        p.targetBalance
+                      }}.
+                      <v-btn
+                        variant="text"
+                        size="small"
+                        class="ml-2"
+                        @click="p.adjustBalance = false"
+                        >Undo</v-btn
+                      >
                     </div>
                   </v-alert>
                 </div>
                 <div v-else class="bg-surface-variant rounded-lg pa-4">
                   <div class="d-flex justify-space-between align-center mb-4">
-                    <span class="text-body-2 text-medium-emphasis">App Balance (After Import):</span>
-                    <span class="font-weight-bold text-h6">{{ formatCurrency(p.dbBalance + sumImporting(p)) }}</span>
+                    <span class="text-body-2 text-medium-emphasis"
+                      >App Balance (After Import):</span
+                    >
+                    <span class="font-weight-bold text-h6">{{
+                      formatCurrency(p.dbBalance + sumImporting(p))
+                    }}</span>
                   </div>
-                  
+
                   <v-alert type="info" variant="tonal" class="rounded-lg mb-0">
                     <div class="mb-2">Bank did not provide a ledger balance to verify against.</div>
                     <div v-if="!p.adjustBalance" class="d-flex align-center gap-2 mt-2">
@@ -412,13 +450,26 @@
                         type="number"
                         style="max-width: 200px"
                       />
-                      <v-btn color="primary" variant="tonal" :disabled="!p.targetBalance" @click="p.adjustBalance = true">
+                      <v-btn
+                        color="primary"
+                        variant="tonal"
+                        :disabled="!p.targetBalance"
+                        @click="p.adjustBalance = true"
+                      >
                         Adjust
                       </v-btn>
                     </div>
                     <div v-else class="text-success font-weight-bold d-flex align-center">
-                      <v-icon start>mdi-check</v-icon> Starting balance will be adjusted to ${{ p.targetBalance }}.
-                      <v-btn variant="text" size="small" class="ml-2" @click="p.adjustBalance = false">Undo</v-btn>
+                      <v-icon start>mdi-check</v-icon> Starting balance will be adjusted to ${{
+                        p.targetBalance
+                      }}.
+                      <v-btn
+                        variant="text"
+                        size="small"
+                        class="ml-2"
+                        @click="p.adjustBalance = false"
+                        >Undo</v-btn
+                      >
                     </div>
                   </v-alert>
                 </div>
@@ -647,7 +698,7 @@ async function goToDuplicates() {
       for (const pr of previewResults.value) {
         pr.adjustBalance = false
         pr.targetBalance = pr.ledgerBalance?.BALAMT || ''
-        
+
         // If it's a new account and we have a ledger balance, automatically enable auto-adjust
         if (!pr.dbBalance && pr.targetBalance) {
           pr.adjustBalance = true
@@ -785,14 +836,21 @@ function formatDateShort(dt) {
 async function doImport() {
   importing.value = true
   try {
-    const batchData = mappings.value.map(m => {
+    const batchData = mappings.value.map((m) => {
       // Find the corresponding preview result by exact matched account ID
       // If it's a new account, targetAcctId is null, so we try to match by the parsed ACCTID
-      const p = previewResults.value.find(pr => 
-        (m.targetAcctId && pr.accountId && pr.accountId.endsWith(m.targetAcctId.replace(/[^a-zA-Z0-9]/g, '').slice(-4))) || 
-        (!m.targetAcctId && pr.accountId && pr.accountId.replace(/[^a-zA-Z0-9]/g, '') === (m.parsedAccount.ACCTID || '').replace(/[^a-zA-Z0-9]/g, ''))
-      ) || previewResults.value[0] // fallback to first just in case
-      
+      const p =
+        previewResults.value.find(
+          (pr) =>
+            (m.targetAcctId &&
+              pr.accountId &&
+              pr.accountId.endsWith(m.targetAcctId.replace(/[^a-zA-Z0-9]/g, '').slice(-4))) ||
+            (!m.targetAcctId &&
+              pr.accountId &&
+              pr.accountId.replace(/[^a-zA-Z0-9]/g, '') ===
+                (m.parsedAccount.ACCTID || '').replace(/[^a-zA-Z0-9]/g, ''))
+        ) || previewResults.value[0] // fallback to first just in case
+
       return {
         ofxText: rawOfxData.value[m.filename],
         targetAcctId: m.targetAcctId,
