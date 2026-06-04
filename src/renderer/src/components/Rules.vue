@@ -45,7 +45,7 @@
         class="mb-4"
         @click:close="applyResult = null"
       >
-        {{ applyResult.applied }} transaction{{ applyResult.applied === 1 ? '' : 's' }} categorized.
+        {{ applyResult.applied }} transaction{{ applyResult.applied === 1 ? '' : 's' }} updated.
       </v-alert>
     </v-slide-y-transition>
 
@@ -104,36 +104,48 @@
           </div>
         </template>
 
-        <template #item.index="{ index }">
-          <span class="text-body-2 text-medium-emphasis">{{ index + 1 }}</span>
+        <template #item.name="{ item }">
+          <span class="text-body-2 font-weight-medium">{{ item.name }}</span>
         </template>
 
-        <template #item.field="{ item }">
-          <span class="text-body-2">{{ fieldLabel(item.field) }}</span>
+        <template #item.conditions="{ item }">
+          <div class="d-flex flex-column gap-1 my-1">
+            <div
+              v-for="(cond, i) in item.conditions"
+              :key="i"
+              class="d-flex align-center gap-1 text-body-2"
+            >
+              <span v-if="i > 0" class="text-caption font-weight-bold text-medium-emphasis"
+                >AND</span
+              >
+              <span class="text-medium-emphasis">{{ fieldLabel(cond.field) }}</span>
+              <span class="text-medium-emphasis">{{ operatorLabel(cond.operator) }}</span>
+              <v-chip
+                size="x-small"
+                variant="tonal"
+                rounded="sm"
+                class="font-weight-bold text-uppercase"
+              >
+                {{ cond.value }}
+              </v-chip>
+            </div>
+          </div>
         </template>
 
-        <template #item.condition="{ item }">
-          <span class="text-body-2 text-medium-emphasis">{{ item.operator }}</span>
-          <v-chip
-            size="x-small"
-            variant="tonal"
-            rounded="sm"
-            class="ml-2 font-weight-bold text-uppercase"
-            >{{ item.value }}</v-chip
-          >
-        </template>
-
-        <template #item.category="{ item }">
-          <v-chip size="x-small" variant="tonal" color="primary" rounded="pill">{{
-            categoriesStore.categoryById[item.category]?.name ?? item.category
-          }}</v-chip>
-        </template>
-
-        <template #item.rename="{ item }">
-          <span v-if="item.rename" class="text-body-2 text-medium-emphasis font-italic">{{
-            item.rename
-          }}</span>
-          <span v-else class="text-body-2 text-disabled">—</span>
+        <template #item.actions_summary="{ item }">
+          <div class="d-flex flex-wrap gap-1 my-1">
+            <v-chip
+              v-for="(action, i) in item.actions"
+              :key="i"
+              size="x-small"
+              variant="tonal"
+              color="primary"
+              rounded="pill"
+            >
+              {{ actionLabel(action) }}
+            </v-chip>
+            <span v-if="!item.actions?.length" class="text-body-2 text-disabled">—</span>
+          </div>
         </template>
 
         <template #item.matches="{ item }">
@@ -179,8 +191,8 @@
 
     <!-- Add / Edit Rule Dialog -->
     <v-dialog v-model="ruleDialog" max-width="1100" persistent>
-      <v-card rounded="lg" class="dialog-card">
-        <v-card-title class="pa-6 pb-4">
+      <v-card rounded="lg" class="dialog-card bg-background">
+        <v-card-title class="pa-6 pb-4 bg-surface">
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center gap-3">
               <v-icon color="primary" size="20">mdi-tag-multiple-outline</v-icon>
@@ -194,119 +206,164 @@
         <v-divider />
         <div class="d-flex dialog-body">
           <!-- Left: form -->
-          <div style="flex: 1; min-width: 0">
+          <div style="flex: 1; min-width: 0; overflow-y: auto">
             <v-card-text class="pa-6">
-              <v-row>
-                <v-col cols="6">
+              <!-- Rule Name -->
+              <div class="text-subtitle-2 font-weight-bold mb-2">Rule Name</div>
+              <v-text-field
+                v-model="form.name"
+                placeholder="e.g. Amazon Purchases"
+                variant="solo"
+                inset
+                density="comfortable"
+                rounded="sm"
+                hide-details
+                color="primary"
+                class="mb-6"
+              />
+
+              <!-- Conditions -->
+              <div
+                class="text-subtitle-2 font-weight-bold mb-2 d-flex align-center justify-space-between"
+              >
+                <span>When transactions match all of...</span>
+                <v-btn
+                  variant="text"
+                  color="primary"
+                  size="small"
+                  prepend-icon="mdi-plus"
+                  @click="addCondition"
+                >
+                  Add Condition
+                </v-btn>
+              </div>
+
+              <v-card variant="outlined" class="pa-4 mb-6" rounded="lg" border>
+                <div
+                  v-for="(cond, idx) in form.conditions"
+                  :key="idx"
+                  class="d-flex align-start gap-2 mb-3"
+                >
                   <v-select
-                    v-model="form.field"
+                    v-model="cond.field"
                     :items="fieldOptions"
                     item-title="label"
                     item-value="value"
-                    label="Field"
                     variant="solo"
                     inset
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                    color="primary"
+                    style="max-width: 150px"
                   />
-                </v-col>
-                <v-col cols="6">
                   <v-select
-                    v-model="form.operator"
+                    v-model="cond.operator"
                     :items="operatorOptions"
                     item-title="label"
                     item-value="value"
-                    label="Operator"
                     variant="solo"
                     inset
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                    color="primary"
+                    style="max-width: 150px"
                   />
-                </v-col>
-                <v-col cols="12" class="mt-3">
                   <v-text-field
-                    v-model="form.value"
-                    label="Match value"
-                    variant="solo"
-                    inset
-                    density="comfortable"
-                    rounded="sm"
-                    persistent-hint
-                    :hint="operatorHint"
-                    autofocus
-                    color="primary"
-                  />
-                </v-col>
-                <v-col cols="12" class="mt-3">
-                  <v-select
-                    v-model="form.type"
-                    :items="typeOptions"
-                    item-title="label"
-                    item-value="value"
-                    label="Assign transaction type (optional)"
+                    v-model="cond.value"
+                    placeholder="Match value"
                     variant="solo"
                     inset
                     density="comfortable"
                     rounded="sm"
                     hide-details
-                    clearable
-                    color="primary"
+                    class="flex-grow-1"
                   />
-                </v-col>
-                <v-col cols="12" class="mt-3">
-                  <v-select
-                    v-model="form.category"
-                    :items="categoryItems"
-                    item-title="title"
-                    item-value="value"
-                    label="Assign category"
-                    variant="solo"
-                    inset
-                    density="comfortable"
-                    rounded="sm"
-                    hide-details
-                    clearable
-                    color="primary"
+                  <v-btn
+                    v-if="form.conditions.length > 1"
+                    icon="mdi-close"
+                    variant="text"
+                    size="small"
+                    color="error"
+                    class="mt-1"
+                    @click="removeCondition(idx)"
                   />
-                </v-col>
-                <v-col cols="12" class="mt-3">
-                  <v-text-field
-                    v-model="form.rename"
-                    label="Rename payee to (optional)"
-                    variant="solo"
-                    inset
-                    density="comfortable"
-                    rounded="sm"
-                    clearable
-                    hint="Overwrites the transaction's Name field when this rule matches"
-                    persistent-hint
-                    color="primary"
-                  />
-                </v-col>
-                <v-col cols="12" class="mt-1">
-                  Is this a Bill or Subscription? (optional)
-                  <div class="d-flex gap-6">
-                    <v-checkbox
-                      v-model="form.subscription"
-                      label="Subscription"
+                </div>
+              </v-card>
+
+              <!-- Actions -->
+              <div class="text-subtitle-2 font-weight-bold mb-2">Then do the following...</div>
+
+              <v-card variant="outlined" class="pa-4" rounded="lg" border>
+                <v-row dense>
+                  <v-col cols="12">
+                    <v-select
+                      v-model="form.type"
+                      :items="typeOptions"
+                      item-title="label"
+                      item-value="value"
+                      label="Assign transaction type"
+                      variant="solo"
+                      inset
                       density="comfortable"
+                      rounded="sm"
+                      hide-details
+                      clearable
+                      color="primary"
+                    />
+                  </v-col>
+                  <v-col cols="12" class="mt-2">
+                    <v-select
+                      v-model="form.category"
+                      :items="categoryItems"
+                      item-title="title"
+                      item-value="value"
+                      label="Assign category"
+                      variant="solo"
+                      inset
+                      density="comfortable"
+                      rounded="sm"
+                      hide-details
+                      clearable
+                      color="primary"
+                    />
+                  </v-col>
+                  <v-col cols="12" class="mt-2">
+                    <v-text-field
+                      v-model="form.rename"
+                      label="Rename payee to"
+                      variant="solo"
+                      inset
+                      density="comfortable"
+                      rounded="sm"
+                      clearable
                       hide-details
                       color="primary"
                     />
-                    <v-checkbox
-                      v-model="form.bill"
-                      label="Bill"
-                      density="comfortable"
-                      hide-details
-                      color="primary"
-                    />
-                  </div>
-                </v-col>
-              </v-row>
+                  </v-col>
+
+                  <v-col cols="12" class="mt-4">
+                    <div class="text-caption font-weight-medium text-medium-emphasis mb-1">
+                      Tags
+                    </div>
+                    <div class="d-flex gap-4">
+                      <v-checkbox
+                        v-model="form.subscription"
+                        label="Subscription"
+                        density="compact"
+                        hide-details
+                        color="primary"
+                      />
+                      <v-checkbox
+                        v-model="form.bill"
+                        label="Bill"
+                        density="compact"
+                        hide-details
+                        color="primary"
+                      />
+                    </div>
+                  </v-col>
+                </v-row>
+              </v-card>
             </v-card-text>
           </div>
 
@@ -314,7 +371,7 @@
           <v-divider vertical />
 
           <!-- Right: live match -->
-          <div class="live-match-panel pa-4 d-flex flex-column">
+          <div class="live-match-panel bg-surface pa-4 d-flex flex-column">
             <div class="d-flex align-center ga-2 mb-3">
               <v-icon size="14" color="primary">mdi-lightning-bolt</v-icon>
               <span class="text-caption font-weight-medium text-medium-emphasis text-uppercase"
@@ -332,14 +389,14 @@
             </div>
             <div
               v-if="liveMatch && liveMatch.samples.length"
-              class="d-flex flex-column ga-1 live-match-list flex-grow-1"
+              class="d-flex flex-column ga-1 live-match-list flex-grow-1 pr-2"
             >
               <div
                 v-for="tx in liveMatch.samples"
                 :key="tx.FITID"
                 class="d-flex align-center justify-space-between text-caption live-match-row px-2 py-1 rounded"
               >
-                <span class="text-truncate mr-2">{{ matchedFieldText(tx) }}</span>
+                <span class="text-truncate mr-2">{{ tx.NAME || tx.MEMO || '—' }}</span>
                 <span class="text-medium-emphasis text-no-wrap">{{
                   tx.TRNAMT != null
                     ? (tx.TRNAMT < 0 ? '-' : '+') + '$' + Math.abs(tx.TRNAMT).toFixed(2)
@@ -358,14 +415,15 @@
         </div>
 
         <v-divider />
-        <v-card-actions class="pa-6 py-4">
+        <v-card-actions class="pa-6 py-4 bg-surface">
           <v-spacer />
           <v-btn variant="text" @click="closeRuleDialog">Cancel</v-btn>
           <v-btn
             variant="flat"
             rounded="sm"
+            color="primary"
             :loading="store.loading"
-            :disabled="!form.field || !form.operator || !form.value || !form.category"
+            :disabled="!isValidForm"
             @click="saveRule"
           >
             {{ editTarget ? 'Save' : 'Add' }}
@@ -379,12 +437,7 @@
       <v-card rounded="lg">
         <v-card-title class="text-h6 pa-6 pb-4">Delete Rule</v-card-title>
         <v-card-text class="pa-6 pt-0 text-body-2 text-medium-emphasis">
-          Delete the rule matching
-          <strong
-            >{{ deleteTarget?.field }} {{ deleteTarget?.operator }} "{{
-              deleteTarget?.value
-            }}"</strong
-          >? This cannot be undone.
+          Delete the rule <strong>"{{ deleteTarget?.name }}"</strong>? This cannot be undone.
         </v-card-text>
         <v-card-actions class="pa-6 pt-0 gap-2">
           <v-spacer />
@@ -437,33 +490,45 @@ function fieldLabel(f) {
   return fieldLabels[f] ?? f
 }
 
+const operatorLabels = {
+  contains: 'contains',
+  notContains: 'does not contain',
+  equals: 'equals',
+  startsWith: 'starts with',
+  wildcard: 'wildcard (*)',
+  wholeWord: 'whole words',
+  gt: '> (greater than)',
+  lt: '< (less than)'
+}
+function operatorLabel(o) {
+  return operatorLabels[o] ?? o
+}
+
+function actionLabel(action) {
+  if (action.type === 'category') {
+    return `Cat: ${categoriesStore.categoryById[action.value]?.name ?? action.value}`
+  }
+  if (action.type === 'transactionType') return `Type: ${action.value}`
+  if (action.type === 'rename') return `Rename: ${action.value}`
+  if (action.type === 'subscription' && action.value === '1') return 'Subscription'
+  if (action.type === 'bill' && action.value === '1') return 'Bill'
+  return `${action.type}: ${action.value}`
+}
+
 const headers = [
   { title: '', key: 'move', width: '72px', sortable: false },
-  { title: '#', key: 'index', width: '60px', sortable: false },
-  { title: 'When', key: 'field', width: '130px', sortable: false },
-  { title: 'Condition', key: 'condition', sortable: false },
-  { title: 'Set category', key: 'category', width: '170px', sortable: false },
-  { title: 'Rename to', key: 'rename', width: '150px', sortable: false },
-  { title: 'Matches', key: 'matches', width: '110px', sortable: false, align: 'end' },
+  { title: 'Name', key: 'name', width: '180px', sortable: false },
+  { title: 'Conditions', key: 'conditions', sortable: false },
+  { title: 'Actions', key: 'actions_summary', sortable: false },
+  { title: 'Matches', key: 'matches', width: '100px', sortable: false, align: 'end' },
   { title: '', key: 'actions', width: '90px', sortable: false, align: 'end' }
 ]
 
-const fieldOptions = [
-  { label: 'Name (payee)', value: 'NAME' },
-  { label: 'Memo', value: 'MEMO' },
-  { label: 'Amount', value: 'TRNAMT' },
-  { label: 'Tran. type', value: 'TRNTYPE' }
-]
-
-const operatorOptions = [
-  { label: 'contains', value: 'contains' },
-  { label: 'equals', value: 'equals' },
-  { label: 'starts with', value: 'startsWith' },
-  { label: 'wildcard (*)', value: 'wildcard' },
-  { label: 'whole words', value: 'wholeWord' },
-  { label: '> (greater than)', value: 'gt' },
-  { label: '< (less than)', value: 'lt' }
-]
+const fieldOptions = Object.entries(fieldLabels).map(([val, lbl]) => ({ label: lbl, value: val }))
+const operatorOptions = Object.entries(operatorLabels).map(([val, lbl]) => ({
+  label: lbl,
+  value: val
+}))
 
 const typeOptions = computed(() => {
   const types = budgetsStore.types.map((t) => ({ label: t, value: t }))
@@ -471,36 +536,36 @@ const typeOptions = computed(() => {
   return types
 })
 
-const operatorHint = computed(
-  () =>
-    ({
-      contains:
-        'Substring match. Bank separators (*, #, etc.) are ignored. "Uber Eats" matches "UBER *EATS"',
-      equals: 'Full-field match. Bank separators (*, #, etc.) are ignored.',
-      startsWith: 'Prefix match. Bank separators (*, #, etc.) are ignored.',
-      wildcard: 'Anchored wildcard — must match the whole field. e.g. WAL*MART*',
-      wholeWord:
-        'Whole-word match. Use * inside a word — e.g. gas* matches "gasoline" but not "natural gases"',
-      gt: 'Numeric — e.g. 50 matches amounts greater than 50',
-      lt: 'Numeric — e.g. 50 matches amounts less than 50'
-    })[form.value.operator] ?? ''
-)
-
 const ruleDialog = ref(false)
 const editTarget = ref(null)
 
 const blankForm = () => ({
-  field: 'NAME',
-  operator: 'contains',
-  value: '',
-  category: '',
-  type: null,
+  name: '',
   priority: 0,
+  conditions: [{ field: 'NAME', operator: 'contains', value: '' }],
+  // UI bindings for actions:
+  category: null,
+  type: null,
   rename: '',
   subscription: false,
   bill: false
 })
 const form = ref(blankForm())
+
+const isValidForm = computed(() => {
+  return (
+    form.value.conditions.every((c) => c.field && c.operator && c.value) &&
+    form.value.conditions.length > 0
+  )
+})
+
+function addCondition() {
+  form.value.conditions.push({ field: 'NAME', operator: 'contains', value: '' })
+}
+
+function removeCondition(idx) {
+  form.value.conditions.splice(idx, 1)
+}
 
 function openAddDialog() {
   editTarget.value = null
@@ -511,15 +576,14 @@ function openAddDialog() {
 function openEditDialog(item) {
   editTarget.value = item
   form.value = {
-    field: item.field,
-    operator: item.operator,
-    value: item.value,
-    category: item.category,
-    type: item.type ?? null,
+    name: item.name,
     priority: item.priority ?? 0,
-    rename: item.rename ?? '',
-    subscription: !!item.subscription,
-    bill: !!item.bill
+    conditions: JSON.parse(JSON.stringify(item.conditions)),
+    category: item.actions.find((a) => a.type === 'category')?.value || null,
+    type: item.actions.find((a) => a.type === 'transactionType')?.value || null,
+    rename: item.actions.find((a) => a.type === 'rename')?.value || '',
+    subscription: item.actions.find((a) => a.type === 'subscription')?.value === '1',
+    bill: item.actions.find((a) => a.type === 'bill')?.value === '1'
   }
   ruleDialog.value = true
 }
@@ -531,17 +595,26 @@ function closeRuleDialog() {
 }
 
 async function saveRule() {
-  const payload = {
-    field: form.value.field,
-    operator: form.value.operator,
-    value: form.value.value,
-    category: form.value.category,
-    type: form.value.type || null,
-    priority: form.value.priority ?? 0,
-    rename: form.value.rename || null,
-    subscription: form.value.subscription ? 1 : 0,
-    bill: form.value.bill ? 1 : 0
+  const actions = []
+  if (form.value.category) actions.push({ type: 'category', value: form.value.category })
+  if (form.value.type) actions.push({ type: 'transactionType', value: form.value.type })
+  if (form.value.rename) actions.push({ type: 'rename', value: form.value.rename })
+  if (form.value.subscription) actions.push({ type: 'subscription', value: '1' })
+  if (form.value.bill) actions.push({ type: 'bill', value: '1' })
+
+  // Auto-name if empty
+  let ruleName = form.value.name.trim()
+  if (!ruleName) {
+    ruleName = form.value.conditions[0]?.value || 'Untitled Rule'
   }
+
+  const payload = {
+    name: ruleName,
+    priority: form.value.priority,
+    conditions: form.value.conditions.filter((c) => c.field && c.operator && c.value),
+    actions
+  }
+
   if (editTarget.value) {
     await store.editRule(editTarget.value.id, payload)
   } else {
@@ -570,7 +643,7 @@ async function doDelete() {
 watch(
   () => form.value.type,
   () => {
-    form.value.category = ''
+    form.value.category = null
   }
 )
 
@@ -581,24 +654,22 @@ let liveMatchTimer = null
 onUnmounted(() => clearTimeout(liveMatchTimer))
 
 watch(
-  () => [form.value.field, form.value.operator, form.value.value],
-  ([field, operator, value]) => {
+  () => form.value.conditions,
+  (newConditions) => {
     clearTimeout(liveMatchTimer)
-    if (!value) {
+    const validConds = newConditions.filter((c) => c.field && c.operator && c.value)
+    if (!validConds.length) {
       liveMatch.value = null
       return
     }
     liveMatchTimer = setTimeout(async () => {
-      liveMatch.value = await store.previewRule({ field, operator, value })
+      liveMatch.value = await store.previewRule({
+        conditions: JSON.parse(JSON.stringify(validConds))
+      })
     }, 350)
-  }
+  },
+  { deep: true }
 )
-
-function matchedFieldText(tx) {
-  const v = tx[form.value.field]
-  if (v != null && String(v).trim() !== '') return String(v)
-  return tx.NAME || tx.MEMO || '—'
-}
 
 const applyResult = ref(null)
 
@@ -625,7 +696,7 @@ async function applyRules(applyAll = false) {
 }
 
 .live-match-panel {
-  width: 580px;
+  width: 480px;
   flex-shrink: 0;
   overflow: hidden;
   align-self: stretch;

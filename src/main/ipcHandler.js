@@ -32,11 +32,6 @@ import {
   applyRulesToMonth,
   applyRulesToAll,
   previewRuleMatch,
-  previewKeywordsMatch,
-  fetchCustomRecurring,
-  addCustomRecurring,
-  editCustomRecurring,
-  removeCustomRecurring,
   fetchCategories,
   createCategory,
   updateCategory,
@@ -158,25 +153,6 @@ export const setupIpcHandlers = () => {
   ipcMain.handle('rules:preview', (_, rule) => {
     if (!isObject(rule)) throw new Error('Invalid rule')
     return previewRuleMatch(rule)
-  })
-  ipcMain.handle('rules:previewKeywords', (_, keywords) => {
-    if (!Array.isArray(keywords)) throw new Error('Invalid keywords')
-    return previewKeywordsMatch(keywords)
-  })
-
-  ipcMain.handle('customRecurring:fetch', () => fetchCustomRecurring())
-  ipcMain.handle('customRecurring:create', (_, entry) => {
-    if (!isObject(entry)) throw new Error('Invalid entry')
-    return addCustomRecurring(entry)
-  })
-  ipcMain.handle('customRecurring:update', (_, id, updates) => {
-    if (!isFiniteNumber(id)) throw new Error('Invalid ID')
-    if (!isObject(updates)) throw new Error('Invalid updates')
-    return editCustomRecurring(id, updates)
-  })
-  ipcMain.handle('customRecurring:delete', (_, id) => {
-    if (!isFiniteNumber(id)) throw new Error('Invalid ID')
-    return removeCustomRecurring(id)
   })
 
   ipcMain.handle('categories:fetch', () => fetchCategories())

@@ -125,16 +125,6 @@ export const useUserRulesStore = defineStore('userRules', () => {
     }
   }
 
-  async function previewKeywords(keywords) {
-    try {
-      const result = await ipc.invoke('rules:previewKeywords', keywords)
-      if (!result.success) throw new Error(result.error)
-      return result.data
-    } catch {
-      return { count: 0, samples: [] }
-    }
-  }
-
   async function applyToAll(categoryNames = {}) {
     loadingCount.value++
     error.value = null
@@ -160,7 +150,6 @@ export const useUserRulesStore = defineStore('userRules', () => {
     removeRule,
     moveRule,
     previewRule,
-    previewKeywords,
     applyToMonth,
     applyToAll
   }

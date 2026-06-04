@@ -91,8 +91,10 @@ import { ref, computed, onMounted } from 'vue'
 import SubscriptionsMain from '../components/SubscriptionsMain.vue'
 import Calendar from '../components/Calendar.vue'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { useUserRulesStore } from '../stores/userRules'
 
 const settingsStore = useUserSettingsStore()
+const rulesStore = useUserRulesStore()
 
 const activeTab = ref('list')
 const loading = ref(false)
@@ -101,7 +103,6 @@ const addLoading = ref(false)
 const addForm = ref({ name: '', operator: 'contains' })
 const snackbar = ref({ show: false, text: '', color: 'default' })
 const allTransactions = ref([])
-const rules = ref([])
 const dueDateOverrides = ref({})
 
 const operatorOptions = [
@@ -113,12 +114,11 @@ const operatorOptions = [
 
 async function fetchAll() {
   loading.value = true
-  const [txResult, rulesResult] = await Promise.all([
+  const [txResult] = await Promise.all([
     window.electron.ipcRenderer.invoke('transactions:fetch', { subscription: 1 }),
-    window.electron.ipcRenderer.invoke('customRecurring:fetch')
+    rulesStore.fetchRules()
   ])
   if (txResult.success) allTransactions.value = txResult.data
-  if (rulesResult.success) rules.value = rulesResult.data
   loading.value = false
 }
 
@@ -130,9 +130,13 @@ function openAdd() {
 async function submitAdd() {
   if (!addForm.value.name.trim()) return
   addLoading.value = true
-  await window.electron.ipcRenderer.invoke('customRecurring:create', {
+  await rulesStore.createRule({
     name: addForm.value.name.trim(),
-    operator: addForm.value.operator
+    priority: 0,
+    conditions: [
+      { field: 'NAME', operator: addForm.value.operator, value: addForm.value.name.trim() }
+    ],
+    actions: [{ type: 'subscription', value: '1' }]
   })
   await fetchAll()
   addLoading.value = false
@@ -150,7 +154,7 @@ async function handleSaveDueDate({ sub, date }) {
 
 async function handleCancel(sub) {
   if (!sub.ruleId) return
-  await window.electron.ipcRenderer.invoke('customRecurring:delete', sub.ruleId)
+  await rulesStore.removeRule(sub.ruleId)
   await fetchAll()
   snackbar.value = { show: true, text: `Removed "${sub.name}" from tracking.`, color: 'default' }
 }
@@ -247,8 +251,11 @@ function buildSub(name, txs, ruleId = null) {
 
 function matchesRule(name, rule) {
   const h = (name || '').toLowerCase()
-  const n = (rule.name || '').toLowerCase()
-  switch (rule.operator) {
+  // Just use the first condition for manual matching approximation
+  const cond = rule.conditions?.[0]
+  if (!cond) return false
+  const n = (cond.value || '').toLowerCase()
+  switch (cond.operator) {
     case 'equals':
       return h === n
     case 'startsWith':
@@ -264,7 +271,9 @@ const subscriptions = computed(() => {
   const result = []
   const covered = new Set()
 
-  for (const rule of rules.value) {
+  const subRules = rulesStore.rules.filter((r) => r.actions?.some((a) => a.type === 'subscription'))
+
+  for (const rule of subRules) {
     const txs = allTransactions.value.filter((tx) => matchesRule(tx.NAME || '', rule))
     txs.forEach((tx) => covered.add(tx.NAME))
     if (txs.length) {

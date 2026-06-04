@@ -25,12 +25,6 @@ import {
   deleteRule as dbDeleteRule,
   applyRules,
   previewRule as dbPreviewRule,
-  previewKeywords as dbPreviewKeywords,
-  getCustomRecurring,
-  createCustomRecurring as dbCreateCustomRecurring,
-  updateCustomRecurring as dbUpdateCustomRecurring,
-  deleteCustomRecurring as dbDeleteCustomRecurring,
-  matchesCustomEntry,
   checkDuplicateFitids,
   getCategories as dbGetCategories,
   createCategory as dbCreateCategory,
@@ -92,23 +86,19 @@ export const importTransactions = async (ofxData) => {
 
     const result = createTransactions(transactions)
 
-    // Mark transactions matching custom recurring entries (before rule application)
-    const customEntries = getCustomRecurring()
-    if (customEntries.length) {
-      for (const tx of transactions) {
-        if (customEntries.some((e) => matchesCustomEntry(tx.MEMO, e))) {
-          updateTransaction(tx.FITID, { subscription: 1 })
-        }
-      }
-    }
-
     // Auto-categorize newly inserted transactions using saved rules
     const patches = applyRules(transactions)
     for (const patch of patches) {
-      const updates = { category: patch.category }
-      if (patch.transactionType) updates.transactionType = patch.transactionType
-      if (patch.rename) updates.NAME = patch.rename
-      updateTransaction(patch.FITID, updates)
+      const updates = {}
+      if ('category' in patch) updates.category = patch.category
+      if ('transactionType' in patch) updates.transactionType = patch.transactionType
+      if ('rename' in patch) updates.NAME = patch.rename
+      if ('subscription' in patch) updates.subscription = patch.subscription
+      if ('bill' in patch) updates.bill = patch.bill
+      if ('linkAccount' in patch) updates.linkAccount = patch.linkAccount
+      if (Object.keys(updates).length > 0) {
+        updateTransaction(patch.FITID, updates)
+      }
     }
 
     return ok(result)
@@ -325,52 +315,6 @@ export const previewRuleMatch = (rule) => {
   }
 }
 
-export const previewKeywordsMatch = (keywords) => {
-  try {
-    return ok(dbPreviewKeywords(keywords))
-  } catch (e) {
-    return fail(e)
-  }
-}
-
-// Custom Recurring
-
-export const fetchCustomRecurring = () => {
-  try {
-    return ok(getCustomRecurring())
-  } catch (e) {
-    return fail(e)
-  }
-}
-
-export const addCustomRecurring = (entry) => {
-  try {
-    return ok(dbCreateCustomRecurring(entry))
-  } catch (e) {
-    return fail(e)
-  }
-}
-
-export const editCustomRecurring = (id, updates) => {
-  try {
-    const changes = dbUpdateCustomRecurring(id, updates)
-    if (!changes) return fail(new Error(`No custom recurring entry found with id: ${id}`))
-    return ok({ id, changes })
-  } catch (e) {
-    return fail(e)
-  }
-}
-
-export const removeCustomRecurring = (id) => {
-  try {
-    const changes = dbDeleteCustomRecurring(id)
-    if (!changes) return fail(new Error(`No custom recurring entry found with id: ${id}`))
-    return ok({ id, changes })
-  } catch (e) {
-    return fail(e)
-  }
-}
-
 // Categories & Budgets
 
 export const fetchCategories = () => {
@@ -515,21 +459,18 @@ export const importBatch = async (items) => {
         : transactions
       const result = createTransactions(remapped)
 
-      const customEntries = getCustomRecurring()
-      if (customEntries.length) {
-        for (const tx of remapped) {
-          if (customEntries.some((e) => matchesCustomEntry(tx.MEMO, e))) {
-            updateTransaction(tx.FITID, { subscription: 1 })
-          }
-        }
-      }
-
       const patches = applyRules(remapped)
       for (const patch of patches) {
-        const upd = { category: patch.category, subscription: patch.subscription, bill: patch.bill }
-        if (patch.transactionType) upd.transactionType = patch.transactionType
-        if (patch.rename) upd.NAME = patch.rename
-        updateTransaction(patch.FITID, upd)
+        const upd = {}
+        if ('category' in patch) upd.category = patch.category
+        if ('transactionType' in patch) upd.transactionType = patch.transactionType
+        if ('rename' in patch) upd.NAME = patch.rename
+        if ('subscription' in patch) upd.subscription = patch.subscription
+        if ('bill' in patch) upd.bill = patch.bill
+        if ('linkAccount' in patch) upd.linkAccount = patch.linkAccount
+        if (Object.keys(upd).length > 0) {
+          updateTransaction(patch.FITID, upd)
+        }
       }
 
       results.push({ ...result, accountId: maskAcctid(realAcctid) })

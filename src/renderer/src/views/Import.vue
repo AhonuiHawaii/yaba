@@ -154,8 +154,8 @@
             rounded="sm"
             :loading="parsing"
             append-icon="mdi-arrow-right"
-            @click="parseFiles"
             color="primary"
+            @click="parseFiles"
           >
             Next
           </v-btn>
@@ -166,8 +166,8 @@
             rounded="sm"
             :loading="checkingDups"
             append-icon="mdi-arrow-right"
-            @click="goCheckDuplicates"
             color="primary"
+            @click="goCheckDuplicates"
           >
             Check duplicates
           </v-btn>
@@ -177,8 +177,8 @@
             variant="flat"
             rounded="sm"
             append-icon="mdi-arrow-right"
-            @click="step = 4"
             color="primary"
+            @click="step = 4"
           >
             Confirm
           </v-btn>
@@ -189,8 +189,8 @@
             rounded="sm"
             :loading="importing"
             append-icon="mdi-check"
-            @click="doImport"
             color="primary"
+            @click="doImport"
           >
             Import
           </v-btn>

@@ -326,8 +326,8 @@
                   color="error"
                   density="comfortable"
                   size="small"
-                  @click="confirmDelete(item)"
                   class="ml-1"
+                  @click="confirmDelete(item)"
                 />
               </div>
             </template>
@@ -753,136 +753,6 @@
           </v-card>
         </v-dialog>
 
-        <!-- Create Rule from Transaction Dialog -->
-        <v-dialog v-model="ruleDialog" max-width="520" persistent>
-          <v-card rounded="lg">
-            <v-card-title class="pa-6 pb-4">
-              <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center ga-3">
-                  <v-icon color="primary" size="20">mdi-tag-multiple-outline</v-icon>
-                  <span class="text-h6 font-weight-bold">Create Rule</span>
-                </div>
-                <v-btn
-                  icon="mdi-close"
-                  variant="text"
-                  density="compact"
-                  @click="ruleDialog = false"
-                />
-              </div>
-            </v-card-title>
-
-            <v-divider />
-
-            <v-card-text class="pa-6">
-              <v-row>
-                <v-col cols="6">
-                  <v-select
-                    v-model="ruleForm.field"
-                    :items="ruleFieldOptions"
-                    item-title="label"
-                    item-value="value"
-                    label="Field"
-                    variant="outlined"
-                    inset
-                    density="comfortable"
-                    rounded="lg"
-                    hide-details
-                    color="primary"
-                  />
-                </v-col>
-                <v-col cols="6">
-                  <v-select
-                    v-model="ruleForm.operator"
-                    :items="ruleOperatorOptions"
-                    item-title="label"
-                    item-value="value"
-                    label="Operator"
-                    variant="outlined"
-                    inset
-                    density="comfortable"
-                    rounded="lg"
-                    hide-details
-                    color="primary"
-                  />
-                </v-col>
-                <v-col cols="12" class="mt-3">
-                  <v-text-field
-                    v-model="ruleForm.value"
-                    label="Match value"
-                    variant="outlined"
-                    inset
-                    density="comfortable"
-                    rounded="lg"
-                    persistent-hint
-                    :hint="ruleOperatorHint"
-                    color="primary"
-                  />
-                </v-col>
-                <v-col cols="8" class="mt-3">
-                  <v-autocomplete
-                    v-model="ruleForm.category"
-                    :items="allCategoryItems"
-                    label="Assign category"
-                    variant="outlined"
-                    inset
-                    density="comfortable"
-                    rounded="lg"
-                    hide-details
-                    clearable
-                    color="primary"
-                  />
-                </v-col>
-                <v-col cols="4" class="mt-3">
-                  <v-text-field
-                    v-model.number="ruleForm.priority"
-                    label="Priority"
-                    type="number"
-                    variant="outlined"
-                    inset
-                    density="comfortable"
-                    rounded="lg"
-                    hide-details
-                    color="primary"
-                  />
-                </v-col>
-                <v-col cols="12" class="mt-3">
-                  <v-select
-                    v-model="ruleForm.type"
-                    :items="ruleTypeOptions"
-                    item-title="label"
-                    item-value="value"
-                    label="Assign transaction type (optional)"
-                    variant="outlined"
-                    inset
-                    density="comfortable"
-                    rounded="lg"
-                    hide-details
-                    clearable
-                    color="primary"
-                  />
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <v-card-actions class="pa-6 pt-0">
-              <v-spacer />
-              <v-btn variant="text" @click="ruleDialog = false">Cancel</v-btn>
-              <v-btn
-                color="primary"
-                variant="flat"
-                rounded="lg"
-                :loading="rulesStore.loading"
-                :disabled="
-                  !ruleForm.field || !ruleForm.operator || !ruleForm.value || !ruleForm.category
-                "
-                @click="saveRule"
-              >
-                Add Rule
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
         <!-- Delete Confirmation Dialog -->
         <v-dialog v-model="deleteDialog" max-width="400">
           <v-card rounded="lg">
@@ -926,7 +796,7 @@ import { useUserAccountsStore } from '../stores/userAccounts'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserBudgetsStore } from '../stores/userBudgets'
 import { useUserSettingsStore } from '../stores/userSettings'
-import { useUserRulesStore } from '../stores/userRules'
+
 import { storeToRefs } from 'pinia'
 import { usePeriodFilter } from '../stores/usePeriodFilter'
 import RulesView from '@components/Rules.vue'
@@ -935,7 +805,7 @@ const accountsStore = useUserAccountsStore()
 const categoriesStore = useUserCategoriesStore()
 const budgetsStore = useUserBudgetsStore()
 const userSettings = useUserSettingsStore()
-const rulesStore = useUserRulesStore()
+
 const { formatCurrency, formatDate } = userSettings
 
 const activeTab = ref('transactions')
@@ -957,8 +827,6 @@ function categoryName(id) {
 const allCategoryItems = computed(() =>
   categoriesStore.categories.map((c) => ({ title: c.name, value: c.id }))
 )
-
-const allCategoryNames = computed(() => categoriesStore.categories.map((c) => c.name))
 
 const incomeCategoryItems = computed(() =>
   categoriesStore.categories
@@ -1271,79 +1139,6 @@ async function saveSplits() {
 
   splitDialog.value = false
   splitTarget.value = null
-}
-
-// ── Create Rule from Transaction ───────────────────────────────────────────────
-const ruleDialog = ref(false)
-const ruleForm = ref({
-  field: 'NAME',
-  operator: 'contains',
-  value: '',
-  category: '',
-  type: null,
-  priority: 0
-})
-
-const ruleFieldOptions = [
-  { label: 'Name (payee)', value: 'NAME' },
-  { label: 'Memo', value: 'MEMO' },
-  { label: 'Amount', value: 'TRNAMT' },
-  { label: 'Tran. type', value: 'TRNTYPE' }
-]
-
-const ruleOperatorOptions = [
-  { label: 'contains', value: 'contains' },
-  { label: 'equals', value: 'equals' },
-  { label: 'starts with', value: 'startsWith' },
-  { label: 'wildcard (*)', value: 'wildcard' },
-  { label: 'whole words', value: 'wholeWord' },
-  { label: '> (greater than)', value: 'gt' },
-  { label: '< (less than)', value: 'lt' }
-]
-
-const ruleTypeOptions = computed(() =>
-  budgetsStore.types.map((t) => ({ label: t.charAt(0).toUpperCase() + t.slice(1), value: t }))
-)
-
-const ruleOperatorHint = computed(
-  () =>
-    ({
-      contains:
-        'Substring match. Bank separators (*, #, etc.) are ignored. "Uber Eats" matches "UBER *EATS"',
-      equals: 'Full-field match. Bank separators (*, #, etc.) are ignored.',
-      startsWith: 'Prefix match. Bank separators (*, #, etc.) are ignored.',
-      wildcard: 'Use * for any characters — e.g. WAL*MART*',
-      wholeWord: 'e.g. "gas" matches "gas station" but not "gasoline"',
-      gt: 'Numeric — e.g. 50 matches amounts greater than 50',
-      lt: 'Numeric — e.g. 50 matches amounts less than 50'
-    })[ruleForm.value.operator] ?? ''
-)
-
-function openCreateRuleFromTransaction(item) {
-  ruleForm.value = {
-    field: 'MEMO',
-    operator: 'contains',
-    value: item.MEMO || '',
-    category: item.category || '',
-    type: null,
-    priority: 0
-  }
-  ruleDialog.value = true
-}
-
-async function saveRule() {
-  await rulesStore.createRule({
-    field: ruleForm.value.field,
-    operator: ruleForm.value.operator,
-    value: ruleForm.value.value,
-    category: ruleForm.value.category,
-    type: ruleForm.value.type || null,
-    priority: ruleForm.value.priority ?? 0
-  })
-  if (!rulesStore.error) {
-    ruleDialog.value = false
-    activeTab.value = 'category-rules'
-  }
 }
 </script>
 

@@ -2,7 +2,7 @@ import Database from 'better-sqlite3-multiple-ciphers'
 // import dpapi from 'node-dpapi-prebuilt'
 import { app } from 'electron'
 import { join } from 'path'
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs'
+import { mkdirSync } from 'fs'
 // import { randomBytes } from 'crypto'
 
 /*
@@ -121,7 +121,6 @@ db.exec(`
 db.exec(`
   UPDATE Transactions SET category = NULL WHERE category IS NOT NULL AND category NOT IN (SELECT id FROM Categories);
   UPDATE Transactions SET splitCategory2 = NULL WHERE splitCategory2 IS NOT NULL AND splitCategory2 NOT IN (SELECT id FROM Categories);
-  DELETE FROM CategoryRules WHERE category IS NOT NULL AND category NOT IN (SELECT id FROM Categories);
 `)
 
 // ── Column sets ──────────────────────────────────────────────────────────────
@@ -486,7 +485,7 @@ function deleteCategory(id) {
     db.prepare('DELETE FROM Budgets WHERE categoryId = ?').run(id)
     db.prepare('UPDATE Transactions SET category = NULL WHERE category = ?').run(id)
     db.prepare('UPDATE Transactions SET splitCategory2 = NULL WHERE splitCategory2 = ?').run(id)
-    db.prepare('DELETE FROM CategoryRules WHERE category = ?').run(id)
+    db.prepare("DELETE FROM RuleActions WHERE type = 'category' AND value = ?").run(id)
   })()
 }
 
@@ -515,164 +514,158 @@ function getCategoryTypes() {
     .map((r) => r.type)
 }
 
-// ── Category Rules ───────────────────────────────────────────────────────────
+// ── Rule Engine (Relational) ───────────────────────────────────────────────────
 
-// Rules are evaluated top-to-bottom (priority DESC) on import; first match wins.
-// rename optionally overwrites the transaction's NAME (payee) field on match.
 db.exec(`
-  CREATE TABLE IF NOT EXISTS CategoryRules (
+  DROP TABLE IF EXISTS CategoryRules;
+  DROP TABLE IF EXISTS CustomRecurring;
+
+  CREATE TABLE IF NOT EXISTS Rules (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    name         TEXT NOT NULL,
+    priority     INTEGER DEFAULT 0,
+    createdAt    TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS RuleConditions (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    ruleId       INTEGER NOT NULL,
     field        TEXT NOT NULL,
     operator     TEXT NOT NULL,
     value        TEXT NOT NULL,
-    category     TEXT NOT NULL,
-    type         TEXT,
-    rename       TEXT,
-    priority     INTEGER DEFAULT 0,
-    subscription INTEGER NOT NULL DEFAULT 0,
-    bill         INTEGER NOT NULL DEFAULT 0,
-    createdAt    TEXT DEFAULT CURRENT_TIMESTAMP
-  )
+    FOREIGN KEY(ruleId) REFERENCES Rules(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS RuleActions (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    ruleId       INTEGER NOT NULL,
+    type         TEXT NOT NULL,
+    value        TEXT,
+    FOREIGN KEY(ruleId) REFERENCES Rules(id) ON DELETE CASCADE
+  );
+
+  DELETE FROM RuleActions WHERE type = 'category' AND value NOT IN (SELECT id FROM Categories);
 `)
 
 function getRules() {
-  return db.prepare('SELECT * FROM CategoryRules ORDER BY priority DESC, id ASC').all()
+  const rules = db.prepare('SELECT * FROM Rules ORDER BY priority DESC, id ASC').all()
+  const conditions = db.prepare('SELECT * FROM RuleConditions').all()
+  const actions = db.prepare('SELECT * FROM RuleActions').all()
+
+  // Map them together
+  const condMap = {}
+  const actMap = {}
+  for (const c of conditions) {
+    if (!condMap[c.ruleId]) condMap[c.ruleId] = []
+    condMap[c.ruleId].push(c)
+  }
+  for (const a of actions) {
+    if (!actMap[a.ruleId]) actMap[a.ruleId] = []
+    actMap[a.ruleId].push(a)
+  }
+
+  return rules.map((r) => ({
+    ...r,
+    conditions: condMap[r.id] || [],
+    actions: actMap[r.id] || []
+  }))
 }
 
 function createRule(rule) {
-  const stmt = db.prepare(`
-    INSERT INTO CategoryRules (field, operator, value, category, type, priority, rename, subscription, bill)
-    VALUES (@field, @operator, @value, @category, @type, @priority, @rename, @subscription, @bill)
-  `)
-  const info = stmt.run({
-    field: rule.field,
-    operator: rule.operator,
-    value: rule.value,
-    category: rule.category,
-    type: rule.type ?? null,
-    priority: rule.priority ?? 0,
-    rename: rule.rename ?? null,
-    subscription: rule.subscription ?? 0,
-    bill: rule.bill ?? 0
-  })
-  return db.prepare('SELECT * FROM CategoryRules WHERE id = ?').get(info.lastInsertRowid)
+  return db.transaction(() => {
+    const info = db.prepare('INSERT INTO Rules (name, priority) VALUES (@name, @priority)').run({
+      name: rule.name || 'Untitled Rule',
+      priority: rule.priority ?? 0
+    })
+    const ruleId = info.lastInsertRowid
+
+    if (rule.conditions && rule.conditions.length > 0) {
+      const stmt = db.prepare(
+        'INSERT INTO RuleConditions (ruleId, field, operator, value) VALUES (?, ?, ?, ?)'
+      )
+      for (const c of rule.conditions) {
+        stmt.run(ruleId, c.field, c.operator, c.value)
+      }
+    }
+
+    if (rule.actions && rule.actions.length > 0) {
+      const stmt = db.prepare('INSERT INTO RuleActions (ruleId, type, value) VALUES (?, ?, ?)')
+      for (const a of rule.actions) {
+        stmt.run(ruleId, a.type, a.value)
+      }
+    }
+
+    // Return the inserted rule by re-fetching
+    const r = db.prepare('SELECT * FROM Rules WHERE id = ?').get(ruleId)
+    r.conditions = db.prepare('SELECT * FROM RuleConditions WHERE ruleId = ?').all(ruleId)
+    r.actions = db.prepare('SELECT * FROM RuleActions WHERE ruleId = ?').all(ruleId)
+    return r
+  })()
 }
 
 function updateRule(id, updates) {
-  const ALLOWED = new Set([
-    'field',
-    'operator',
-    'value',
-    'category',
-    'type',
-    'priority',
-    'rename',
-    'subscription',
-    'bill'
-  ])
-  const entries = Object.entries(updates).filter(([col]) => ALLOWED.has(col))
-  if (entries.length === 0) return 0
-  const setClause = entries.map(([col]) => `${col} = ?`).join(', ')
-  const values = entries.map(([, val]) => val)
-  return db.prepare(`UPDATE CategoryRules SET ${setClause} WHERE id = ?`).run(...values, id).changes
+  return db.transaction(() => {
+    // Update main table if fields exist
+    if (updates.name !== undefined || updates.priority !== undefined) {
+      const sets = []
+      const vals = []
+      if (updates.name !== undefined) {
+        sets.push('name = ?')
+        vals.push(updates.name)
+      }
+      if (updates.priority !== undefined) {
+        sets.push('priority = ?')
+        vals.push(updates.priority)
+      }
+      if (sets.length > 0) {
+        db.prepare(`UPDATE Rules SET ${sets.join(', ')} WHERE id = ?`).run(...vals, id)
+      }
+    }
+
+    // Replace conditions if provided
+    if (updates.conditions) {
+      db.prepare('DELETE FROM RuleConditions WHERE ruleId = ?').run(id)
+      const stmt = db.prepare(
+        'INSERT INTO RuleConditions (ruleId, field, operator, value) VALUES (?, ?, ?, ?)'
+      )
+      for (const c of updates.conditions) {
+        stmt.run(id, c.field, c.operator, c.value)
+      }
+    }
+
+    // Replace actions if provided
+    if (updates.actions) {
+      db.prepare('DELETE FROM RuleActions WHERE ruleId = ?').run(id)
+      const stmt = db.prepare('INSERT INTO RuleActions (ruleId, type, value) VALUES (?, ?, ?)')
+      for (const a of updates.actions) {
+        stmt.run(id, a.type, a.value)
+      }
+    }
+    return 1
+  })()
 }
 
 function deleteRule(id) {
-  return db.prepare('DELETE FROM CategoryRules WHERE id = ?').run(id).changes
+  return db.prepare('DELETE FROM Rules WHERE id = ?').run(id).changes
 }
 
-/**
- * Normalize bank transaction text for matching. Bank feeds use inconsistent
- * delimiters (*, #, /, etc.) between merchant segments — e.g. "WALMART*GROCERIES",
- * "PAYPAL *MERCHANT", "AMAZON.COM/BILLING". This normalizes all such separators
- * to spaces so users can write natural phrases like "Uber Eats" and match
- * "UBER *EATS", "UBER*EATS", or "UBER/EATS" without needing wildcards.
- *
- * For advanced glob-style pattern matching, use the 'wildcard' operator.
- */
 const normalizeBankText = (value) =>
   String(value ?? '')
     .toLowerCase()
     .replace(/&/g, ' and ')
     .replace(/['']/g, '')
-    .replace(/[*#:/\\|_()\[\]{}-]+/g, ' ')
+    .replace(/[*#:/\\|_()[\]{}-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 
-/**
- * Evaluate all rules (highest priority first) against each transaction.
- * First matching rule wins per transaction.
- * @param {Object[]} transactions
- * @returns {{ FITID: string, category: string, transactionType?: string }[]}
- */
-function applyRules(transactions) {
-  const rules = getRules()
-  if (!rules.length || !transactions.length) return []
-
-  const patches = []
-  for (const txn of transactions) {
-    for (const rule of rules) {
-      const raw = txn[rule.field]
-      const fieldStr = String(raw ?? '')
-      const ruleVal = rule.value
-      let matches = false
-
-      // contains / equals / startsWith use normalized text matching.
-      // Bank separators (*, #, /, etc.) are collapsed to spaces before comparison
-      // so "Uber Eats" matches "UBER *EATS", "UBER*EATS", "UBER/EATS", etc.
-      // For raw glob-style pattern matching, use the 'wildcard' operator.
-      switch (rule.operator) {
-        case 'contains':
-          matches = normalizeBankText(fieldStr).includes(normalizeBankText(ruleVal))
-          break
-        case 'equals':
-          matches = normalizeBankText(fieldStr) === normalizeBankText(ruleVal)
-          break
-        case 'startsWith':
-          matches = normalizeBankText(fieldStr).startsWith(normalizeBankText(ruleVal))
-          break
-        case 'gt':
-          matches = Number(raw) > Number(ruleVal)
-          break
-        case 'lt':
-          matches = Number(raw) < Number(ruleVal)
-          break
-        case 'wildcard': {
-          const pattern = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
-          matches = new RegExp(`^${pattern}$`, 'i').test(fieldStr)
-          break
-        }
-        case 'wholeWord': {
-          const hasStar = ruleVal.includes('*')
-          const escaped = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&')
-          const pattern = hasStar ? escaped.replace(/\*/g, '\\S*') : escaped.replace(/\*/g, '\\*')
-          matches = new RegExp(`\\b${pattern}\\b`, 'i').test(fieldStr)
-          break
-        }
-      }
-
-      if (matches) {
-        const patch = { FITID: txn.FITID, category: rule.category }
-        if (rule.type) patch.transactionType = rule.type
-        if (rule.rename) patch.rename = rule.rename
-        patch.subscription = rule.subscription ?? 0
-        patch.bill = rule.bill ?? 0
-        patches.push(patch)
-        break
-      }
-    }
-  }
-  return patches
-}
-
-function matchesOneRule(tx, { field, operator, value }) {
+function matchesOneCondition(tx, { field, operator, value }) {
   const raw = tx[field]
   const fieldStr = String(raw ?? '')
-  // contains / equals / startsWith use normalized text matching (see normalizeBankText).
-  // For raw glob-style pattern matching, use the 'wildcard' operator.
   switch (operator) {
     case 'contains':
       return normalizeBankText(fieldStr).includes(normalizeBankText(value))
+    case 'notContains':
+      return !normalizeBankText(fieldStr).includes(normalizeBankText(value))
     case 'equals':
       return normalizeBankText(fieldStr) === normalizeBankText(value)
     case 'startsWith':
@@ -696,84 +689,65 @@ function matchesOneRule(tx, { field, operator, value }) {
   }
 }
 
-function previewRule({ field, operator, value }) {
-  if (!field || !operator || !value) return { count: 0, samples: [] }
-  const txs = db
-    .prepare(
-      'SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC'
-    )
-    .all()
-  const matches = txs.filter((tx) => matchesOneRule(tx, { field, operator, value }))
-  return { count: matches.length, samples: matches }
-}
+/**
+ * Evaluates rules (highest priority first). Returns patch actions for matched rules.
+ */
+function applyRules(transactions) {
+  const rules = getRules()
+  if (!rules.length || !transactions.length) return []
 
-function previewKeywords(keywords) {
-  const clean = (keywords || []).map((k) => k.trim()).filter(Boolean)
-  if (!clean.length) return { count: 0, samples: [] }
-  const txs = db
-    .prepare(
-      'SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC'
-    )
-    .all()
-  const matches = txs.filter((tx) =>
-    clean.some((kw) => {
-      const needle = normalizeBankText(kw)
-      return (
-        normalizeBankText(tx.NAME).includes(needle) || normalizeBankText(tx.MEMO).includes(needle)
-      )
-    })
-  )
-  return { count: matches.length, samples: matches }
-}
+  const patches = []
+  for (const txn of transactions) {
+    for (const rule of rules) {
+      if (!rule.conditions || rule.conditions.length === 0) continue
 
-// ── Custom Recurring ─────────────────────────────────────────────────────────
+      // All conditions must pass (AND logic)
+      let matches = true
+      for (const cond of rule.conditions) {
+        if (!matchesOneCondition(txn, cond)) {
+          matches = false
+          break
+        }
+      }
 
-// User-defined recurring transaction patterns matched against MEMO on import.
-db.exec(`
-  CREATE TABLE IF NOT EXISTS CustomRecurring (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    name        TEXT NOT NULL,
-    operator    TEXT NOT NULL DEFAULT 'contains',
-    createdAt   TEXT DEFAULT CURRENT_TIMESTAMP
-  )
-`)
-function matchesCustomEntry(memo, entry) {
-  const haystack = (memo || '').toLowerCase()
-  const needle = (entry.name || '').toLowerCase()
-  switch (entry.operator) {
-    case 'equals':
-      return haystack === needle
-    case 'startsWith':
-      return haystack.startsWith(needle)
-    case 'wholeWord':
-      return new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(haystack)
-    default:
-      return haystack.includes(needle) // contains
+      if (matches) {
+        const patch = { FITID: txn.FITID }
+        for (const action of rule.actions || []) {
+          // Flatten action array into object keys for the updater
+          if (action.type === 'category') patch.category = action.value
+          if (action.type === 'transactionType') patch.transactionType = action.value
+          if (action.type === 'rename') patch.rename = action.value
+          if (action.type === 'subscription') patch.subscription = Number(action.value)
+          if (action.type === 'bill') patch.bill = Number(action.value)
+          if (action.type === 'linkAccount') patch.linkAccount = action.value
+        }
+        // Always push a patch if there's a match, even if actions are empty,
+        // though normally actions aren't empty.
+        if (Object.keys(patch).length > 1) {
+          patches.push(patch)
+        }
+        break
+      }
+    }
   }
+  return patches
 }
 
-function getCustomRecurring() {
-  return db.prepare('SELECT * FROM CustomRecurring ORDER BY name ASC').all()
-}
+function previewRule({ conditions }) {
+  if (!conditions || !conditions.length) return { count: 0, samples: [] }
+  const txs = db
+    .prepare(
+      'SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC'
+    )
+    .all()
 
-function createCustomRecurring(entry) {
-  const stmt = db.prepare(`INSERT INTO CustomRecurring (name, operator) VALUES (@name, @operator)`)
-  const info = stmt.run({ name: entry.name, operator: entry.operator ?? 'contains' })
-  return db.prepare('SELECT * FROM CustomRecurring WHERE id = ?').get(info.lastInsertRowid)
-}
-
-function updateCustomRecurring(id, updates) {
-  const ALLOWED = new Set(['name', 'operator'])
-  const entries = Object.entries(updates).filter(([col]) => ALLOWED.has(col))
-  if (entries.length === 0) return 0
-  const setClause = entries.map(([col]) => `${col} = ?`).join(', ')
-  const values = entries.map(([, val]) => val)
-  return db.prepare(`UPDATE CustomRecurring SET ${setClause} WHERE id = ?`).run(...values, id)
-    .changes
-}
-
-function deleteCustomRecurring(id) {
-  return db.prepare('DELETE FROM CustomRecurring WHERE id = ?').run(id).changes
+  const matches = txs.filter((tx) => {
+    for (const cond of conditions) {
+      if (!matchesOneCondition(tx, cond)) return false
+    }
+    return true
+  })
+  return { count: matches.length, samples: matches }
 }
 
 // ── Reporting ────────────────────────────────────────────────────────────────
@@ -1016,13 +990,6 @@ export {
   deleteRule,
   applyRules,
   previewRule,
-  previewKeywords,
-  // Custom Recurring
-  getCustomRecurring,
-  createCustomRecurring,
-  updateCustomRecurring,
-  deleteCustomRecurring,
-  matchesCustomEntry,
   checkDuplicateFitids,
   // Categories & Budgets
   getCategories,
