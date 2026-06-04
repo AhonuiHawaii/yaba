@@ -49,6 +49,8 @@ const DEFAULT_DECIMAL_PLACES = '2'
 const DATE_FORMAT_KEY = 'budget.dateFormat'
 const DEFAULT_DATE_FORMAT = 'MM/DD/YYYY'
 
+const SUBSCRIPTION_CATEGORY_KEY = 'budget.subscriptionCategory'
+
 export const useUserSettingsStore = defineStore('userSettings', () => {
   const theme = ref(localStorage.getItem(THEME_KEY) || DEFAULT_THEME)
   const currency = ref(localStorage.getItem(CURRENCY_KEY) || DEFAULT_CURRENCY)
@@ -58,6 +60,7 @@ export const useUserSettingsStore = defineStore('userSettings', () => {
   const weekStart = ref(localStorage.getItem(WEEK_START_KEY) || DEFAULT_WEEK_START)
   const decimalPlaces = ref(localStorage.getItem(DECIMAL_PLACES_KEY) || DEFAULT_DECIMAL_PLACES)
   const dateFormat = ref(localStorage.getItem(DATE_FORMAT_KEY) || DEFAULT_DATE_FORMAT)
+  const subscriptionCategory = ref(localStorage.getItem(SUBSCRIPTION_CATEGORY_KEY) || null)
 
   function setTheme(newTheme) {
     if (!newTheme) return
@@ -93,6 +96,12 @@ export const useUserSettingsStore = defineStore('userSettings', () => {
     if (!format) return
     dateFormat.value = format
     localStorage.setItem(DATE_FORMAT_KEY, format)
+  }
+
+  function setSubscriptionCategory(id) {
+    subscriptionCategory.value = id || null
+    if (id) localStorage.setItem(SUBSCRIPTION_CATEGORY_KEY, id)
+    else localStorage.removeItem(SUBSCRIPTION_CATEGORY_KEY)
   }
 
   const currencySymbol = computed(() => CURRENCY_SYMBOLS[currency.value] ?? currency.value)
@@ -143,6 +152,8 @@ export const useUserSettingsStore = defineStore('userSettings', () => {
     setDateFormat,
     currencySymbol,
     formatCurrency,
-    formatDate
+    formatDate,
+    subscriptionCategory,
+    setSubscriptionCategory
   }
 })

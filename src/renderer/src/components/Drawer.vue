@@ -17,7 +17,7 @@ const navGroups = [
     label: 'ACCOUNTS',
     items: [
       { title: 'Accounts', value: 'Accounts', icon: 'mdi-bank-outline' },
-      { title: 'Import Accounts', value: 'Import', icon: 'mdi-download-outline' },
+      { title: 'Update Accounts', value: 'Import', icon: 'mdi-download-outline' },
       { title: 'Net Worth', value: 'NetWorth', icon: 'mdi-chart-line' }
     ]
   },

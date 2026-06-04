@@ -25,15 +25,25 @@
         <div class="text-body-2 text-medium-emphasis mb-4">
           Import an OFX or QFX file from your bank to get started.
         </div>
-        <v-btn
-          color="primary"
-          variant="flat"
-          rounded="sm"
-          prepend-icon="mdi-download-outline"
-          @click="emit('navigate', 'Import')"
-        >
-          Import via OFX
-        </v-btn>
+        <div class="d-flex align-center justify-center gap-3">
+          <v-btn
+            color="primary"
+            variant="flat"
+            rounded="sm"
+            prepend-icon="mdi-download-outline"
+            @click="emit('navigate', 'Import')"
+          >
+            Import via OFX
+          </v-btn>
+          <v-btn
+            variant="outlined"
+            rounded="sm"
+            prepend-icon="mdi-pencil-plus-outline"
+            @click="manualDialog = true"
+          >
+            Add Manual
+          </v-btn>
+        </div>
       </v-card-text>
     </v-card>
 
@@ -351,18 +361,29 @@
             />
           </v-menu>
         </v-card-text>
-        <v-card-actions class="pa-6 pt-0">
-          <v-spacer />
-          <v-btn variant="text" @click="manualDialog = false">Cancel</v-btn>
-          <v-btn
-            variant="flat"
+        <v-card-actions class="pa-6 pt-0 flex-column align-end">
+          <v-alert
+            v-if="store.error"
+            type="error"
+            density="compact"
+            class="mb-2 text-caption w-100"
             rounded="sm"
-            :loading="store.loading"
-            :disabled="!manualForm.displayName"
-            @click="saveManualAccount"
           >
-            Add
-          </v-btn>
+            {{ store.error }}
+          </v-alert>
+          <div class="d-flex gap-2">
+            <v-spacer />
+            <v-btn variant="text" @click="manualDialog = false">Cancel</v-btn>
+            <v-btn
+              variant="flat"
+              rounded="sm"
+              :loading="store.loading"
+              :disabled="!manualForm.displayName"
+              @click="saveManualAccount"
+            >
+              Add
+            </v-btn>
+          </div>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -603,10 +624,27 @@
           ending in <strong>{{ pendingRemove?.ACCTID }}</strong
           >? This only removes the account from this app — no bank data is affected.
         </v-card-text>
-        <v-card-actions class="pa-6 pt-0 gap-2">
-          <v-spacer />
-          <v-btn variant="text" @click="removeDialog = false">Cancel</v-btn>
-          <v-btn color="error" variant="flat" rounded="sm" @click="doRemove">Remove</v-btn>
+        <v-card-actions class="pa-6 pt-0 gap-2 flex-column align-end">
+          <v-alert
+            v-if="store.error"
+            type="error"
+            density="compact"
+            class="mb-2 text-caption w-100"
+            rounded="sm"
+          >
+            {{ store.error }}
+          </v-alert>
+          <div class="d-flex gap-2">
+            <v-btn variant="text" @click="removeDialog = false">Cancel</v-btn>
+            <v-btn
+              color="error"
+              variant="flat"
+              rounded="sm"
+              :loading="store.loading"
+              @click="doRemove"
+              >Remove</v-btn
+            >
+          </div>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -658,7 +696,9 @@ const isVariableDueDate = (account) => isLoanAccount(account)
 function dueDateToPickerValue(day) {
   if (!day) return null
   const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth(), Number(day), 12, 0, 0)
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const clamped = Math.min(Number(day), lastDay)
+  return new Date(now.getFullYear(), now.getMonth(), clamped, 12, 0, 0)
 }
 
 function isoToPickerValue(isoStr) {
@@ -845,9 +885,10 @@ function confirmRemove(account) {
   removeDialog.value = true
 }
 
-function doRemove() {
+async function doRemove() {
   if (pendingRemove.value) {
-    store.removeAccount(pendingRemove.value.ACCTID)
+    await store.removeAccount(pendingRemove.value.ACCTID)
+    if (store.error) return
   }
   removeDialog.value = false
   pendingRemove.value = null

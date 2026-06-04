@@ -82,7 +82,7 @@
             </div>
             <div class="text-h4 font-weight-bold">{{ formatCurrency(displayNetWorth) }}</div>
             <div
-              v-if="netWorthHistory.length >= 2"
+              v-if="netWorthHistory.length >= 2 && activePeriodRecord !== null"
               class="d-flex align-center gap-1 mt-1 text-caption font-weight-medium"
               :class="periodChange >= 0 ? 'text-success' : 'text-error'"
             >
@@ -131,12 +131,10 @@ import { Line } from 'vue-chartjs'
 import { useTheme } from 'vuetify'
 import {
   Chart as ChartJS,
-  ArcElement,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  Title,
   Tooltip,
   Legend,
   Filler
@@ -145,17 +143,7 @@ import { useUserAccountsStore, resolveIsAsset } from '../stores/userAccounts'
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
 
-ChartJS.register(
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-)
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
 
 const accountsStore = useUserAccountsStore()
 const transactionsStore = useUserTransactionsStore()
@@ -184,7 +172,7 @@ const activePeriodRecord = computed(() => {
 
   // Find the latest record in history that is <= lastActiveMonth
   const activeHistory = history.filter((r) => r.month <= lastActiveMonth)
-  if (activeHistory.length === 0) return history[0]
+  if (activeHistory.length === 0) return null
   return activeHistory[activeHistory.length - 1]
 })
 
@@ -228,7 +216,7 @@ const trendMonths = computed(() => {
     const targetMonth = periodStart.value
     const idx = all.findIndex((r) => r.month === targetMonth)
     if (idx === -1) {
-      return all.slice(-6)
+      return []
     }
     const startIdx = Math.max(0, idx - 5)
     return all.slice(startIdx, idx + 1)
@@ -252,9 +240,10 @@ const trendChipLabel = computed(() => {
 const hexToRgba = (hex, alpha) => {
   if (!hex) return `rgba(0, 0, 0, ${alpha})`
   if (hex.startsWith('rgb')) return hex
-  const r = parseInt(hex.slice(1, 3), 16) || 0
-  const g = parseInt(hex.slice(3, 5), 16) || 0
-  const b = parseInt(hex.slice(5, 7), 16) || 0
+  const full = hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex
+  const r = parseInt(full.slice(1, 3), 16) || 0
+  const g = parseInt(full.slice(3, 5), 16) || 0
+  const b = parseInt(full.slice(5, 7), 16) || 0
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
@@ -321,16 +310,12 @@ const accountBalances = computed(() => {
   })
 })
 
-const assetRows = computed(() =>
-  accountBalances.value.filter((a) => a.isAsset).sort((a, b) => b.balance - a.balance)
+const totalAssets = computed(() =>
+  accountBalances.value.filter((a) => a.isAsset).reduce((sum, a) => sum + a.balance, 0)
 )
-
-const liabilityRows = computed(() =>
-  accountBalances.value.filter((a) => !a.isAsset).sort((a, b) => b.balance - a.balance)
+const totalLiabilities = computed(() =>
+  accountBalances.value.filter((a) => !a.isAsset).reduce((sum, a) => sum + a.balance, 0)
 )
-
-const totalAssets = computed(() => assetRows.value.reduce((sum, a) => sum + a.balance, 0))
-const totalLiabilities = computed(() => liabilityRows.value.reduce((sum, a) => sum + a.balance, 0))
 
 const chartOptions = computed(() => {
   const outlineColor = theme.current.value.colors.outline || '#9e9e9e'

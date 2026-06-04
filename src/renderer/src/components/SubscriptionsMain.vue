@@ -22,22 +22,6 @@
         </v-card>
       </div>
 
-      <!-- Filter chips -->
-      <div class="d-flex ga-2 mb-4">
-        <v-chip
-          v-for="f in filterOptions"
-          :key="f.key"
-          :variant="activeFilter === f.key ? 'flat' : 'solo'"
-          :color="activeFilter === f.key ? 'primary' : undefined"
-          :prepend-icon="activeFilter === f.key ? 'mdi-check' : undefined"
-          size="small"
-          rounded
-          class="cursor-pointer"
-          @click="activeFilter = f.key"
-          >{{ f.label }}</v-chip
-        >
-      </div>
-
       <!-- Table -->
       <v-card rounded="sm" elevation="1">
         <div
@@ -54,14 +38,14 @@
         <v-divider />
 
         <div
-          v-if="!filtered.length"
+          v-if="!subscriptions.length"
           class="d-flex flex-column align-center text-medium-emphasis pa-12"
         >
           <v-icon size="48" class="mb-3" style="opacity: 0.3" icon="mdi-calendar-sync" />
           <div class="text-body-2">No subscriptions found.</div>
         </div>
 
-        <template v-for="(sub, i) in filtered" :key="sub.name">
+        <template v-for="(sub, i) in subscriptions" :key="sub.name">
           <div class="sub-row">
             <!-- Service -->
             <div class="d-flex align-center ga-3">
@@ -167,7 +151,7 @@
               >
             </div>
           </div>
-          <v-divider v-if="i < filtered.length - 1" />
+          <v-divider v-if="i < subscriptions.length - 1" />
         </template>
       </v-card>
     </template>
@@ -175,7 +159,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useUserSettingsStore } from '../stores/userSettings'
 
 const props = defineProps({
@@ -184,31 +168,8 @@ const props = defineProps({
 })
 const emit = defineEmits(['cancel'])
 
-const { formatCurrency } = useUserSettingsStore()
-const activeFilter = ref('all')
-
-const filterOptions = computed(() => [
-  { key: 'all', label: `All ${props.subscriptions.length}` },
-  { key: 'active', label: 'Active' },
-  { key: 'unused', label: 'Unused' },
-  { key: 'renewing', label: 'Renewing soon' }
-])
-
-const filtered = computed(() => {
-  const now = Date.now()
-  switch (activeFilter.value) {
-    case 'active':
-      return props.subscriptions.filter((s) => s.status === 'active')
-    case 'unused':
-      return props.subscriptions.filter((s) => s.status === 'unused')
-    case 'renewing':
-      return props.subscriptions.filter(
-        (s) => s.nextCharge && (s.nextCharge.getTime() - now) / 86400000 <= 7
-      )
-    default:
-      return props.subscriptions
-  }
-})
+const settingsStore = useUserSettingsStore()
+const { formatCurrency } = settingsStore
 
 const activeCount = computed(() => props.subscriptions.filter((s) => s.status === 'active').length)
 
@@ -233,8 +194,6 @@ const renewingSoonCount = computed(() => {
   ).length
 })
 
-const priceHikeCount = computed(() => props.subscriptions.filter((s) => s.priceUp).length)
-
 const summaryCards = computed(() => [
   {
     title: 'Monthly Total',
@@ -253,12 +212,6 @@ const summaryCards = computed(() => [
     value: String(renewingSoonCount.value),
     subtitle: 'next 7 days',
     valueClass: ''
-  },
-  {
-    title: 'Price Hikes',
-    value: String(priceHikeCount.value),
-    subtitle: 'went up recently',
-    valueClass: priceHikeCount.value > 0 ? 'text-error' : ''
   }
 ])
 </script>
@@ -266,7 +219,7 @@ const summaryCards = computed(() => [
 <style scoped>
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 

@@ -11,17 +11,6 @@
       <v-spacer />
       <v-btn
         size="small"
-        variant="tonal"
-        color="primary"
-        rounded="sm"
-        prepend-icon="mdi-import"
-        class="mr-2"
-        @click="openImport"
-      >
-        Import from rules
-      </v-btn>
-      <v-btn
-        size="small"
         variant="flat"
         color="primary"
         rounded="sm"
@@ -91,128 +80,133 @@
       </template>
     </v-card>
 
-    <!-- Add rule dialog -->
-    <v-dialog v-model="addDialog" max-width="420">
-      <v-card rounded="sm">
-        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold"
-          >Add detection rule</v-card-title
-        >
-        <v-divider />
-        <v-card-text class="pa-5">
-          <v-text-field
-            v-model="form.name"
-            label="Payee keyword"
-            variant="outlined"
-            density="compact"
-            rounded="sm"
-            autofocus
-            class="mb-4"
-            hint="Transactions containing this will be tracked as subscriptions"
-            persistent-hint
-            color="primary"
-          />
-          <v-select
-            v-model="form.operator"
-            :items="operatorOptions"
-            label="Match type"
-            variant="outlined"
-            density="compact"
-            rounded="sm"
-            color="primary"
-          />
-        </v-card-text>
-        <v-card-actions class="pa-5 pt-0">
-          <v-spacer />
-          <v-btn variant="text" rounded="sm" :disabled="saving" @click="addDialog = false"
-            >Cancel</v-btn
-          >
-          <v-btn
-            color="primary"
-            variant="flat"
-            rounded="sm"
-            :disabled="!form.name.trim()"
-            :loading="saving"
-            @click="saveRule"
-            >Add</v-btn
-          >
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Import from category rules dialog -->
-    <v-dialog v-model="importDialog" max-width="560" :persistent="importing">
-      <v-card rounded="sm">
-        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">
-          Import from category rules
+    <!-- Add / Edit Rule Dialog -->
+    <v-dialog v-model="ruleDialog" max-width="1100" persistent>
+      <v-card rounded="lg" class="dialog-card">
+        <v-card-title class="pa-6 pb-4">
+          <div class="d-flex align-center justify-space-between">
+            <div class="d-flex align-center gap-3">
+              <v-icon color="primary" size="20">mdi-tag-multiple-outline</v-icon>
+              <span class="text-h6 font-weight-bold">{{
+                editTarget ? 'Edit Rule' : 'Add Rule'
+              }}</span>
+            </div>
+            <v-btn icon="mdi-close" variant="text" density="compact" @click="closeRuleDialog" />
+          </div>
         </v-card-title>
         <v-divider />
-        <v-card-text class="pa-5">
-          <v-select
-            v-model="importFilterCategory"
-            :items="categoryOptions"
-            label="Filter by category"
-            variant="outlined"
-            density="compact"
-            rounded="sm"
-            clearable
-            hide-details
-            color="primary"
-            class="mb-4"
-          />
-
-          <div v-if="importableRules.length === 0" class="text-body-2 text-medium-emphasis">
-            No compatible rules found{{ importFilterCategory ? ' for that category' : '' }}.
-          </div>
-          <template v-else>
-            <div class="d-flex align-center justify-space-between mb-2">
-              <span class="text-caption text-medium-emphasis"
-                >Select rules to import as subscription detection rules.</span
-              >
-              <v-btn size="x-small" variant="text" color="primary" @click="toggleSelectAll">
-                {{
-                  importSelection.length === selectableRules.length ? 'Deselect all' : 'Select all'
-                }}
-              </v-btn>
-            </div>
-            <v-list density="compact" class="py-0">
-              <v-list-item
-                v-for="r in importableRules"
-                :key="r.id"
-                :disabled="isAlreadyImported(r)"
-                @click="toggleImportSelection(r.id)"
-              >
-                <template #prepend>
-                  <v-checkbox-btn
-                    :model-value="importSelection.includes(r.id)"
-                    :disabled="isAlreadyImported(r)"
+        <div class="d-flex dialog-body">
+          <!-- Left: form -->
+          <div style="flex: 1; min-width: 0">
+            <v-card-text class="pa-6">
+              <v-row>
+                <v-col cols="6">
+                  <v-select
+                    v-model="form.field"
+                    :items="fieldOptions"
+                    item-title="label"
+                    item-value="value"
+                    label="Field"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    hide-details
                     color="primary"
                   />
-                </template>
-                <v-list-item-title class="text-body-2">
-                  <span class="font-weight-medium">{{ r.value }}</span>
-                  <span class="text-medium-emphasis ml-2">({{ r.operator }})</span>
-                </v-list-item-title>
-                <v-list-item-subtitle v-if="isAlreadyImported(r)" class="text-caption">
-                  Already imported
-                </v-list-item-subtitle>
-              </v-list-item>
-            </v-list>
-          </template>
-        </v-card-text>
-        <v-card-actions class="pa-5 pt-0">
+                </v-col>
+                <v-col cols="6">
+                  <v-select
+                    v-model="form.operator"
+                    :items="operatorOptions"
+                    item-title="label"
+                    item-value="value"
+                    label="Operator"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    hide-details
+                    color="primary"
+                  />
+                </v-col>
+                <v-col cols="12" class="mt-3">
+                  <v-text-field
+                    v-model="form.value"
+                    label="Match value"
+                    variant="solo"
+                    inset
+                    density="comfortable"
+                    rounded="sm"
+                    persistent-hint
+                    :hint="operatorHint"
+                    autofocus
+                    color="primary"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </div>
+
+          <!-- Divider -->
+          <v-divider vertical />
+
+          <!-- Right: live match -->
+          <div class="live-match-panel pa-4 d-flex flex-column">
+            <div class="d-flex align-center ga-2 mb-3">
+              <v-icon size="14" color="primary">mdi-lightning-bolt</v-icon>
+              <span class="text-caption font-weight-medium text-medium-emphasis text-uppercase"
+                >Live match</span
+              >
+              <v-chip
+                v-if="liveMatch"
+                size="x-small"
+                :color="liveMatch.count > 0 ? 'primary' : 'default'"
+                variant="tonal"
+                rounded="pill"
+              >
+                {{ liveMatch.count }} transaction{{ liveMatch.count === 1 ? '' : 's' }}
+              </v-chip>
+            </div>
+            <div
+              v-if="liveMatch && liveMatch.samples.length"
+              class="d-flex flex-column ga-1 live-match-list flex-grow-1"
+            >
+              <div
+                v-for="tx in liveMatch.samples"
+                :key="tx.FITID"
+                class="d-flex align-center justify-space-between text-caption live-match-row px-2 py-1 rounded"
+              >
+                <span class="text-truncate mr-2">{{ matchedFieldText(tx) }}</span>
+                <span class="text-medium-emphasis text-no-wrap">{{
+                  tx.TRNAMT != null
+                    ? (tx.TRNAMT < 0 ? '-' : '+') + '$' + Math.abs(tx.TRNAMT).toFixed(2)
+                    : '—'
+                }}</span>
+              </div>
+            </div>
+            <div
+              v-else
+              class="text-caption text-medium-emphasis flex-grow-1 d-flex align-center justify-center text-center"
+              style="opacity: 0.5"
+            >
+              {{ liveMatch ? 'No transactions match.' : 'Type a match value\nto preview results.' }}
+            </div>
+          </div>
+        </div>
+
+        <v-divider />
+        <v-card-actions class="pa-6 py-4">
           <v-spacer />
-          <v-btn variant="text" rounded="sm" :disabled="importing" @click="importDialog = false">
-            Cancel
-          </v-btn>
+          <v-btn variant="text" @click="closeRuleDialog">Cancel</v-btn>
           <v-btn
-            color="primary"
             variant="flat"
             rounded="sm"
-            :disabled="importSelection.length === 0"
-            :loading="importing"
-            @click="executeImport"
+            :loading="saving"
+            :disabled="!form.field || !form.operator || !form.value"
+            @click="saveRule"
           >
-            Import {{ importSelection.length || '' }}
+            {{ editTarget ? 'Save' : 'Add' }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -246,10 +240,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useUserSettingsStore } from '../stores/userSettings'
 import { useUserRulesStore } from '../stores/userRules'
-import { useUserCategoriesStore } from '../stores/userCategories'
 
 const props = defineProps({
   rules: { type: Array, default: () => [] },
@@ -259,94 +252,73 @@ const emit = defineEmits(['updated'])
 
 const { formatCurrency } = useUserSettingsStore()
 const rulesStore = useUserRulesStore()
-const categoriesStore = useUserCategoriesStore()
 
-const addDialog = ref(false)
+const ruleDialog = ref(false)
+const editTarget = ref(null)
 const deleteDialog = ref(false)
-const importDialog = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
-const importing = ref(false)
 const pendingDelete = ref(null)
-const form = ref({ name: '', operator: 'contains' })
-const importSelection = ref([])
-const importFilterCategory = ref(null)
 
-// Only these operators have a direct equivalent in subscription rules
-const COMPATIBLE_OPERATORS = new Set(['contains', 'startsWith', 'equals', 'wholeWord'])
+const blankForm = () => ({ field: 'NAME', operator: 'contains', value: '' })
+const form = ref(blankForm())
 
-const categoryOptions = computed(() =>
-  categoriesStore.categories.map((c) => ({ title: c.name, value: c.id }))
+const liveMatch = ref(null)
+let liveMatchTimer = null
+
+onUnmounted(() => clearTimeout(liveMatchTimer))
+
+watch(
+  () => [form.value.field, form.value.operator, form.value.value],
+  ([field, operator, value]) => {
+    clearTimeout(liveMatchTimer)
+    if (!value) {
+      liveMatch.value = null
+      return
+    }
+    liveMatchTimer = setTimeout(async () => {
+      liveMatch.value = await rulesStore.previewRule({ field, operator, value })
+    }, 350)
+  }
 )
 
-const importableRules = computed(() => {
-  const all = (rulesStore.rules || []).filter(
-    (r) => COMPATIBLE_OPERATORS.has(r.operator) && r.value
-  )
-  if (!importFilterCategory.value) return all
-  // Match by UUID (new rules) or by plain category name (legacy rules)
-  const selectedCat = categoriesStore.categories.find((c) => c.id === importFilterCategory.value)
-  return all.filter(
-    (r) =>
-      r.category === importFilterCategory.value || (selectedCat && r.category === selectedCat.name)
-  )
-})
-
-function isAlreadyImported(rule) {
-  const key = `${(rule.value || '').toLowerCase()}|${rule.operator}`
-  return props.rules.some(
-    (existing) => `${(existing.name || '').toLowerCase()}|${existing.operator}` === key
-  )
-}
-
-const selectableRules = computed(() => importableRules.value.filter((r) => !isAlreadyImported(r)))
-
-function toggleImportSelection(id) {
-  const i = importSelection.value.indexOf(id)
-  if (i === -1) importSelection.value.push(id)
-  else importSelection.value.splice(i, 1)
-}
-
-function toggleSelectAll() {
-  if (importSelection.value.length === selectableRules.value.length) {
-    importSelection.value = []
-  } else {
-    importSelection.value = selectableRules.value.map((r) => r.id)
-  }
-}
-
-async function openImport() {
-  importFilterCategory.value = null
-  await rulesStore.fetchRules()
-  importSelection.value = selectableRules.value.map((r) => r.id)
-  importDialog.value = true
-}
-
-async function executeImport() {
-  if (importSelection.value.length === 0) return
-  importing.value = true
-  try {
-    const selected = importableRules.value.filter((r) => importSelection.value.includes(r.id))
-    for (const r of selected) {
-      if (isAlreadyImported(r)) continue
-      await window.electron.ipcRenderer.invoke('customRecurring:create', {
-        name: r.value,
-        operator: r.operator
-      })
-    }
-    importDialog.value = false
-    emit('updated')
-  } finally {
-    importing.value = false
-  }
-}
+const fieldOptions = [
+  { label: 'Name (payee)', value: 'NAME' },
+  { label: 'Memo', value: 'MEMO' },
+  { label: 'Amount', value: 'TRNAMT' },
+  { label: 'Tran. type', value: 'TRNTYPE' }
+]
 
 const operatorOptions = [
-  { title: 'Contains', value: 'contains' },
-  { title: 'Starts with', value: 'startsWith' },
-  { title: 'Equals', value: 'equals' },
-  { title: 'Whole word', value: 'wholeWord' }
+  { label: 'contains', value: 'contains' },
+  { label: 'equals', value: 'equals' },
+  { label: 'starts with', value: 'startsWith' },
+  { label: 'wildcard (*)', value: 'wildcard' },
+  { label: 'whole words', value: 'wholeWord' },
+  { label: '> (greater than)', value: 'gt' },
+  { label: '< (less than)', value: 'lt' }
 ]
+
+const operatorHint = computed(
+  () =>
+    ({
+      contains:
+        'Substring match. Bank separators (*, #, etc.) are ignored. "Uber Eats" matches "UBER *EATS"',
+      equals: 'Full-field match. Bank separators (*, #, etc.) are ignored.',
+      startsWith: 'Prefix match. Bank separators (*, #, etc.) are ignored.',
+      wildcard: 'Anchored wildcard — must match the whole field. e.g. WAL*MART*',
+      wholeWord:
+        'Whole-word match. Use * inside a word — e.g. gas* matches "gasoline" but not "natural gases"',
+      gt: 'Numeric — e.g. 50 matches amounts greater than 50',
+      lt: 'Numeric — e.g. 50 matches amounts less than 50'
+    })[form.value.operator] ?? ''
+)
+
+function matchedFieldText(tx) {
+  const v = tx[form.value.field]
+  if (v != null && String(v).trim() !== '') return String(v)
+  return tx.NAME || tx.MEMO || '—'
+}
 
 function matchesRule(name, rule) {
   const haystack = (name || '').toLowerCase()
@@ -368,19 +340,27 @@ function matchedSub(rule) {
 }
 
 function openAdd() {
-  form.value = { name: '', operator: 'contains' }
-  addDialog.value = true
+  editTarget.value = null
+  form.value = blankForm()
+  liveMatch.value = null
+  ruleDialog.value = true
+}
+
+function closeRuleDialog() {
+  ruleDialog.value = false
+  editTarget.value = null
+  liveMatch.value = null
 }
 
 async function saveRule() {
-  if (!form.value.name.trim()) return
+  if (!form.value.value.trim()) return
   saving.value = true
   await window.electron.ipcRenderer.invoke('customRecurring:create', {
-    name: form.value.name.trim(),
+    name: form.value.value.trim(),
     operator: form.value.operator
   })
   saving.value = false
-  addDialog.value = false
+  closeRuleDialog()
   emit('updated')
 }
 
@@ -413,5 +393,32 @@ async function executeDelete() {
 .rule-row--header {
   padding-top: 4px;
   padding-bottom: 4px;
+}
+
+.dialog-card {
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.live-match-panel {
+  width: 580px;
+  flex-shrink: 0;
+  overflow: hidden;
+  align-self: stretch;
+}
+
+.live-match-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.live-match-row {
+  background: rgba(var(--v-theme-surface-variant), 0.4);
 }
 </style>

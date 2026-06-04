@@ -125,7 +125,7 @@
 
         <template #item.category="{ item }">
           <v-chip size="x-small" variant="tonal" color="primary" rounded="pill">{{
-            item.category
+            categoriesStore.categoryById[item.category]?.name ?? item.category
           }}</v-chip>
         </template>
 
@@ -271,9 +271,11 @@
                   />
                 </v-col>
                 <v-col cols="12" class="mt-3">
-                  <v-combobox
+                  <v-select
                     v-model="form.category"
-                    :items="allCategoryNames"
+                    :items="categoryItems"
+                    item-title="title"
+                    item-value="value"
                     label="Assign category"
                     variant="solo"
                     inset
@@ -413,11 +415,11 @@ onMounted(() => {
   store.fetchRules()
 })
 
-const allCategoryNames = computed(() => {
+const categoryItems = computed(() => {
   const cats = form.value.type
     ? categoriesStore.categories.filter((c) => c.type === form.value.type)
     : categoriesStore.categories
-  return cats.map((c) => c.name)
+  return cats.map((c) => ({ title: c.name, value: c.id }))
 })
 
 const sortedRules = computed(() =>

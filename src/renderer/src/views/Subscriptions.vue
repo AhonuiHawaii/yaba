@@ -4,22 +4,18 @@
     <div class="d-flex align-center px-5 pt-5 pb-3">
       <div>
         <div class="text-h6 font-weight-bold">Subscriptions</div>
-        <div class="text-caption text-medium-emphasis">
-          Recurring charges we spotted in your imports
-        </div>
+        <div class="text-caption text-medium-emphasis">Recurring charges tracked by your rules</div>
       </div>
       <v-spacer />
-      <v-btn color="primary" rounded="sm" prepend-icon="mdi-plus" class="mr-2" @click="openAdd">
-        Add manually
-      </v-btn>
       <v-btn
-        color="primary"
+        icon="mdi-cog-outline"
+        variant="text"
         rounded="sm"
-        prepend-icon="mdi-refresh"
-        :loading="rescanning"
-        @click="rescan"
-      >
-        Re-scan imports
+        class="mr-2"
+        @click="openSettings"
+      />
+      <v-btn color="primary" rounded="sm" prepend-icon="mdi-plus" @click="openAdd">
+        Add manually
       </v-btn>
     </div>
 
@@ -27,21 +23,20 @@
     <v-tabs v-model="activeTab" class="px-5 mb-4" color="primary">
       <v-tab value="list" prepend-icon="mdi-format-list-bulleted">List</v-tab>
       <v-tab value="calendar" prepend-icon="mdi-calendar-month-outline">Calendar</v-tab>
-      <v-tab value="rules" prepend-icon="mdi-tune-variant">Rules</v-tab>
     </v-tabs>
 
     <!-- Tab content -->
     <v-tabs-window v-model="activeTab">
       <v-tabs-window-item value="list">
-        <AllRecurring :subscriptions="subscriptions" :loading="loading" @cancel="handleCancel" />
+        <SubscriptionsMain
+          :subscriptions="subscriptions"
+          :loading="loading"
+          @cancel="handleCancel"
+        />
       </v-tabs-window-item>
 
       <v-tabs-window-item value="calendar">
         <Calendar :subscriptions="subscriptions" />
-      </v-tabs-window-item>
-
-      <v-tabs-window-item value="rules">
-        <SubscriptionRules :rules="rules" :subscriptions="subscriptions" @updated="fetchAll" />
       </v-tabs-window-item>
     </v-tabs-window>
 
@@ -90,6 +85,37 @@
       </v-card>
     </v-dialog>
 
+    <!-- Settings dialog -->
+    <v-dialog v-model="settingsDialog" max-width="420">
+      <v-card rounded="sm">
+        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold"
+          >Subscription settings</v-card-title
+        >
+        <v-divider />
+        <v-card-text class="pa-5">
+          <v-select
+            v-model="settingsCategoryId"
+            :items="categoryOptions"
+            item-title="name"
+            item-value="id"
+            label="Subscription budget category"
+            variant="outlined"
+            density="compact"
+            rounded="sm"
+            clearable
+            hint="Transactions in this category will be considered subscriptions for budgeting purposes."
+            persistent-hint
+            color="primary"
+          />
+        </v-card-text>
+        <v-card-actions class="pa-5 pt-0">
+          <v-spacer />
+          <v-btn variant="text" rounded="sm" @click="settingsDialog = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" rounded="sm" @click="saveSettings">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Cancel/untrack snackbar -->
     <v-snackbar v-model="snackbar.show" :timeout="3000" rounded="sm" :color="snackbar.color">
       {{ snackbar.text }}
@@ -99,40 +125,26 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import AllRecurring from '../components/AllRecurring.vue'
+import SubscriptionsMain from '../components/SubscriptionsMain.vue'
 import Calendar from '../components/Calendar.vue'
-import SubscriptionRules from '../components/SubscriptionRules.vue'
+import { useUserSettingsStore } from '../stores/userSettings'
+import { useUserCategoriesStore } from '../stores/userCategories'
 
-const CATEGORY_PATTERNS = [
-  [/netflix/i, 'Streaming'],
-  [/hulu/i, 'Streaming'],
-  [/disney/i, 'Streaming'],
-  [/paramount/i, 'Streaming'],
-  [/peacock/i, 'Streaming'],
-  [/\bhbo\b|apple\s*tv/i, 'Streaming'],
-  [/spotify/i, 'Music'],
-  [/apple\s*music/i, 'Music'],
-  [/tidal/i, 'Music'],
-  [/pandora/i, 'Music'],
-  [/adobe/i, 'Software'],
-  [/microsoft|office\s*365/i, 'Software'],
-  [/notion|figma|github|1password/i, 'Software'],
-  [/icloud/i, 'Storage'],
-  [/dropbox/i, 'Storage'],
-  [/google\s*one/i, 'Storage'],
-  [/backblaze/i, 'Storage'],
-  [/amazon\s*prime|prime\s*video/i, 'Shopping'],
-  [/planet\s*fitness|equinox|anytime\s*fitness/i, 'Fitness'],
-  [/nyt|new\s*york\s*times/i, 'News'],
-  [/wsj|wall\s*street|washington\s*post/i, 'News']
-]
+const settingsStore = useUserSettingsStore()
+const categoriesStore = useUserCategoriesStore()
 
-function detectCategory(name) {
-  for (const [pattern, cat] of CATEGORY_PATTERNS) {
-    if (pattern.test(name)) return cat
-  }
-  return null
-}
+const activeTab = ref('list')
+const loading = ref(false)
+const addDialog = ref(false)
+const addLoading = ref(false)
+const addForm = ref({ name: '', operator: 'contains' })
+const snackbar = ref({ show: false, text: '', color: 'default' })
+const settingsDialog = ref(false)
+const settingsCategoryId = ref(settingsStore.subscriptionCategory)
+const allTransactions = ref([])
+const rules = ref([])
+
+const categoryOptions = computed(() => categoriesStore.categories)
 
 const operatorOptions = [
   { title: 'Contains', value: 'contains' },
@@ -141,38 +153,34 @@ const operatorOptions = [
   { title: 'Whole word', value: 'wholeWord' }
 ]
 
-const activeTab = ref('list')
-const loading = ref(false)
-const rescanning = ref(false)
-const addDialog = ref(false)
-const addLoading = ref(false)
-const addForm = ref({ name: '', operator: 'contains' })
-const snackbar = ref({ show: false, text: '', color: 'default' })
-
-const recurringTransactions = ref([])
-const rules = ref([])
-
-function openAdd() {
-  addForm.value = { name: '', operator: 'contains' }
-  addDialog.value = true
-}
-
 async function fetchAll() {
   loading.value = true
+  const categoryId = settingsStore.subscriptionCategory
   const [txResult, rulesResult] = await Promise.all([
-    window.electron.ipcRenderer.invoke('transactions:fetch', { recurring: 1 }),
+    categoryId
+      ? window.electron.ipcRenderer.invoke('transactions:fetch', { category: categoryId })
+      : Promise.resolve({ success: true, data: [] }),
     window.electron.ipcRenderer.invoke('customRecurring:fetch')
   ])
-  if (txResult.success) recurringTransactions.value = txResult.data
+  if (txResult.success) allTransactions.value = txResult.data
   if (rulesResult.success) rules.value = rulesResult.data
   loading.value = false
 }
 
-async function rescan() {
-  rescanning.value = true
-  await window.electron.ipcRenderer.invoke('transactions:rescanRecurring')
+function openSettings() {
+  settingsCategoryId.value = settingsStore.subscriptionCategory
+  settingsDialog.value = true
+}
+
+async function saveSettings() {
+  settingsStore.setSubscriptionCategory(settingsCategoryId.value)
+  settingsDialog.value = false
   await fetchAll()
-  rescanning.value = false
+}
+
+function openAdd() {
+  addForm.value = { name: '', operator: 'contains' }
+  addDialog.value = true
 }
 
 async function submitAdd() {
@@ -188,25 +196,16 @@ async function submitAdd() {
 }
 
 async function handleCancel(sub) {
-  if (sub.ruleId) {
-    await window.electron.ipcRenderer.invoke('customRecurring:delete', sub.ruleId)
-    await fetchAll()
-    snackbar.value = { show: true, text: `Removed "${sub.name}" from tracking.`, color: 'default' }
-  } else {
-    snackbar.value = {
-      show: true,
-      text: 'Auto-detected subscriptions can be excluded via the Rules tab.',
-      color: 'default'
-    }
-  }
+  if (!sub.ruleId) return
+  await window.electron.ipcRenderer.invoke('customRecurring:delete', sub.ruleId)
+  await fetchAll()
+  snackbar.value = { show: true, text: `Removed "${sub.name}" from tracking.`, color: 'default' }
 }
-
-// ── Subscription computation ──────────────────────────────────────────────────
 
 function median(arr) {
   if (!arr.length) return 0
-  const sorted = [...arr].sort((a, b) => a - b)
-  return sorted[Math.floor(sorted.length / 2)]
+  const s = [...arr].sort((a, b) => a - b)
+  return s[Math.floor(s.length / 2)]
 }
 
 function getInitials(name) {
@@ -217,52 +216,16 @@ function getInitials(name) {
     .join('')
 }
 
-function computeNextCharge(typicalDay) {
-  if (!typicalDay) return null
-  const now = new Date()
-  const thisMonth = new Date(now.getFullYear(), now.getMonth(), typicalDay)
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, typicalDay)
-  return thisMonth >= now ? thisMonth : nextMonth
-}
-
-function formatDateShort(date) {
-  if (!date) return '—'
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function matchesRule(name, rule) {
-  const haystack = (name || '').toLowerCase()
-  const needle = (rule.name || '').toLowerCase()
-  switch (rule.operator) {
-    case 'equals':
-      return haystack === needle
-    case 'startsWith':
-      return haystack.startsWith(needle)
-    case 'wholeWord':
-      return new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(haystack)
-    default:
-      return haystack.includes(needle)
-  }
-}
-
-function buildSub(name, txs, acctid) {
+function buildSub(name, txs, ruleId = null) {
   const sorted = [...txs].sort((a, b) => (a.DTPOSTED > b.DTPOSTED ? 1 : -1))
   const amounts = sorted.map((t) => Math.abs(Number(t.TRNAMT))).filter((a) => a > 0)
   const months = new Set(sorted.map((t) => t.DTPOSTED?.slice(0, 6)).filter(Boolean))
   const days = sorted.map((t) => parseInt(t.DTPOSTED?.slice(6, 8), 10)).filter((d) => !isNaN(d))
-  const categories = sorted.map((t) => t.category).filter(Boolean)
-
   const currentAmount = amounts[amounts.length - 1] || 0
-  const historicalAmounts = amounts.slice(0, -1)
-  const histMedian =
-    historicalAmounts.length >= 2 ? median(historicalAmounts) : amounts.length ? median(amounts) : 0
-
-  const priceUp =
-    historicalAmounts.length >= 2 &&
-    currentAmount > histMedian * 1.05 &&
-    currentAmount !== histMedian
-  const previousAmount = priceUp ? histMedian : null
-
+  const prev = amounts.slice(0, -1)
+  const histMedian = prev.length >= 2 ? median(prev) : median(amounts)
+  const priceUp = prev.length >= 2 && currentAmount > histMedian * 1.05
+  const typicalDay = days.length ? median(days) : null
   const lastDate = sorted[sorted.length - 1]?.DTPOSTED
   let daysSinceCharge = null
   if (lastDate?.length >= 8) {
@@ -270,72 +233,75 @@ function buildSub(name, txs, acctid) {
     daysSinceCharge = Math.floor((Date.now() - d.getTime()) / 86400000)
   }
   const unused = daysSinceCharge !== null && daysSinceCharge > 35
-
-  const typicalDay = days.length ? median(days) : null
-  const nextCharge = computeNextCharge(typicalDay)
-
+  let nextCharge = null
+  if (typicalDay) {
+    const now = new Date()
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), typicalDay)
+    nextCharge =
+      thisMonth >= now ? thisMonth : new Date(now.getFullYear(), now.getMonth() + 1, typicalDay)
+  }
   const sortedMonths = [...months].sort()
   let billing = 'Monthly'
   if (sortedMonths.length >= 2) {
-    const first = sortedMonths[0]
-    const last = sortedMonths[sortedMonths.length - 1]
     const span =
-      (parseInt(last.slice(0, 4)) - parseInt(first.slice(0, 4))) * 12 +
-      parseInt(last.slice(4)) -
-      parseInt(first.slice(4)) +
+      (parseInt(sortedMonths.at(-1).slice(0, 4)) - parseInt(sortedMonths[0].slice(0, 4))) * 12 +
+      parseInt(sortedMonths.at(-1).slice(4)) -
+      parseInt(sortedMonths[0].slice(4)) +
       1
     if (months.size <= 2 && span >= 10) billing = 'Yearly'
   }
-
-  const txCategory = categories.length
-    ? [...categories].sort(
-        (a, b) =>
-          categories.filter((c) => c === b).length - categories.filter((c) => c === a).length
-      )[0]
-    : null
-
-  const rule = rules.value.find((r) => matchesRule(name, r))
-
   return {
     name,
-    category: detectCategory(name) || txCategory || null,
+    category: sorted.map((t) => t.category).filter(Boolean)[0] ?? null,
     billing,
     nextCharge,
-    nextChargeLabel: formatDateShort(nextCharge),
+    nextChargeLabel: nextCharge
+      ? nextCharge.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : '—',
     currentAmount,
     typicalAmount: median(amounts),
     priceUp,
-    previousAmount,
+    previousAmount: priceUp ? histMedian : null,
     unused,
     daysSinceCharge,
     monthCount: months.size,
     typicalDay,
     status: priceUp ? 'priceUp' : unused ? 'unused' : 'active',
-    lastFour: acctid ? String(acctid).slice(-4) : null,
-    ruleId: rule?.id || null,
+    lastFour: txs[0]?.ACCTID ? String(txs[0].ACCTID).slice(-4) : null,
+    ruleId,
     initials: getInitials(name),
-    fromRule: false
+    fromRule: ruleId != null && !txs.length
+  }
+}
+
+function matchesRule(name, rule) {
+  const h = (name || '').toLowerCase()
+  const n = (rule.name || '').toLowerCase()
+  switch (rule.operator) {
+    case 'equals':
+      return h === n
+    case 'startsWith':
+      return h.startsWith(n)
+    case 'wholeWord':
+      return new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(h)
+    default:
+      return h.includes(n)
   }
 }
 
 const subscriptions = computed(() => {
-  const map = new Map()
-  for (const tx of recurringTransactions.value) {
-    const key = tx.NAME || 'Unknown'
-    if (!map.has(key)) map.set(key, { txs: [], acctid: tx.ACCTID || null })
-    map.get(key).txs.push(tx)
-  }
-
   const result = []
-  for (const [name, g] of map) {
-    result.push(buildSub(name, g.txs, g.acctid))
-  }
+  const covered = new Set()
 
   for (const rule of rules.value) {
-    if (!result.some((s) => matchesRule(s.name, rule))) {
+    const txs = allTransactions.value.filter((tx) => matchesRule(tx.NAME || '', rule))
+    txs.forEach((tx) => covered.add(tx.NAME))
+    if (txs.length) {
+      result.push(buildSub(rule.name, txs, rule.id))
+    } else {
       result.push({
         name: rule.name,
-        category: detectCategory(rule.name),
+        category: null,
         billing: 'Monthly',
         nextCharge: null,
         nextChargeLabel: '—',
@@ -354,6 +320,17 @@ const subscriptions = computed(() => {
         fromRule: true
       })
     }
+  }
+
+  const byName = new Map()
+  for (const tx of allTransactions.value) {
+    if (covered.has(tx.NAME)) continue
+    const name = tx.NAME || 'Unknown'
+    if (!byName.has(name)) byName.set(name, [])
+    byName.get(name).push(tx)
+  }
+  for (const [name, txs] of byName) {
+    result.push(buildSub(name, txs, null))
   }
 
   return result.sort((a, b) => (a.typicalDay ?? 99) - (b.typicalDay ?? 99))
