@@ -9,27 +9,6 @@ const ipc = window.electron.ipcRenderer
 /** Account types treated as assets by default (when accountCategory is not set). */
 export const ASSET_TYPES = new Set(['Checking', 'Savings', 'Money Market'])
 
-/** Maps each asset ACCTTYPE to its net worth category label. */
-export const CATEGORY_MAP = {
-  Checking: 'Cash',
-  Savings: 'Savings',
-  'Money Market': 'Cash'
-}
-
-/** Display order for asset categories in the Net Worth breakdown. */
-export const CATEGORY_ORDER = ['Investments', 'Savings', 'Cash', 'Other Assets']
-
-/** Categories always rendered even when empty. */
-export const ALWAYS_SHOW_CATEGORIES = new Set(['Savings', 'Cash'])
-
-/**
- * Returns true when an account type defaults to an asset.
- * Always use the accountCategory field (if set) in preference to this.
- * @param {string} acctType
- */
-export function isAssetType(acctType) {
-  return ASSET_TYPES.has(acctType)
-}
 
 /**
  * Resolve whether a single account row should be treated as an asset,
@@ -184,27 +163,6 @@ export const useUserAccountsStore = defineStore('userAccounts', () => {
     }
   }
 
-  async function setAccountCategory(acctid, category) {
-    return updateAccount(acctid, { accountCategory: category })
-  }
-
-  async function updateBankName(oldName, newName) {
-    loadingCount.value++
-    error.value = null
-    try {
-      const affected = accounts.value.filter((a) => a.ORG === oldName)
-      for (const acct of affected) {
-        const result = await ipc.invoke('accounts:edit', acct.ACCTID, { ORG: newName })
-        if (!result.success) throw new Error(result.error)
-      }
-      await fetchAccounts()
-    } catch (err) {
-      setError(err)
-    } finally {
-      loadingCount.value--
-    }
-  }
-
   async function removeAccount(acctid) {
     loadingCount.value++
     error.value = null
@@ -227,8 +185,6 @@ export const useUserAccountsStore = defineStore('userAccounts', () => {
     importAccountFromOfx,
     createManualAccount,
     updateAccount,
-    setAccountCategory,
-    updateBankName,
     removeAccount,
     clearError
   }

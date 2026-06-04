@@ -149,24 +149,6 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
     }
   }
 
-  /**
-   * Delete all transactions for a given account.
-   * @param {string} acctid
-   */
-  async function removeAccountTransactions(acctid) {
-    loadingCount.value++
-    error.value = null
-    try {
-      const result = await ipc.invoke('transactions:removeByAccount', acctid)
-      if (!result.success) throw new Error(result.error)
-      transactions.value = transactions.value.filter((t) => t.ACCTID !== acctid)
-    } catch (err) {
-      setError(err)
-    } finally {
-      loadingCount.value--
-    }
-  }
-
   // ── Reports ───────────────────────────────────────────────────────────────
 
   /**
@@ -240,8 +222,6 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
   return {
     // State
     transactions,
-    monthsWithData,
-    activeMonth,
     accountSummary,
     monthlyTotals,
     netWorthHistory,
@@ -254,7 +234,6 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
     importTransactionsFromOfx,
     editTransaction,
     removeTransaction,
-    removeAccountTransactions,
     // Reports
     fetchAccountSummary,
     fetchMonthsWithData,

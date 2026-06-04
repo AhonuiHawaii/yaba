@@ -4,7 +4,6 @@ import { app } from 'electron'
 import { join } from 'path'
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs'
 // import { randomBytes } from 'crypto'
-import { buildMerchantHistory, scoreRecurring, rescanRecurring } from './util/detectRecurring.js'
 
 /*
   Database initialization
@@ -86,7 +85,9 @@ db.exec(`
     splitAmount2    REAL,
     notes           TEXT,
     dueDate         INTEGER,
-    recurring       INTEGER DEFAULT 0
+    frequency       TEXT,
+    subscription       INTEGER NOT NULL DEFAULT 0,
+    bill               INTEGER NOT NULL DEFAULT 0
   )
 `)
 
@@ -137,8 +138,10 @@ const VALID_COLUMNS = new Set([
   'splitAmount2',
   'ORG',
   'notes',
-  'recurring',
-  'dueDate'
+  'dueDate',
+  'frequency',
+  'subscription',
+  'bill'
 ])
 
 // OFX date columns — use LIKE prefix matching so partial dates work
@@ -196,15 +199,13 @@ function createTransaction(txn) {
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO Transactions
       (FITID, ACCTID, TRNTYPE, DTPOSTED, DTUSER, TRNAMT, NAME, MEMO,
-       CHECKNUM, REFNUM, DTAVAIL, SRVRTID, PAYEEID, EXTDNAME, SIC, ORG, rawTransaction, recurring)
+       CHECKNUM, REFNUM, DTAVAIL, SRVRTID, PAYEEID, EXTDNAME, SIC, ORG, rawTransaction)
     VALUES
       (@FITID, @ACCTID, @TRNTYPE, @DTPOSTED, @DTUSER, @TRNAMT, @NAME, COALESCE(NULLIF(@MEMO, ''), @NAME),
-       @CHECKNUM, @REFNUM, @DTAVAIL, @SRVRTID, @PAYEEID, @EXTDNAME, @SIC, @ORG, @rawTransaction, @recurring)
+       @CHECKNUM, @REFNUM, @DTAVAIL, @SRVRTID, @PAYEEID, @EXTDNAME, @SIC, @ORG, @rawTransaction)
   `)
 
-  const history = buildMerchantHistory(db)
-  const recurring = scoreRecurring(txn, history) ? 1 : 0
-  return stmt.run({ ...txn, rawTransaction: JSON.stringify(txn), recurring }).changes
+  return stmt.run({ ...txn, rawTransaction: JSON.stringify(txn) }).changes
 }
 
 /**
@@ -220,22 +221,18 @@ function createTransactions(txns) {
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO Transactions
       (FITID, ACCTID, TRNTYPE, DTPOSTED, DTUSER, TRNAMT, NAME, MEMO,
-       CHECKNUM, REFNUM, DTAVAIL, SRVRTID, PAYEEID, EXTDNAME, SIC, ORG, rawTransaction, recurring)
+       CHECKNUM, REFNUM, DTAVAIL, SRVRTID, PAYEEID, EXTDNAME, SIC, ORG, rawTransaction)
     VALUES
       (@FITID, @ACCTID, @TRNTYPE, @DTPOSTED, @DTUSER, @TRNAMT, @NAME, COALESCE(NULLIF(@MEMO, ''), @NAME),
-       @CHECKNUM, @REFNUM, @DTAVAIL, @SRVRTID, @PAYEEID, @EXTDNAME, @SIC, @ORG, @rawTransaction, @recurring)
+       @CHECKNUM, @REFNUM, @DTAVAIL, @SRVRTID, @PAYEEID, @EXTDNAME, @SIC, @ORG, @rawTransaction)
   `)
 
   let inserted = 0
   db.transaction((rows) => {
     for (const txn of rows) {
-      inserted += stmt.run({ ...txn, rawTransaction: JSON.stringify(txn), recurring: 0 }).changes
+      inserted += stmt.run({ ...txn, rawTransaction: JSON.stringify(txn) }).changes
     }
   })(txns)
-
-  // Authoritative pass — runs after every bulk import so newly-eligible
-  // merchants pick up their flag and stale flags get cleared.
-  rescanRecurring(db)
 
   return { total: txns.length, inserted, skipped: txns.length - inserted }
 }
@@ -411,15 +408,17 @@ function deleteAccount(acctid) {
 // rename optionally overwrites the transaction's NAME (payee) field on match.
 db.exec(`
   CREATE TABLE IF NOT EXISTS CategoryRules (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    field     TEXT NOT NULL,
-    operator  TEXT NOT NULL,
-    value     TEXT NOT NULL,
-    category  TEXT NOT NULL,
-    type      TEXT,
-    rename    TEXT,
-    priority  INTEGER DEFAULT 0,
-    createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    field        TEXT NOT NULL,
+    operator     TEXT NOT NULL,
+    value        TEXT NOT NULL,
+    category     TEXT NOT NULL,
+    type         TEXT,
+    rename       TEXT,
+    priority     INTEGER DEFAULT 0,
+    subscription INTEGER NOT NULL DEFAULT 0,
+    bill         INTEGER NOT NULL DEFAULT 0,
+    createdAt    TEXT DEFAULT CURRENT_TIMESTAMP
   )
 `)
 
@@ -429,8 +428,8 @@ function getRules() {
 
 function createRule(rule) {
   const stmt = db.prepare(`
-    INSERT INTO CategoryRules (field, operator, value, category, type, priority, rename)
-    VALUES (@field, @operator, @value, @category, @type, @priority, @rename)
+    INSERT INTO CategoryRules (field, operator, value, category, type, priority, rename, subscription, bill)
+    VALUES (@field, @operator, @value, @category, @type, @priority, @rename, @subscription, @bill)
   `)
   const info = stmt.run({
     field: rule.field,
@@ -439,13 +438,25 @@ function createRule(rule) {
     category: rule.category,
     type: rule.type ?? null,
     priority: rule.priority ?? 0,
-    rename: rule.rename ?? null
+    rename: rule.rename ?? null,
+    subscription: rule.subscription ?? 0,
+    bill: rule.bill ?? 0
   })
   return db.prepare('SELECT * FROM CategoryRules WHERE id = ?').get(info.lastInsertRowid)
 }
 
 function updateRule(id, updates) {
-  const ALLOWED = new Set(['field', 'operator', 'value', 'category', 'type', 'priority', 'rename'])
+  const ALLOWED = new Set([
+    'field',
+    'operator',
+    'value',
+    'category',
+    'type',
+    'priority',
+    'rename',
+    'subscription',
+    'bill'
+  ])
   const entries = Object.entries(updates).filter(([col]) => ALLOWED.has(col))
   if (entries.length === 0) return 0
   const setClause = entries.map(([col]) => `${col} = ?`).join(', ')
@@ -531,6 +542,8 @@ function applyRules(transactions) {
         const patch = { FITID: txn.FITID, category: rule.category }
         if (rule.type) patch.transactionType = rule.type
         if (rule.rename) patch.rename = rule.rename
+        patch.subscription = rule.subscription ?? 0
+        patch.bill = rule.bill ?? 0
         patches.push(patch)
         break
       }
@@ -890,7 +903,6 @@ export {
   applyRules,
   previewRule,
   previewKeywords,
-  runRescanRecurring,
   // Custom Recurring
   getCustomRecurring,
   createCustomRecurring,
@@ -898,20 +910,4 @@ export {
   deleteCustomRecurring,
   matchesCustomEntry,
   checkDuplicateFitids
-}
-
-function runRescanRecurring() {
-  const customEntries = getCustomRecurring()
-  const customFitids = new Set()
-
-  if (customEntries.length) {
-    const rows = db.prepare(`SELECT FITID, MEMO FROM Transactions WHERE TRNAMT < 0`).all()
-    for (const row of rows) {
-      if (customEntries.some((e) => matchesCustomEntry(row.MEMO, e))) {
-        customFitids.add(row.FITID)
-      }
-    }
-  }
-
-  return rescanRecurring(db, customFitids)
 }

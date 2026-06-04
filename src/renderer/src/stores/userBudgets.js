@@ -8,10 +8,6 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
   const loading = computed(() => loadingCount.value > 0)
   const error = ref(null)
 
-  const monthlyBudgets = computed(() =>
-    budgets.value.filter((budget) => !budget.period || budget.period === 'monthly')
-  )
-
   const types = computed(() =>
     [...new Set(budgets.value.map((b) => b.type).filter(Boolean))].sort()
   )
@@ -63,20 +59,6 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
     }
   }
 
-  async function deleteBudget(id) {
-    loadingCount.value++
-    error.value = null
-    try {
-      if (!budgets.value.some((budget) => budget.id === id)) return
-      await db.budgets.delete(id)
-      await fetchBudgets()
-    } catch (err) {
-      setError(err)
-    } finally {
-      loadingCount.value--
-    }
-  }
-
   async function addType(name) {
     const id = crypto.randomUUID()
     await db.budgets.add({
@@ -99,14 +81,12 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
   return {
     budgets,
     types,
-    monthlyBudgets,
     loading,
     error,
     fetchBudgets,
     getBudget,
     upsertBudget,
     addType,
-    deleteBudget,
     clearError
   }
 })

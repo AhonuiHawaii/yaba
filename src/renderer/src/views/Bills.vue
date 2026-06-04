@@ -1,363 +1,354 @@
 <template>
-  <div>
-    <!-- ── Header ───────────────────────────────────────────────────────────── -->
-    <div class="d-flex align-start justify-space-between px-4 pt-4 pb-3 gap-4 flex-wrap">
+  <div class="d-flex flex-column h-100">
+    <!-- Page header -->
+    <div class="d-flex align-center px-5 pt-5 pb-3">
       <div>
-        <div class="text-h5 font-weight-bold">Bills</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
+        <div class="text-h6 font-weight-bold">Bills</div>
+        <div class="text-caption text-medium-emphasis">
           Recurring payments detected from imports
         </div>
       </div>
-      <v-btn
-        color="primary"
-        variant="flat"
-        prepend-icon="mdi-plus"
-        rounded="sm"
-        @click="openAddDialog"
-        >Add bill</v-btn
-      >
     </div>
 
-    <!-- ── Tab toggle ────────────────────────────────────────────────────────── -->
-    <div class="d-flex px-4 pb-4">
-      <v-btn-toggle
-        v-model="activeTab"
-        mandatory
-        rounded="sm"
-        density="comfortable"
-        variant="flat"
-        color="primary"
-      >
-        <v-btn value="list" size="small" prepend-icon="mdi-format-list-bulleted">List</v-btn>
-        <v-btn value="calendar" size="small" prepend-icon="mdi-calendar-month">Calendar</v-btn>
-      </v-btn-toggle>
-    </div>
+    <!-- Tabs -->
+    <v-tabs v-model="activeTab" class="px-5 mb-4" color="primary">
+      <v-tab value="list" prepend-icon="mdi-format-list-bulleted">List</v-tab>
+      <v-tab value="calendar" prepend-icon="mdi-calendar-month-outline">Calendar</v-tab>
+    </v-tabs>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- LIST VIEW                                                              -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <template v-if="activeTab === 'list'">
-      <!-- ── Stat cards ──────────────────────────────────────────────────────── -->
-      <div class="px-4 pb-4">
-        <v-row density="comfortable">
-          <v-col cols="12" sm="4">
-            <v-card rounded="lg" elevation="0" border class="pa-1">
-              <v-card-text class="pa-5">
-                <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-                  Due this month
-                </div>
-                <div class="text-h4 font-weight-bold">{{ formatCurrency(totalDue) }}</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col cols="12" sm="4">
-            <v-card rounded="lg" elevation="0" border class="pa-1">
-              <v-card-text class="pa-5">
-                <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-                  Paid
-                </div>
-                <div class="text-h4 font-weight-bold text-success">
-                  {{ formatCurrency(totalPaid) }}
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col cols="12" sm="4">
-            <v-card rounded="lg" elevation="0" border class="pa-1">
-              <v-card-text class="pa-5">
-                <div class="text-caption font-weight-bold text-uppercase text-medium-emphasis mb-3">
-                  Upcoming
-                </div>
-                <div class="text-h4 font-weight-bold">{{ formatCurrency(totalUpcoming) }}</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-      </div>
+    <!-- Tab content -->
+    <v-tabs-window v-model="activeTab">
+      <!-- ── LIST VIEW ── -->
+      <v-tabs-window-item value="list">
+        <div v-if="loading" class="d-flex justify-center pa-12">
+          <v-progress-circular indeterminate color="primary" />
+        </div>
 
-      <!-- ── Bills table ─────────────────────────────────────────────────────── -->
-      <div class="px-4 pb-6">
-        <v-card rounded="lg" elevation="0" border>
-          <div v-if="loading" class="d-flex justify-center pa-10">
-            <v-progress-circular indeterminate color="primary" />
-          </div>
-
-          <template v-else>
-            <div
-              v-if="!billItems.length"
-              class="d-flex flex-column align-center text-medium-emphasis pa-12"
+        <template v-else>
+          <!-- Summary cards -->
+          <div class="summary-grid px-5 mb-4">
+            <v-card
+              v-for="card in summaryCards"
+              :key="card.title"
+              rounded="sm"
+              elevation="1"
+              class="pa-4"
             >
-              <v-icon
-                size="60"
-                class="mb-4"
-                style="opacity: 0.3"
-                icon="mdi-calendar-month-outline"
-              />
-              <div class="text-body-1">No bills detected yet.</div>
-              <div class="text-caption mt-1">Import transactions and categorize them as bills.</div>
-            </div>
-
-            <v-table v-else density="comfortable">
-              <thead>
-                <tr>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">
-                    Bill
-                  </th>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">
-                    Category
-                  </th>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">
-                    Frequency
-                  </th>
-                  <th class="text-body-2 text-medium-emphasis font-weight-regular bills-th">
-                    Next due
-                  </th>
-                  <th
-                    class="text-body-2 text-medium-emphasis font-weight-regular bills-th text-right"
-                  >
-                    Amount
-                  </th>
-                  <th
-                    class="text-body-2 text-medium-emphasis font-weight-regular bills-th text-right"
-                  >
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="bill in billItems" :key="bill.name" class="bills-tr">
-                  <td class="text-body-2 font-weight-medium">{{ bill.name }}</td>
-                  <td>
-                    <v-chip
-                      v-if="bill.category"
-                      size="x-small"
-                      variant="tonal"
-                      color="primary"
-                      rounded="pill"
-                      >{{ bill.category }}</v-chip
-                    >
-                    <span v-else class="text-caption text-medium-emphasis">—</span>
-                  </td>
-                  <td class="text-body-2 text-medium-emphasis">Monthly</td>
-                  <td class="text-body-2 text-medium-emphasis">{{ bill.nextDueLabel }}</td>
-                  <td class="text-body-2 text-right">{{ formatCurrency(bill.typicalAmount) }}</td>
-                  <td class="text-right">
-                    <v-chip
-                      v-if="bill.isPaid"
-                      color="success"
-                      size="x-small"
-                      variant="tonal"
-                      rounded="pill"
-                      prepend-icon="mdi-check"
-                      >Paid</v-chip
-                    >
-                    <v-chip v-else size="x-small" variant="outlined" rounded="pill"
-                      >Upcoming</v-chip
-                    >
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
-          </template>
-        </v-card>
-      </div>
-    </template>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- CALENDAR VIEW (bills only)                                             -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <v-container v-else fluid class="pa-4">
-      <v-sheet rounded="sm" elevation="2" class="pa-4">
-        <!-- Navigation -->
-        <div class="d-flex align-center gap-3 mb-6">
-          <v-btn icon="mdi-chevron-left" variant="text" density="comfortable" @click="prevMonth" />
-          <span class="text-h6 font-weight-bold cal-title">{{ monthTitle }}</span>
-          <v-btn icon="mdi-chevron-right" variant="text" density="comfortable" @click="nextMonth" />
-          <v-btn size="small" variant="flat" rounded="sm" @click="goToday">Today</v-btn>
-          <v-spacer />
-          <div class="d-flex align-center gap-3">
-            <span class="text-caption text-medium-emphasis d-flex align-center gap-1">
-              <v-icon size="12" color="primary">mdi-circle</v-icon> Upcoming
-            </span>
-            <span class="text-caption text-medium-emphasis d-flex align-center gap-1">
-              <v-icon size="12" color="success">mdi-circle</v-icon> Paid
-            </span>
-          </div>
-        </div>
-
-        <!-- Day-of-week headers -->
-        <div class="cal-grid mb-1">
-          <div
-            v-for="d in ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']"
-            :key="d"
-            class="text-caption text-center text-uppercase font-weight-bold text-medium-emphasis py-2"
-          >
-            {{ d }}
-          </div>
-        </div>
-
-        <!-- Calendar cells -->
-        <div class="cal-grid">
-          <div
-            v-for="day in calendarDays"
-            :key="day.key"
-            class="cal-cell"
-            :class="{ 'cal-cell--other': !day.currentMonth, 'cal-cell--today': day.isToday }"
-          >
-            <div
-              class="cal-day-num text-caption font-weight-bold mb-1"
-              :class="day.isToday ? 'text-primary' : 'text-medium-emphasis'"
-            >
-              <v-avatar
-                v-if="day.isToday"
-                color="primary"
-                size="20"
-                class="text-caption font-weight-bold"
-              >
-                {{ day.date.getDate() }}
-              </v-avatar>
-              <span v-else>{{ day.date.getDate() }}</span>
-            </div>
-
-            <template v-if="day.currentMonth">
-              <v-chip
-                v-for="evt in calEventsByDay.get(day.key) || []"
-                :key="evt.name"
-                :color="evt.isPast ? 'success' : 'primary'"
-                size="x-small"
-                variant="flat"
-                class="cal-chip mb-1 cursor-pointer"
-                @click.stop="openCalEvent(evt)"
-              >
-                <span class="cal-chip-label"
-                  >{{ evt.name }} · {{ formatCurrency(evt.typicalAmount) }}</span
-                >
-              </v-chip>
-            </template>
-          </div>
-        </div>
-
-        <!-- Event detail dialog -->
-        <v-dialog v-model="calDialogOpen" max-width="400">
-          <v-card v-if="selectedCalEvent" rounded="sm">
-            <v-card-title class="pa-6 pb-4">
-              <div class="d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-3">
-                  <v-icon color="primary" size="20">mdi-calendar-month</v-icon>
-                  <span class="text-h6 font-weight-bold">{{ selectedCalEvent.name }}</span>
-                </div>
-                <v-btn
-                  icon="mdi-close"
-                  variant="text"
-                  density="compact"
-                  @click="calDialogOpen = false"
-                />
+              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-1">
+                {{ card.title }}
               </div>
-            </v-card-title>
-            <v-divider />
-            <v-card-text class="pa-6">
-              <div class="d-flex align-center justify-space-between mb-3">
-                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
-                  Typical Amount
-                </div>
-                <div class="text-h6 font-weight-bold text-primary">
-                  {{ formatCurrency(selectedCalEvent.typicalAmount) }}
-                </div>
-              </div>
-              <v-divider class="mb-3" />
-              <div class="d-flex align-center justify-space-between mb-2">
-                <span class="text-body-2 font-weight-medium">Next due</span>
-                <span class="text-body-2 text-medium-emphasis">{{
-                  selectedCalEvent.nextDueLabel
-                }}</span>
-              </div>
+              <div class="text-h5 font-weight-bold" :class="card.valueClass">{{ card.value }}</div>
+              <div class="text-caption text-medium-emphasis">{{ card.subtitle }}</div>
+            </v-card>
+          </div>
+
+          <!-- Bills table -->
+          <div class="px-5 pb-6">
+            <v-card rounded="sm" elevation="1">
               <div
-                v-if="selectedCalEvent.category"
-                class="d-flex align-center justify-space-between"
+                class="bill-row bill-row--header text-caption text-uppercase font-weight-bold text-medium-emphasis"
               >
-                <span class="text-body-2 font-weight-medium">Category</span>
-                <span class="text-body-2 text-medium-emphasis">{{
-                  selectedCalEvent.category
-                }}</span>
+                <span>Bill</span>
+                <span>Category</span>
+                <span>Billing</span>
+                <span>Due Date</span>
+                <span>Last paid</span>
+                <span class="text-right">Amount</span>
+                <span>Status</span>
               </div>
-            </v-card-text>
-            <v-card-actions class="pa-6 pt-0">
-              <v-spacer />
-              <v-btn variant="tonal" rounded="sm" @click="calDialogOpen = false">Close</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-sheet>
-    </v-container>
+              <v-divider />
 
-    <!-- ── Add Bill Dialog ───────────────────────────────────────────────────── -->
-    <v-dialog v-model="addDialogOpen" max-width="480">
-      <v-card rounded="sm">
-        <v-card-title class="pa-6 pb-4">
-          <div class="d-flex align-center justify-space-between">
-            <span class="text-h6 font-weight-bold">Add Bill Category</span>
-            <v-btn
-              icon="mdi-close"
-              variant="text"
-              density="compact"
-              @click="addDialogOpen = false"
-            />
+              <div
+                v-if="!billItems.length"
+                class="d-flex flex-column align-center text-medium-emphasis pa-12"
+              >
+                <v-icon size="48" class="mb-3" style="opacity: 0.3" icon="mdi-calendar-sync" />
+                <div class="text-body-2">No bills found.</div>
+                <div class="text-caption mt-1">
+                  Mark a rule as "Bill" in Rules to track transactions here.
+                </div>
+              </div>
+
+              <template v-for="(bill, i) in billItems" :key="bill.name">
+                <div class="bill-row">
+                  <!-- Bill name -->
+                  <div class="d-flex align-center ga-3">
+                    <div class="min-width-0">
+                      <div class="text-body-2 font-weight-medium text-truncate">{{ bill.name }}</div>
+                      <div class="text-caption text-medium-emphasis">Monthly</div>
+                    </div>
+                  </div>
+
+                  <!-- Category -->
+                  <div>
+                    <v-chip
+                      v-if="categoryName(bill.category)"
+                      size="x-small"
+                      variant="tonal"
+                      color="teal"
+                      rounded="sm"
+                    >{{ categoryName(bill.category) }}</v-chip>
+                    <span v-else class="text-caption text-medium-emphasis">—</span>
+                  </div>
+
+                  <!-- Billing -->
+                  <div>
+                    <span class="text-body-2 text-medium-emphasis">Monthly</span>
+                  </div>
+
+                  <!-- Due date with picker -->
+                  <div class="d-flex align-center ga-1">
+                    <span class="text-body-2 text-medium-emphasis">
+                      {{ editingKey === bill.name && editingDate ? formatEditDate(editingDate) : bill.nextDueLabel }}
+                    </span>
+                    <v-btn
+                      v-if="editingKey !== bill.name"
+                      icon="mdi-pencil-outline"
+                      size="x-small"
+                      variant="text"
+                      density="compact"
+                      @click="startEdit(bill)"
+                    />
+                    <template v-else>
+                      <v-menu v-model="pickerOpen" :close-on-content-click="false">
+                        <template #activator="{ props: menuProps }">
+                          <v-btn
+                            icon="mdi-calendar"
+                            size="x-small"
+                            variant="text"
+                            density="compact"
+                            v-bind="menuProps"
+                          />
+                        </template>
+                        <v-date-picker v-model="editingDate" hide-header>
+                          <template #actions>
+                            <v-btn variant="text" @click="pickerOpen = false">Cancel</v-btn>
+                            <v-btn color="primary" variant="flat" @click="pickerOpen = false">OK</v-btn>
+                          </template>
+                        </v-date-picker>
+                      </v-menu>
+                      <v-btn
+                        icon="mdi-check"
+                        size="x-small"
+                        variant="text"
+                        density="compact"
+                        color="success"
+                        @click="commitDueDate(bill)"
+                      />
+                    </template>
+                  </div>
+
+                  <!-- Last paid -->
+                  <div>
+                    <span class="text-body-2 text-medium-emphasis">{{ bill.lastPaidLabel }}</span>
+                  </div>
+
+                  <!-- Amount -->
+                  <div class="text-right">
+                    <span class="text-body-2 font-weight-bold">{{ formatCurrency(bill.typicalAmount) }}</span>
+                  </div>
+
+                  <!-- Status -->
+                  <div>
+                    <v-chip v-if="bill.isPaid" size="x-small" color="success" variant="flat" rounded="sm">Paid</v-chip>
+                    <v-chip v-else size="x-small" color="primary" variant="flat" rounded="sm">Upcoming</v-chip>
+                  </div>
+                </div>
+                <v-divider v-if="i < billItems.length - 1" />
+              </template>
+            </v-card>
           </div>
-        </v-card-title>
-        <v-divider />
-        <v-card-text class="pa-6">
-          <v-text-field
-            v-model="newBill.name"
-            label="Category name"
-            variant="outlined"
-            density="comfortable"
-            rounded="sm"
-            hide-details
-            color="primary"
-          />
-          <div class="text-caption text-medium-emphasis mt-2">
-            This creates a new Bills budget category. Assign transactions to it to track them here.
-          </div>
-        </v-card-text>
-        <v-card-actions class="pa-6 pt-0">
-          <v-spacer />
-          <v-btn variant="text" rounded="sm" @click="addDialogOpen = false">Cancel</v-btn>
-          <v-btn
-            variant="flat"
-            color="primary"
-            rounded="sm"
-            :disabled="!newBill.name"
-            :loading="saving"
-            @click="saveBill"
-            >Add</v-btn
-          >
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        </template>
+      </v-tabs-window-item>
+
+      <!-- ── CALENDAR VIEW ── -->
+      <v-tabs-window-item value="calendar">
+        <div class="px-5 pb-6">
+          <v-sheet rounded="sm" elevation="2" class="pa-4">
+            <!-- Navigation -->
+            <div class="d-flex align-center gap-3 mb-6">
+              <v-btn
+                icon="mdi-chevron-left"
+                variant="text"
+                density="comfortable"
+                @click="prevMonth"
+              />
+              <span class="text-h6 font-weight-bold cal-title">{{ monthTitle }}</span>
+              <v-btn
+                icon="mdi-chevron-right"
+                variant="text"
+                density="comfortable"
+                @click="nextMonth"
+              />
+              <v-btn size="small" variant="flat" rounded="sm" @click="goToday">Today</v-btn>
+              <v-spacer />
+              <div class="d-flex align-center gap-3">
+                <span class="text-caption text-medium-emphasis d-flex align-center gap-1">
+                  <v-icon size="12" color="primary">mdi-circle</v-icon> Upcoming
+                </span>
+                <span class="text-caption text-medium-emphasis d-flex align-center gap-1">
+                  <v-icon size="12" color="success">mdi-circle</v-icon> Paid
+                </span>
+              </div>
+            </div>
+
+            <!-- Day-of-week headers -->
+            <div class="cal-grid mb-1">
+              <div
+                v-for="d in ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']"
+                :key="d"
+                class="text-caption text-center text-uppercase font-weight-bold text-medium-emphasis py-2"
+              >
+                {{ d }}
+              </div>
+            </div>
+
+            <!-- Calendar cells -->
+            <div class="cal-grid">
+              <div
+                v-for="day in calendarDays"
+                :key="day.key"
+                class="cal-cell"
+                :class="{ 'cal-cell--other': !day.currentMonth, 'cal-cell--today': day.isToday }"
+              >
+                <div
+                  class="cal-day-num text-caption font-weight-bold mb-1"
+                  :class="day.isToday ? 'text-primary' : 'text-medium-emphasis'"
+                >
+                  <v-avatar
+                    v-if="day.isToday"
+                    color="primary"
+                    size="20"
+                    class="text-caption font-weight-bold"
+                  >
+                    {{ day.date.getDate() }}
+                  </v-avatar>
+                  <span v-else>{{ day.date.getDate() }}</span>
+                </div>
+
+                <template v-if="day.currentMonth">
+                  <v-chip
+                    v-for="evt in calEventsByDay.get(day.key) || []"
+                    :key="evt.name"
+                    :color="evt.isPast ? 'success' : 'primary'"
+                    size="x-small"
+                    variant="flat"
+                    class="cal-chip mb-1 cursor-pointer"
+                    @click.stop="openCalEvent(evt)"
+                  >
+                    <span class="cal-chip-label"
+                      >{{ evt.name }} · {{ formatCurrency(evt.typicalAmount) }}</span
+                    >
+                  </v-chip>
+                </template>
+              </div>
+            </div>
+
+            <!-- Event detail dialog -->
+            <v-dialog v-model="calDialogOpen" max-width="400">
+              <v-card v-if="selectedCalEvent" rounded="sm">
+                <v-card-title class="pa-6 pb-4">
+                  <div class="d-flex align-center justify-space-between">
+                    <div class="d-flex align-center gap-3">
+                      <v-icon color="primary" size="20">mdi-calendar-month</v-icon>
+                      <span class="text-h6 font-weight-bold">{{ selectedCalEvent.name }}</span>
+                    </div>
+                    <v-btn
+                      icon="mdi-close"
+                      variant="text"
+                      density="compact"
+                      @click="calDialogOpen = false"
+                    />
+                  </div>
+                </v-card-title>
+                <v-divider />
+                <v-card-text class="pa-6">
+                  <div class="d-flex align-center justify-space-between mb-3">
+                    <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                      Typical Amount
+                    </div>
+                    <div class="text-h6 font-weight-bold text-primary">
+                      {{ formatCurrency(selectedCalEvent.typicalAmount) }}
+                    </div>
+                  </div>
+                  <v-divider class="mb-3" />
+                  <div class="d-flex align-center justify-space-between mb-2">
+                    <span class="text-body-2 font-weight-medium">Next due</span>
+                    <span class="text-body-2 text-medium-emphasis">{{
+                      selectedCalEvent.nextDueLabel
+                    }}</span>
+                  </div>
+                  <div
+                    v-if="selectedCalEvent.category"
+                    class="d-flex align-center justify-space-between"
+                  >
+                    <span class="text-body-2 font-weight-medium">Category</span>
+                    <span class="text-body-2 text-medium-emphasis">{{
+                      categoryName(selectedCalEvent.category)
+                    }}</span>
+                  </div>
+                </v-card-text>
+                <v-card-actions class="pa-6 pt-0">
+                  <v-spacer />
+                  <v-btn variant="tonal" rounded="sm" @click="calDialogOpen = false">Close</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </v-sheet>
+        </div>
+      </v-tabs-window-item>
+    </v-tabs-window>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { useUserCategoriesStore } from '../stores/userCategories'
 
-const categoriesStore = useUserCategoriesStore()
 const { formatCurrency } = useUserSettingsStore()
+const categoriesStore = useUserCategoriesStore()
+
+function categoryName(id) {
+  return categoriesStore.categoryById[id]?.name ?? null
+}
 
 const activeTab = ref('list')
 const loading = ref(false)
+const allTransactions = ref([])
+const dueDateOverrides = ref({})
 
-// ── All transactions (we filter by bills category client-side) ────────────────
+const editingKey = ref(null)
+const editingDate = ref(null)
+const pickerOpen = ref(false)
 
-const recurringTransactions = ref([])
-
-async function fetchRecurring() {
-  const result = await window.electron.ipcRenderer.invoke('transactions:fetchAll')
-  if (result.success) recurringTransactions.value = result.data
+function formatEditDate(date) {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+function startEdit(bill) {
+  editingKey.value = bill.name
+  editingDate.value = bill.nextCharge ? new Date(bill.nextCharge) : new Date()
+}
+
+async function commitDueDate(bill) {
+  if (editingDate.value && bill.lastFITID) {
+    const iso = editingDate.value.toISOString().slice(0, 10)
+    dueDateOverrides.value = { ...dueDateOverrides.value, [bill.name]: iso }
+    const dueDateInt = parseInt(iso.replace(/-/g, ''), 10)
+    await window.electron.ipcRenderer.invoke('transactions:edit', bill.lastFITID, { dueDate: dueDateInt })
+  }
+  editingKey.value = null
+  editingDate.value = null
+  pickerOpen.value = false
+}
+
+async function fetchAll() {
+  loading.value = true
+  const result = await window.electron.ipcRenderer.invoke('transactions:fetchAll')
+  if (result.success) allTransactions.value = result.data
+  loading.value = false
+}
 
 function median(arr) {
   if (!arr.length) return 0
@@ -374,30 +365,26 @@ function daysUntil(dayOfMonth) {
   return Math.round((target - now) / 86400000)
 }
 
-// ── Bill groups (txns whose category is a bills-type category) ────────────────
-
-const billCategories = computed(() => categoriesStore.getCategoriesByType('bills'))
-
-// Match by UUID (new) or plain name (legacy)
-const isBillsCategory = (categoryValue) => {
-  if (!categoryValue) return false
-  return billCategories.value.some((c) => c.id === categoryValue || c.name === categoryValue)
-}
-
 const billGroups = computed(() => {
   const map = new Map()
 
-  for (const tx of recurringTransactions.value) {
-    if (!tx.category || !isBillsCategory(tx.category)) continue
+  for (const tx of allTransactions.value) {
+    if (!tx.bill) continue
 
     const key = tx.NAME || 'Unknown'
     if (!map.has(key)) {
-      map.set(key, { name: key, amounts: [], days: [], months: new Set(), category: tx.category })
+      map.set(key, { name: key, amounts: [], days: [], months: new Set(), category: tx.category, lastPosted: null, lastFITID: null })
     }
     const g = map.get(key)
     const amt = Math.abs(Number(tx.TRNAMT))
     if (amt > 0) g.amounts.push(amt)
-    if (tx.DTPOSTED?.length >= 8) g.days.push(parseInt(tx.DTPOSTED.slice(6, 8), 10))
+    if (tx.DTPOSTED?.length >= 8) {
+      g.days.push(parseInt(tx.DTPOSTED.slice(6, 8), 10))
+      if (!g.lastPosted || tx.DTPOSTED > g.lastPosted) {
+        g.lastPosted = tx.DTPOSTED
+        g.lastFITID = tx.FITID
+      }
+    }
     if (tx.DTPOSTED?.length >= 6) g.months.add(tx.DTPOSTED.slice(0, 6))
   }
 
@@ -411,31 +398,35 @@ const billGroups = computed(() => {
     .map((g) => {
       const typicalAmount = median(g.amounts)
       const typicalDay = g.days.length ? median(g.days) : null
-
-      // isPaid: this bill already posted a transaction this month
       const isPaid = g.months.has(currentMonthStr) && typicalDay !== null && typicalDay < todayDay
 
-      // Next due date
+      const override = dueDateOverrides.value[g.name]
+      let nextCharge = null
       let nextDueLabel = '—'
-      if (typicalDay) {
+      if (override) {
+        const [oy, om, od] = override.split('-').map(Number)
+        nextCharge = new Date(oy, om - 1, od)
+        nextDueLabel = nextCharge.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      } else if (typicalDay) {
         const days = daysUntil(typicalDay)
         if (days !== null) {
-          const labelDate =
+          nextCharge =
             days >= 0
               ? new Date(now.getFullYear(), now.getMonth(), typicalDay)
               : new Date(now.getFullYear(), now.getMonth() + 1, typicalDay)
-          nextDueLabel = labelDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          nextDueLabel = nextCharge.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         }
       }
 
-      return {
-        name: g.name,
-        category: g.category,
-        typicalAmount,
-        typicalDay,
-        isPaid,
-        nextDueLabel
+      let lastPaidLabel = '—'
+      if (g.lastPosted?.length >= 8) {
+        const y = parseInt(g.lastPosted.slice(0, 4), 10)
+        const mo = parseInt(g.lastPosted.slice(4, 6), 10) - 1
+        const d = parseInt(g.lastPosted.slice(6, 8), 10)
+        lastPaidLabel = new Date(y, mo, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       }
+
+      return { name: g.name, category: g.category, typicalAmount, typicalDay, isPaid, nextDueLabel, nextCharge, lastPaidLabel, lastFITID: g.lastFITID }
     })
     .sort((a, b) => {
       if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1
@@ -445,8 +436,6 @@ const billGroups = computed(() => {
 
 const billItems = computed(() => billGroups.value)
 
-// ── Stat totals ───────────────────────────────────────────────────────────────
-
 const totalDue = computed(() => billItems.value.reduce((s, b) => s + (b.typicalAmount || 0), 0))
 const totalPaid = computed(() =>
   billItems.value.filter((b) => b.isPaid).reduce((s, b) => s + (b.typicalAmount || 0), 0)
@@ -454,6 +443,16 @@ const totalPaid = computed(() =>
 const totalUpcoming = computed(() =>
   billItems.value.filter((b) => !b.isPaid).reduce((s, b) => s + (b.typicalAmount || 0), 0)
 )
+
+const summaryCards = computed(() => {
+  const paidCount = billItems.value.filter((b) => b.isPaid).length
+  const upcomingCount = billItems.value.filter((b) => !b.isPaid).length
+  return [
+    { title: 'Due this month', value: formatCurrency(totalDue.value), subtitle: `${billItems.value.length} bill${billItems.value.length !== 1 ? 's' : ''}`, valueClass: '' },
+    { title: 'Paid', value: formatCurrency(totalPaid.value), subtitle: `${paidCount} paid`, valueClass: 'text-success' },
+    { title: 'Upcoming', value: formatCurrency(totalUpcoming.value), subtitle: `${upcomingCount} remaining`, valueClass: '' }
+  ]
+})
 
 // ── Calendar navigation ───────────────────────────────────────────────────────
 
@@ -463,6 +462,7 @@ function currentMonthValue() {
   const d = new Date()
   return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`
 }
+
 function offsetMonth(yyyymm, delta) {
   const year = Number(yyyymm.slice(0, 4))
   const month = Number(yyyymm.slice(4)) - 1
@@ -522,8 +522,6 @@ const calendarDays = computed(() => {
   return days
 })
 
-// ── Bills-only calendar events ────────────────────────────────────────────────
-
 const calEventsByDay = computed(() => {
   const y = viewYear.value
   const m = viewMonth.value
@@ -546,8 +544,6 @@ const calEventsByDay = computed(() => {
   return map
 })
 
-// ── Calendar dialog ───────────────────────────────────────────────────────────
-
 const calDialogOpen = ref(false)
 const selectedCalEvent = ref(null)
 
@@ -556,53 +552,34 @@ function openCalEvent(evt) {
   calDialogOpen.value = true
 }
 
-// ── Add bill category dialog ──────────────────────────────────────────────────
-
-const addDialogOpen = ref(false)
-const saving = ref(false)
-const newBill = ref({ name: '' })
-
-function openAddDialog() {
-  newBill.value = { name: '' }
-  addDialogOpen.value = true
-}
-
-async function saveBill() {
-  if (!newBill.value.name) return
-  saving.value = true
-  try {
-    await categoriesStore.addCategory({ type: 'bills', name: newBill.value.name })
-  } finally {
-    saving.value = false
-    addDialogOpen.value = false
-  }
-}
-
 // ── Init ──────────────────────────────────────────────────────────────────────
 
-onMounted(async () => {
-  loading.value = true
-  await Promise.all([categoriesStore.fetchCategories(), fetchRecurring()])
-  loading.value = false
-})
+onMounted(fetchAll)
 </script>
 
 <style scoped>
-/* ── Table ── */
-.bills-th {
-  padding-top: 14px !important;
-  padding-bottom: 14px !important;
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
-.bills-tr td {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+.bill-row {
+  display: grid;
+  grid-template-columns: 1fr 128px 80px 120px 110px 96px 106px;
+  align-items: center;
+  column-gap: 12px;
+  padding: 12px 16px;
 }
 
-.bills-tr:last-child td {
-  border-bottom: none;
+.bill-row--header {
+  padding: 8px 16px;
 }
 
-/* ── Calendar ── */
+.min-width-0 {
+  min-width: 0;
+}
+
 .cal-title {
   min-width: 200px;
   text-align: center;

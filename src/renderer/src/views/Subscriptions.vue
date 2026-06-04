@@ -7,13 +7,6 @@
         <div class="text-caption text-medium-emphasis">Recurring charges tracked by your rules</div>
       </div>
       <v-spacer />
-      <v-btn
-        icon="mdi-cog-outline"
-        variant="text"
-        rounded="sm"
-        class="mr-2"
-        @click="openSettings"
-      />
       <v-btn color="primary" rounded="sm" prepend-icon="mdi-plus" @click="openAdd">
         Add manually
       </v-btn>
@@ -86,37 +79,6 @@
       </v-card>
     </v-dialog>
 
-    <!-- Settings dialog -->
-    <v-dialog v-model="settingsDialog" max-width="420">
-      <v-card rounded="sm">
-        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold"
-          >Subscription settings</v-card-title
-        >
-        <v-divider />
-        <v-card-text class="pa-5">
-          <v-select
-            v-model="settingsCategoryId"
-            :items="categoryOptions"
-            item-title="name"
-            item-value="id"
-            label="Subscription budget category"
-            variant="outlined"
-            density="compact"
-            rounded="sm"
-            clearable
-            hint="Transactions in this category will be considered subscriptions for budgeting purposes."
-            persistent-hint
-            color="primary"
-          />
-        </v-card-text>
-        <v-card-actions class="pa-5 pt-0">
-          <v-spacer />
-          <v-btn variant="text" rounded="sm" @click="settingsDialog = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" rounded="sm" @click="saveSettings">Save</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <!-- Cancel/untrack snackbar -->
     <v-snackbar v-model="snackbar.show" :timeout="3000" rounded="sm" :color="snackbar.color">
       {{ snackbar.text }}
@@ -129,10 +91,8 @@ import { ref, computed, onMounted } from 'vue'
 import SubscriptionsMain from '../components/SubscriptionsMain.vue'
 import Calendar from '../components/Calendar.vue'
 import { useUserSettingsStore } from '../stores/userSettings'
-import { useUserCategoriesStore } from '../stores/userCategories'
 
 const settingsStore = useUserSettingsStore()
-const categoriesStore = useUserCategoriesStore()
 
 const activeTab = ref('list')
 const loading = ref(false)
@@ -140,13 +100,9 @@ const addDialog = ref(false)
 const addLoading = ref(false)
 const addForm = ref({ name: '', operator: 'contains' })
 const snackbar = ref({ show: false, text: '', color: 'default' })
-const settingsDialog = ref(false)
-const settingsCategoryId = ref(settingsStore.subscriptionCategory)
 const allTransactions = ref([])
 const rules = ref([])
 const dueDateOverrides = ref({})
-
-const categoryOptions = computed(() => categoriesStore.categories)
 
 const operatorOptions = [
   { title: 'Contains', value: 'contains' },
@@ -157,27 +113,13 @@ const operatorOptions = [
 
 async function fetchAll() {
   loading.value = true
-  const categoryId = settingsStore.subscriptionCategory
   const [txResult, rulesResult] = await Promise.all([
-    categoryId
-      ? window.electron.ipcRenderer.invoke('transactions:fetch', { category: categoryId })
-      : Promise.resolve({ success: true, data: [] }),
+    window.electron.ipcRenderer.invoke('transactions:fetch', { subscription: 1 }),
     window.electron.ipcRenderer.invoke('customRecurring:fetch')
   ])
   if (txResult.success) allTransactions.value = txResult.data
   if (rulesResult.success) rules.value = rulesResult.data
   loading.value = false
-}
-
-function openSettings() {
-  settingsCategoryId.value = settingsStore.subscriptionCategory
-  settingsDialog.value = true
-}
-
-async function saveSettings() {
-  settingsStore.setSubscriptionCategory(settingsCategoryId.value)
-  settingsDialog.value = false
-  await fetchAll()
 }
 
 function openAdd() {

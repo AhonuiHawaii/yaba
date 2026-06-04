@@ -20,11 +20,6 @@ export const useUserDebtsStore = defineStore('userDebts', () => {
   const extraPayment = ref(Number(localStorage.getItem('debt_extra_payment') ?? 500))
   const strategy = ref(localStorage.getItem('debt_strategy') ?? 'avalanche')
 
-  function setExtraPayment(val) {
-    extraPayment.value = Number(val) || 0
-    localStorage.setItem('debt_extra_payment', extraPayment.value)
-  }
-
   function setStrategy(val) {
     strategy.value = val
     localStorage.setItem('debt_strategy', val)
@@ -44,35 +39,6 @@ export const useUserDebtsStore = defineStore('userDebts', () => {
     return details.value.find((d) => d.id === id) ?? { id, ...DEFAULT_DETAIL }
   }
 
-  async function upsertDebtDetail(id, updates) {
-    loadingCount.value++
-    try {
-      const existing = await db.debtDetails.get(id)
-      const now = new Date().toISOString()
-      const normalized = Object.fromEntries(
-        Object.entries(updates).map(([k, v]) => [k, Number(v) || 0])
-      )
-      if (existing) {
-        await db.debtDetails.update(id, { ...normalized, updatedAt: now })
-      } else {
-        await db.debtDetails.put({ id, ...DEFAULT_DETAIL, ...normalized, updatedAt: now })
-      }
-      await fetchDebtDetails()
-    } finally {
-      loadingCount.value--
-    }
-  }
-
-  async function deleteDebtDetail(id) {
-    loadingCount.value++
-    try {
-      await db.debtDetails.delete(id)
-      await fetchDebtDetails()
-    } finally {
-      loadingCount.value--
-    }
-  }
-
   fetchDebtDetails()
 
   return {
@@ -80,11 +46,8 @@ export const useUserDebtsStore = defineStore('userDebts', () => {
     loading,
     extraPayment,
     strategy,
-    setExtraPayment,
     setStrategy,
     fetchDebtDetails,
-    getDetail,
-    upsertDebtDetail,
-    deleteDebtDetail
+    getDetail
   }
 })

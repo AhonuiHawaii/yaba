@@ -110,7 +110,7 @@ const loading = ref(false)
 
 async function fetchRecurring() {
   loading.value = true
-  const result = await window.electron.ipcRenderer.invoke('transactions:fetch', { recurring: 1 })
+  const result = await window.electron.ipcRenderer.invoke('transactions:fetch', { subscription: 1 })
   if (result.success) recurringTransactions.value = result.data
   loading.value = false
 }

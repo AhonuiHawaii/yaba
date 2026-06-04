@@ -2,7 +2,7 @@
   <v-container class="pa-6" style="max-width: 1100px">
     <div class="d-flex align-center justify-space-between mb-4">
       <div>
-        <div class="text-h6 font-weight-bold">Category Rules</div>
+        <div class="text-h6 font-weight-bold">Rules</div>
         <div class="text-body-2 text-medium-emphasis">
           Applied top-to-bottom as transactions are imported
         </div>
@@ -241,7 +241,7 @@
                     color="primary"
                   />
                 </v-col>
-                <v-col cols="8" class="mt-3">
+                <v-col cols="12" class="mt-3">
                   <v-select
                     v-model="form.type"
                     :items="typeOptions"
@@ -254,19 +254,6 @@
                     rounded="sm"
                     hide-details
                     clearable
-                    color="primary"
-                  />
-                </v-col>
-                <v-col cols="4" class="mt-3">
-                  <v-text-field
-                    v-model.number="form.priority"
-                    label="Priority"
-                    type="number"
-                    variant="solo"
-                    inset
-                    density="comfortable"
-                    rounded="sm"
-                    hide-details
                     color="primary"
                   />
                 </v-col>
@@ -299,6 +286,25 @@
                     persistent-hint
                     color="primary"
                   />
+                </v-col>
+                <v-col cols="12" class="mt-1">
+                  Is this a Bill or Subscription? (optional)
+                  <div class="d-flex gap-6">
+                    <v-checkbox
+                      v-model="form.subscription"
+                      label="Subscription"
+                      density="comfortable"
+                      hide-details
+                      color="primary"
+                    />
+                    <v-checkbox
+                      v-model="form.bill"
+                      label="Bill"
+                      density="comfortable"
+                      hide-details
+                      color="primary"
+                    />
+                  </div>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -490,7 +496,9 @@ const blankForm = () => ({
   category: '',
   type: null,
   priority: 0,
-  rename: ''
+  rename: '',
+  subscription: false,
+  bill: false
 })
 const form = ref(blankForm())
 
@@ -509,7 +517,9 @@ function openEditDialog(item) {
     category: item.category,
     type: item.type ?? null,
     priority: item.priority ?? 0,
-    rename: item.rename ?? ''
+    rename: item.rename ?? '',
+    subscription: !!item.subscription,
+    bill: !!item.bill
   }
   ruleDialog.value = true
 }
@@ -528,7 +538,9 @@ async function saveRule() {
     category: form.value.category,
     type: form.value.type || null,
     priority: form.value.priority ?? 0,
-    rename: form.value.rename || null
+    rename: form.value.rename || null,
+    subscription: form.value.subscription ? 1 : 0,
+    bill: form.value.bill ? 1 : 0
   }
   if (editTarget.value) {
     await store.editRule(editTarget.value.id, payload)

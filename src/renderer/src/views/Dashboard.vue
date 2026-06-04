@@ -639,7 +639,7 @@ async function loadDashboard() {
     })
 
     // Recurring for upcoming bills
-    const recurringResult = await ipc?.invoke('transactions:fetch', { recurring: 1 })
+    const recurringResult = await ipc?.invoke('transactions:fetch', { subscription: 1 })
     recurringTransactions.value = recurringResult?.success ? (recurringResult.data ?? []) : []
   } catch (err) {
     dashboardError.value = err?.message ?? String(err)

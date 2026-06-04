@@ -33,7 +33,6 @@ import {
   applyRulesToAll,
   previewRuleMatch,
   previewKeywordsMatch,
-  rescanRecurringTransactions,
   fetchCustomRecurring,
   addCustomRecurring,
   editCustomRecurring,
@@ -157,7 +156,6 @@ export const setupIpcHandlers = () => {
     if (!Array.isArray(keywords)) throw new Error('Invalid keywords')
     return previewKeywordsMatch(keywords)
   })
-  ipcMain.handle('transactions:rescanRecurring', () => rescanRecurringTransactions())
 
   ipcMain.handle('customRecurring:fetch', () => fetchCustomRecurring())
   ipcMain.handle('customRecurring:create', (_, entry) => {

@@ -26,7 +26,6 @@ import {
   applyRules,
   previewRule as dbPreviewRule,
   previewKeywords as dbPreviewKeywords,
-  runRescanRecurring,
   getCustomRecurring,
   createCustomRecurring as dbCreateCustomRecurring,
   updateCustomRecurring as dbUpdateCustomRecurring,
@@ -91,7 +90,7 @@ export const importTransactions = async (ofxData) => {
     if (customEntries.length) {
       for (const tx of transactions) {
         if (customEntries.some((e) => matchesCustomEntry(tx.MEMO, e))) {
-          updateTransaction(tx.FITID, { recurring: 1 })
+          updateTransaction(tx.FITID, { subscription: 1 })
         }
       }
     }
@@ -327,15 +326,6 @@ export const previewKeywordsMatch = (keywords) => {
   }
 }
 
-export const rescanRecurringTransactions = () => {
-  try {
-    const count = runRescanRecurring()
-    return ok({ count })
-  } catch (e) {
-    return fail(e)
-  }
-}
-
 // Custom Recurring
 
 export const fetchCustomRecurring = () => {
@@ -379,7 +369,11 @@ export const applyRulesToMonth = (yyyymm, categoryNames = {}) => {
     const transactions = getTransactions({ DTPOSTED: yyyymm })
     const patches = applyRules(transactions)
     for (const patch of patches) {
-      const updates = { category: patch.category }
+      const updates = {
+        category: patch.category,
+        subscription: patch.subscription,
+        bill: patch.bill
+      }
       if (patch.transactionType) updates.transactionType = patch.transactionType
       if (patch.rename) updates.NAME = patch.rename
       else {
@@ -456,14 +450,14 @@ export const importBatch = async (items) => {
       if (customEntries.length) {
         for (const tx of remapped) {
           if (customEntries.some((e) => matchesCustomEntry(tx.MEMO, e))) {
-            updateTransaction(tx.FITID, { recurring: 1 })
+            updateTransaction(tx.FITID, { subscription: 1 })
           }
         }
       }
 
       const patches = applyRules(remapped)
       for (const patch of patches) {
-        const upd = { category: patch.category }
+        const upd = { category: patch.category, subscription: patch.subscription, bill: patch.bill }
         if (patch.transactionType) upd.transactionType = patch.transactionType
         if (patch.rename) upd.NAME = patch.rename
         updateTransaction(patch.FITID, upd)
@@ -482,7 +476,11 @@ export const applyRulesToAll = (categoryNames = {}) => {
     const transactions = getAllTransactions()
     const patches = applyRules(transactions)
     for (const patch of patches) {
-      const updates = { category: patch.category }
+      const updates = {
+        category: patch.category,
+        subscription: patch.subscription,
+        bill: patch.bill
+      }
       if (patch.transactionType) updates.transactionType = patch.transactionType
       if (patch.rename) updates.NAME = patch.rename
       else {
