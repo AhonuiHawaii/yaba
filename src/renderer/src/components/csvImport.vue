@@ -257,6 +257,7 @@ const TARGET_COLUMNS = [
   { key: 'REFNUM', label: 'Reference #', required: false, multi: false },
   { key: 'DTUSER', label: 'User Date', required: false, multi: true },
   { key: 'EXTDNAME', label: 'Extended Name', required: false, multi: false }
+]
 
 // CSV specifics
 const csvText = ref('')
@@ -352,16 +353,16 @@ function doParseHeaders() {
 
         // Auto-guess columns
         const dateMatches = csvHeaders.value.filter((h) => /date|time/i.test(h))
-        const nameMatch = csvHeaders.value.find((h) => /description|payee|name|title/i.test(h))
+        const memoMatch = csvHeaders.value.find((h) => /description|payee|name|title|memo|notes/i.test(h))
         const amountMatch = csvHeaders.value.find((h) => /amount|value/i.test(h))
-        const memoMatch = csvHeaders.value.find((h) => /memo|notes/i.test(h))
+        const typeMatch = csvHeaders.value.find((h) => /type/i.test(h))
 
         dateMatches.forEach((dm) => {
           headerMapping.value[dm] = 'DTPOSTED'
         })
-        if (nameMatch) headerMapping.value[nameMatch] = 'NAME'
-        if (amountMatch) headerMapping.value[amountMatch] = 'TRNAMT'
         if (memoMatch) headerMapping.value[memoMatch] = 'MEMO'
+        if (amountMatch) headerMapping.value[amountMatch] = 'TRNAMT'
+        if (typeMatch) headerMapping.value[typeMatch] = 'TRNTYPE'
 
         step.value = 2
       } else {
