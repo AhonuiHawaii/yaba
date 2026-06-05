@@ -10,42 +10,7 @@
       </div>
 
       <div class="d-flex align-center ga-2">
-        <v-btn icon="mdi-chevron-left" variant="text" density="compact" @click="prevPeriod" />
-        <span class="text-body-1 font-weight-medium">{{ periodLabel }}</span>
-        <v-btn
-          icon="mdi-chevron-right"
-          variant="text"
-          density="compact"
-          :disabled="isNextPeriodFuture"
-          @click="nextPeriod"
-        />
-
-        <v-btn-group variant="flat" rounded="lg" color="primary" density="comfortable" class="ml-2">
-          <v-btn
-            :variant="period === 'month' ? 'flat' : 'outlined'"
-            :color="period === 'month' ? 'primary' : undefined"
-            @click="period = 'month'"
-            >Month</v-btn
-          >
-          <v-btn
-            :variant="period === 'quarter' ? 'flat' : 'outlined'"
-            :color="period === 'quarter' ? 'primary' : undefined"
-            @click="period = 'quarter'"
-            >Quarter</v-btn
-          >
-          <v-btn
-            :variant="period === 'semi' ? 'flat' : 'outlined'"
-            :color="period === 'semi' ? 'primary' : undefined"
-            @click="period = 'semi'"
-            >Semi</v-btn
-          >
-          <v-btn
-            :variant="period === 'annual' ? 'flat' : 'outlined'"
-            :color="period === 'annual' ? 'primary' : undefined"
-            @click="period = 'annual'"
-            >Annual</v-btn
-          >
-        </v-btn-group>
+        <FilterComponent />
 
         <v-btn
           variant="flat"
@@ -242,6 +207,7 @@
             :items-per-page="25"
             :items-per-page-options="[10, 25, 50, 100]"
             hover
+            @click:row="toggleRow"
           >
             <template #item.DTPOSTED="{ item }">
               <span class="text-body-2">{{ formatDate(item.DTPOSTED) }}</span>
@@ -940,6 +906,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 
 const emit = defineEmits(['navigate'])
+import FilterComponent from '../components/filterComponent.vue'
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserAccountsStore } from '../stores/userAccounts'
 import { useUserCategoriesStore } from '../stores/userCategories'
@@ -960,8 +927,7 @@ const { formatCurrency, formatDate } = userSettings
 const activeTab = ref('transactions')
 
 const _pf = usePeriodFilter()
-const { period, periodLabel, periodMonths, isNextPeriodFuture } = storeToRefs(_pf)
-const { prevPeriod, nextPeriod } = _pf
+const { periodLabel, periodMonths } = storeToRefs(_pf)
 
 const uncategorizedCount = computed(() => store.transactions.filter((t) => !t.category).length)
 
