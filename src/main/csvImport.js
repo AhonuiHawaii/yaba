@@ -88,7 +88,21 @@ export function extractCsvTransactions(csvText, mapping, options = {}) {
   return rows.map((row) => {
     const txn = {
       FITID: `CSV-${randomUUID()}`,
-      ACCTID: null // Stamped by importCsvBatch once the account is resolved
+      ACCTID: null, // Stamped by importCsvBatch once the account is resolved
+      TRNTYPE: null,
+      DTPOSTED: null,
+      DTUSER: null,
+      TRNAMT: null,
+      NAME: null,
+      MEMO: null,
+      CHECKNUM: null,
+      REFNUM: null,
+      DTAVAIL: null,
+      SRVRTID: null,
+      PAYEEID: null,
+      EXTDNAME: null,
+      SIC: null,
+      ORG: null
     }
 
     for (const target of TARGET_COLUMNS) {

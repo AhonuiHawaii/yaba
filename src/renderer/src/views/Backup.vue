@@ -95,8 +95,9 @@
           </div>
 
           <div class="text-body-2 text-medium-emphasis mb-5">
-            Save a snapshot of your transactions, accounts and budgets to a single encrypted `.yaba`
-            file.
+            Save a snapshot of your transactions, accounts and budgets to a standard SQLite
+            <code>.db</code> file. For safekeeping, store it in OneDrive, Google Drive, or iCloud —
+            they encrypt files at rest and keep automatic copies.
           </div>
 
           <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
@@ -114,24 +115,6 @@
             </v-chip>
           </div>
 
-          <div class="d-flex align-center justify-space-between mb-3">
-            <span class="text-body-2">Encryption passphrase</span>
-          </div>
-
-          <div class="mb-3">
-            <v-text-field
-              v-model="passphrase"
-              type="password"
-              label="Encryption passphrase"
-              placeholder="Enter passphrase (minimum 8 characters)"
-              variant="solo-filled"
-              density="compact"
-              rounded="lg"
-              hint="Must be at least 8 characters. Do not lose this passphrase."
-              persistent-hint
-            />
-          </div>
-
           <v-spacer />
 
           <div class="d-flex ga-3 mt-4">
@@ -141,7 +124,6 @@
               rounded="lg"
               prepend-icon="mdi-download"
               :loading="isExporting"
-              :disabled="!isValid"
               @click="handleExport"
             >
               Export now
@@ -233,7 +215,6 @@ const categoriesStore = useUserCategoriesStore()
 const accountsStore = useUserAccountsStore()
 const transactionsStore = useUserTransactionsStore()
 
-const passphrase = ref('')
 const isExporting = ref(false)
 const isCsvExporting = ref(false)
 const isImporting = ref(false)
@@ -282,10 +263,6 @@ const dbPath = computed(() => {
   }
 })
 
-const isValid = computed(() => {
-  return passphrase.value.length >= 8
-})
-
 async function loadStats() {
   await accountsStore.fetchAccounts()
   await transactionsStore.fetchAccountSummary()
@@ -297,12 +274,11 @@ async function handleExport() {
   success.value = ''
   isExporting.value = true
   try {
-    const res = await window.electron.ipcRenderer.invoke('backup:export', passphrase.value)
+    const res = await window.electron.ipcRenderer.invoke('backup:export')
     if (res.canceled) {
       // User canceled, do nothing
     } else if (res.success) {
       success.value = 'Backup exported successfully.'
-      passphrase.value = ''
       await loadStats()
     } else {
       error.value = res.error || 'Failed to export backup.'
@@ -341,13 +317,12 @@ async function confirmImport() {
   success.value = ''
   isImporting.value = true
   try {
-    const res = await window.electron.ipcRenderer.invoke('backup:import', passphrase.value)
+    const res = await window.electron.ipcRenderer.invoke('backup:import')
     if (res.canceled) {
       showConfirmDialog.value = false
     } else if (res.success) {
       success.value =
         'Backup restored successfully. The application will now restart to load your restored data.'
-      passphrase.value = ''
       showConfirmDialog.value = false
     } else {
       error.value = res.error || 'Failed to restore backup.'

@@ -7,11 +7,12 @@ import Database from 'better-sqlite3-multiple-ciphers'
 
 export function setupBackupHandlers() {
   ipcMain.handle('backup:export', async (event, passphrase) => {
+    let tempDbPath = null
     try {
       const { canceled, filePath } = await dialog.showSaveDialog({
         title: 'Export Backup',
-        defaultPath: path.join(app.getPath('documents'), 'budget_backup.yaba'),
-        filters: [{ name: 'YABA Backup', extensions: ['yaba'] }]
+        defaultPath: path.join(app.getPath('documents'), 'budget_backup.db'),
+        filters: [{ name: 'SQLite Database', extensions: ['db'] }]
       })
 
       if (canceled || !filePath) return { success: false, canceled: true }
@@ -19,7 +20,6 @@ export function setupBackupHandlers() {
       const DB_DIR = path.join(app.getPath('userData'), 'data')
       const KEY_PATH = path.join(DB_DIR, 'budget.key')
 
-      // Read and unprotect the current DPAPI key
       let rawKey = ''
       try {
         if (fs.existsSync(KEY_PATH)) {
@@ -30,56 +30,52 @@ export function setupBackupHandlers() {
         throw new Error('Failed to unprotect DPAPI key: ' + err.message)
       }
 
-      // Perform a safe backup of the active SQLite database
-      const tempDbPath = path.join(DB_DIR, `budget_temp_${Date.now()}.db`)
       const DB_PATH = path.join(DB_DIR, 'budget.db')
+      tempDbPath = path.join(DB_DIR, `budget_temp_${Date.now()}.db`)
 
-      // Force all WAL data into the main database file safely
       db.pragma('wal_checkpoint(TRUNCATE)')
       fs.copyFileSync(DB_PATH, tempDbPath)
 
-      // Open the temp DB with the current DPAPI key, and rekey it with the user's passphrase
       const tempDb = new Database(tempDbPath)
+      tempDb.pragma('cipher_compatibility = 4')
       if (rawKey) {
         tempDb.pragma(`key='${rawKey}'`)
       }
-      tempDb.pragma(`rekey='${passphrase}'`)
+      // WAL mode doesn't support rekey — switch to rollback journal first
+      tempDb.pragma('journal_mode = DELETE')
+      tempDb.pragma(`rekey=''`)
       tempDb.close()
 
-      // Copy the rekeyed temp DB to the final destination
       fs.copyFileSync(tempDbPath, filePath)
-
-      // Clean up temporary DB copy
-      if (fs.existsSync(tempDbPath)) {
-        fs.unlinkSync(tempDbPath)
-      }
-
       return { success: true }
     } catch (err) {
       console.error('Export Backup Error:', err)
       return { success: false, error: err.message }
+    } finally {
+      if (tempDbPath && fs.existsSync(tempDbPath)) {
+        try { fs.unlinkSync(tempDbPath) } catch { /* ignore */ }
+      }
     }
   })
 
   ipcMain.handle('backup:import', async (event, passphrase) => {
+    let tempDbPath = null
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
         title: 'Import Backup',
         properties: ['openFile'],
-        filters: [{ name: 'YABA Backup', extensions: ['yaba'] }]
+        filters: [{ name: 'SQLite Database', extensions: ['db'] }]
       })
 
       if (canceled || filePaths.length === 0) return { success: false, canceled: true }
       const sourcePath = filePaths[0]
 
       const DB_DIR = path.join(app.getPath('userData'), 'data')
-      const tempDbPath = path.join(DB_DIR, `budget_import_${Date.now()}.db`)
       const KEY_PATH = path.join(DB_DIR, 'budget.key')
+      tempDbPath = path.join(DB_DIR, `budget_import_${Date.now()}.db`)
 
-      // Copy the backup file to a temp location
       fs.copyFileSync(sourcePath, tempDbPath)
 
-      // Get the local DPAPI key
       let rawKey = ''
       try {
         if (fs.existsSync(KEY_PATH)) {
@@ -90,34 +86,24 @@ export function setupBackupHandlers() {
         throw new Error('Failed to unprotect DPAPI key on import: ' + err.message)
       }
 
-      // Open the backup file using the user's passphrase
       try {
         const tempDb = new Database(tempDbPath)
-        tempDb.pragma(`key='${passphrase}'`)
-
-        // Run a simple query to verify the passphrase is correct.
-        // If incorrect, this will throw an error (e.g., file is not a database).
         tempDb.prepare('SELECT 1 FROM sqlite_schema').get()
 
-        // If correct, rekey it to the local DPAPI key
+        tempDb.pragma('journal_mode = DELETE')
+
         if (rawKey) {
           tempDb.pragma(`rekey='${rawKey}'`)
-        } else {
-          tempDb.pragma(`rekey=''`) // Decrypt if there is no local DPAPI key
         }
         tempDb.close()
       } catch (err) {
-        throw new Error('Incorrect passphrase or corrupted file: ' + err.message)
+        throw new Error('Not a valid SQLite database file: ' + err.message)
       }
 
-      // Overwrite current DB
-      db.close() // Close the current db connection so we can overwrite
-
       const DB_PATH = path.join(DB_DIR, 'budget.db')
+      db.close()
       fs.copyFileSync(tempDbPath, DB_PATH)
-      fs.unlinkSync(tempDbPath)
 
-      // Relaunch
       setTimeout(() => {
         app.relaunch()
         app.exit(0)
@@ -126,15 +112,11 @@ export function setupBackupHandlers() {
       return { success: true }
     } catch (err) {
       console.error('Import Backup Error:', err)
-      const DB_DIR = path.join(app.getPath('userData'), 'data')
-      try {
-        fs.readdirSync(DB_DIR)
-          .filter((f) => f.startsWith('budget_import_') && f.endsWith('.db'))
-          .forEach((f) => fs.unlinkSync(path.join(DB_DIR, f)))
-      } catch {
-        /* ignore */
-      }
       return { success: false, error: err.message }
+    } finally {
+      if (tempDbPath && fs.existsSync(tempDbPath)) {
+        try { fs.unlinkSync(tempDbPath) } catch { /* ignore */ }
+      }
     }
   })
 }
