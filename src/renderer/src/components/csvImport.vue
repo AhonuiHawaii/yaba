@@ -285,7 +285,7 @@ const fileInput = ref(null)
     - multi: whether multiple CSV columns can be mapped to this field (e.g. multiple date columns like posted date, user date, etc.)
     - core: whether this is a core field that should always be shown in the mapping options, even if not auto-mapped
     MEMO is not the same as NOTE. MEMO is a specific field in the database, while "Note" is a more generic term that users will use to add notes to Transactions in Transactions.vue
-    *s
+    */
 
 const TARGET_COLUMNS = [
   { key: 'DTPOSTED', label: 'Posted Date (+ Time)', required: true, multi: true, core: true },
