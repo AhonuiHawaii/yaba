@@ -104,7 +104,7 @@
                 label="Choose OFX / QFX file"
                 prepend-icon=""
                 prepend-inner-icon="mdi-folder-open-outline"
-                variant="flat"
+                variant="solo-filled"
                 density="comfortable"
                 rounded="lg"
                 hide-details="auto"
@@ -136,7 +136,7 @@
             v-model="search"
             prepend-inner-icon="mdi-magnify"
             placeholder="Search payee or note"
-            variant="flat"
+            variant="solo-filled"
             density="compact"
             hide-details
             color="primary"
@@ -165,7 +165,7 @@
             item-title="label"
             item-value="value"
             placeholder="Account"
-            variant="flat"
+            variant="solo-filled"
             density="compact"
             hide-details
             rounded="lg"
@@ -372,12 +372,11 @@
                 v-model="editCategoryValue"
                 :items="categoriesForTransaction(editTarget)"
                 label="Category"
-                variant="flat"
+                variant="solo-filled"
                 inset
                 density="comfortable"
                 color="primary"
                 hide-details
-                autofocus
                 clearable
                 @keyup.enter="saveCategory"
               />
@@ -420,7 +419,7 @@
               <v-text-field
                 v-model="editPayeeValue"
                 label="Payee"
-                variant="flat"
+                variant="solo-filled"
                 inset
                 density="comfortable"
                 color="primary"
@@ -494,7 +493,7 @@
                   v-model="splitState.type1"
                   :items="budgetsStore.types"
                   label="Type"
-                  variant="flat"
+                  variant="solo-filled"
                   inset
                   density="compact"
                   hide-details
@@ -511,7 +510,7 @@
                       .map((c) => c.name)
                   "
                   label="Category"
-                  variant="flat"
+                  variant="solo-filled"
                   inset
                   density="compact"
                   hide-details
@@ -523,7 +522,7 @@
                   v-model.number="splitState.amount1"
                   label="Amount"
                   type="number"
-                  variant="flat"
+                  variant="solo-filled"
                   inset
                   density="compact"
                   hide-details
@@ -539,7 +538,7 @@
                   v-model="splitState.type2"
                   :items="budgetsStore.types"
                   label="Type"
-                  variant="flat"
+                  variant="solo-filled"
                   inset
                   density="compact"
                   hide-details
@@ -556,7 +555,7 @@
                       .map((c) => c.name)
                   "
                   label="Category"
-                  variant="flat"
+                  variant="solo-filled"
                   inset
                   density="compact"
                   hide-details
@@ -568,7 +567,7 @@
                   v-model.number="splitState.amount2"
                   label="Amount"
                   type="number"
-                  variant="flat"
+                  variant="solo-filled"
                   inset
                   density="compact"
                   hide-details
@@ -622,11 +621,10 @@
               <v-textarea
                 v-model="notesValue"
                 label="Add a note…"
-                variant="flat"
+                variant="solo-filled"
                 inset
                 rows="4"
                 hide-details
-                autofocus
                 no-resize
                 color="primary"
               />
@@ -672,11 +670,10 @@
                 v-model="bulkCategoryValue"
                 :items="bulkCategoryItems"
                 label="Category"
-                variant="flat"
+                variant="solo-filled"
                 inset
                 density="comfortable"
                 hide-details
-                autofocus
                 clearable
                 color="primary"
               />
@@ -732,7 +729,7 @@
               <v-text-field
                 v-model="bulkPayeeValue"
                 label="Payee"
-                variant="flat"
+                variant="solo-filled"
                 inset
                 density="comfortable"
                 color="primary"
