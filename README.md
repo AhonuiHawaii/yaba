@@ -18,7 +18,7 @@ If a release is not available yet, you can build the app from source using the i
 
 ## What You Can Do
 
-- Import accounts and transactions from OFX or QFX files exported by your bank.
+- Import accounts and transactions from OFX, QFX, or CSV files exported by your bank.
 - Review transactions by month, quarter, or year.
 - Search, filter, categorize, split, edit payees, and add notes to transactions.
 - Create auto-rules that categorize future transactions by payee, memo, amount, or transaction type.
@@ -29,7 +29,7 @@ If a release is not available yet, you can build the app from source using the i
 - Track savings goals, target amounts, target dates, and progress.
 - View dashboard summaries, top spending, recent transactions, net worth, assets, and liabilities.
 - Review recurring transactions in a calendar-style view.
-- Export encrypted backups and restore them later with a passphrase.
+- Export backups and restore them later.
 - Export budget data as JSON.
 - Choose between Pastel, Blue Grey, and Black & White themes in light or dark mode.
 
@@ -38,7 +38,7 @@ If a release is not available yet, you can build the app from source using the i
 1. Open YABA.
 2. Go to **Accounts**.
 3. Click **Add Account**.
-4. Choose an `.ofx` or `.qfx` file exported from your bank.
+4. Choose an `.ofx`, `.qfx`, or `.csv` file exported from your bank.
 5. Go to **Transactions** to review imported activity.
 6. Go to **Budgets** to create categories and monthly plans.
 7. Use **Auto-Rules** to speed up categorizing repeated merchants.
@@ -51,8 +51,9 @@ YABA supports:
 
 - `.ofx`
 - `.qfx`
+- `.csv`
 
-Most banks provide these from their website under transaction export, download activity, or accounting software export.
+Most banks provide these from their website under transaction export, download activity, or accounting software export. CSV imports include a column-mapping step so you can match your bank's column layout.
 
 YABA does not log in to your bank and does not need your bank password.
 
@@ -60,7 +61,7 @@ YABA does not log in to your bank and does not need your bank password.
 
 Use **Backup & Restore** to protect your data.
 
-Encrypted backups require a passphrase of at least 8 characters. Keep this passphrase somewhere safe. If you lose it, the backup cannot be restored.
+Backup files are unencrypted — store them somewhere safe and treat them like any other sensitive file.
 
 Restoring a backup overwrites the current app database. After a restore, restart the app so it can load the restored data cleanly.
 
@@ -70,12 +71,12 @@ Restoring a backup overwrites the current app database. After a restore, restart
 
 **Your data is encrypted at rest.** The local database is encrypted with a 256-bit key. On Windows, that key is sealed to your operating-system user account using DPAPI, so another user on the same computer cannot open your database — only the logged-in user who created it can.
 
-**Encrypted backups.** When you export an encrypted backup, YABA protects it with AES-256-GCM using the passphrase you choose. The backup file is yours to store wherever you want; YABA never uploads it.
+**Backups are unencrypted.** Backup files are stored wherever you choose on your own disk; YABA never uploads them. Keep backup files in a secure location and treat them like any other sensitive file.
 
 Important notes:
 
 - The app is designed for fully local, offline use.
-- OFX/QFX files are read only from files you select manually on your own disk.
+- OFX, QFX, and CSV files are read only from files you select manually on your own disk.
 - YABA does not log in to your bank, see your bank credentials, or contact your bank in any way.
 - Removing an account from YABA only removes it from the app. It does not affect your bank account.
 - Plain JSON exports are _not_ encrypted — handle them like any other sensitive file.
@@ -108,13 +109,13 @@ Important notes:
 
 Packaged installers are provided for Windows. macOS and Linux can be built from source (see below) but are not officially supported.
 
-You will also need OFX or QFX transaction files from your bank if you want automatic account and transaction import.
+You will also need OFX, QFX, or CSV transaction files from your bank if you want automatic account and transaction import.
 
 ## Project Status
 
 YABA is under active development. Expect new features, UI changes, and occasional rough edges.
 
-Before trying a new version, export an encrypted backup from **Backup & Restore** so you can recover your data if something goes wrong.
+Before trying a new version, export a backup from **Backup & Restore** so you can recover your data if something goes wrong.
 
 ## Build From Source
 
@@ -157,7 +158,7 @@ If you find a bug, open a GitHub issue and include:
 - What happened instead
 - Whether the issue happened after importing, restoring, or upgrading
 
-Do not attach OFX, QFX, database, backup, or JSON export files unless you have removed all private financial data.
+Do not attach OFX, QFX, CSV, database, backup, or JSON export files unless you have removed all private financial data.
 
 ## License
 

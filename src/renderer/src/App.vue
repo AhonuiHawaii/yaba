@@ -68,6 +68,6 @@ onErrorCaptured((err) => {
       </v-alert>
       <component :is="currentComponent" v-else @navigate="changeView" />
     </v-main>
-    <AppFooter />
+    <AppFooter @change-view="changeView" />
   </v-app>
 </template>

@@ -87,20 +87,7 @@ const emit = defineEmits(['change-view'])
             </v-tooltip>
           </template>
         </v-list-item>
-        <v-list-item
-          link
-          title="Privacy"
-          :active="'Privacy' === currentView"
-          @click="emit('change-view', 'Privacy')"
-        >
-          <template #prepend>
-            <v-tooltip text="Privacy" location="right">
-              <template #activator="{ props: tipProps }">
-                <v-icon v-bind="tipProps" icon="mdi-shield-lock-outline" />
-              </template>
-            </v-tooltip>
-          </template>
-        </v-list-item>
+
       </v-list>
     </template>
   </v-navigation-drawer>

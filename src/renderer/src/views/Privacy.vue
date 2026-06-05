@@ -86,18 +86,17 @@
                 The local database is encrypted using AES-256 encryption. The encryption key is
                 sealed to your operating-system user profile via the platform's native credential
                 storage (e.g., DPAPI on Windows). Other users on this computer cannot open your
-                data. Backup exports are encrypted with AES-256-GCM using a passphrase of your
-                choosing and are stored wherever you save them — never uploaded. Despite these
-                security measures, you are solely responsible for maintaining the security of your
+                data. Backup exports are unencrypted files stored wherever you choose to save them
+                — never uploaded. You are solely responsible for maintaining the security of your
                 device and any exported backup files.
               </div>
             </v-alert>
 
             <p class="font-weight-bold text-body-1 mb-2">7. Financial Data Import</p>
             <p class="mb-3">
-              YABA reads only the OFX/QFX files you select manually from your local file system. The
-              Application never contacts your bank or any financial institution. No credentials for
-              external financial services are requested, stored, or transmitted.
+              YABA reads only the OFX/QFX and CSV files you select manually from your local file
+              system. The Application never contacts your bank or any financial institution. No
+              credentials for external financial services are requested, stored, or transmitted.
             </p>
 
             <p class="font-weight-bold text-body-1 mb-2">8. Children's Privacy</p>
