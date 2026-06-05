@@ -117,6 +117,12 @@
 /* ==========================================================================
    GLOBAL STYLES & RESET
    ========================================================================== */
+
+/* --- Subtle theme-aware view background --- */
+.v-main {
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-background));
+}
+
 body {
   color: var(--color-text-primary);
   background-color: var(--color-background);
