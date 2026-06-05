@@ -156,7 +156,7 @@
               :gradient="gradient[1]"
               :line-width="1"
               :color="sparklineLineColor"
-              :model-value="sparklineNetWorth"
+              :model-value="sparklineLeftToSpend"
               :padding="0"
               :smooth="16"
               auto-draw
@@ -165,10 +165,10 @@
           <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
-                >Net Worth</span
+                >Left to Spend</span
               >
               <v-avatar color="primary" variant="flat" size="38" rounded="lg">
-                <v-icon size="20">mdi-chart-line</v-icon>
+                <v-icon size="20">mdi-wallet-outline</v-icon>
               </v-avatar>
             </v-row>
             <div class="text-h4 font-weight-black mb-1">
@@ -656,7 +656,7 @@ const chartJsOptions = computed(() => {
 
 const sparklineSpending = computed(() => chartData.value.map((d) => d.spending))
 const sparklineIncome = computed(() => chartData.value.map((d) => d.income))
-const sparklineNetWorth = computed(() => {
+const sparklineLeftToSpend = computed(() => {
   let running = 0
   return chartData.value.map((d) => {
     running += d.income - d.spending

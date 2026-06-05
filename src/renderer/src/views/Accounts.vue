@@ -127,7 +127,7 @@
             <!-- Footer -->
             <div class="text-caption text-medium-emphasis">
               <template v-if="account.lastImport">
-                ••{{ account.ACCTID }} · synced {{ formatSyncDate(account.lastImport) }}
+                ••{{ String(account.ACCTID).slice(-4) }} · synced {{ formatSyncDate(account.lastImport) }}
               </template>
               <template v-else>
                 manual ·
@@ -724,7 +724,7 @@
         <v-card-text class="pa-6 pt-0 text-body-2 text-medium-emphasis">
           Remove
           <strong>{{ pendingRemove?.displayName || pendingRemove?.ORG || 'this account' }}</strong>
-          ending in <strong>{{ pendingRemove?.ACCTID }}</strong
+          ending in <strong>••{{ String(pendingRemove?.ACCTID ?? '').slice(-4) }}</strong
           >? This only removes the account from this app — no bank data is affected.
         </v-card-text>
         <v-card-actions class="pa-6 pt-0 gap-2 flex-column align-end">
