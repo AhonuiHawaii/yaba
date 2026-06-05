@@ -101,7 +101,7 @@ Important notes:
 
 **Auto-Rules** manages transaction rules and custom recurring matches.
 
-**Backup & Restore** handles encrypted backup files and budget JSON exports.
+**Backup & Restore** handles backup files and budget JSON exports.
 
 **Settings** controls appearance, themes, dark mode, currency, and date and number formatting.
 
@@ -169,6 +169,6 @@ and offering a separate pro version, as long as the license terms are followed.
 
 ## Security
 
-YABA handles sensitive financial data. Please do not post personal financial files, screenshots with account details, or backup passphrases in public issues.
+YABA handles sensitive financial data. Please do not post personal financial files, screenshots with account details, or backup files in public issues.
 
 If you discover a security problem, report it privately if the repository has GitHub private vulnerability reporting enabled.
