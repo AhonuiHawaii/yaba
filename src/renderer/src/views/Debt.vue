@@ -1,802 +1,581 @@
 <template>
-  <v-container fluid class="pa-4">
-    <div class="d-flex justify-center align-center mb-6">
-      <v-btn variant="flat" density="comfortable" rounded="sm" @click="prevMonth">
-        <v-icon start size="16">mdi-chevron-left</v-icon>
-        Last Month
-      </v-btn>
-      <span class="text-subtitle-1 font-weight-bold mx-6">This Month</span>
-      <v-btn
-        variant="flat"
-        density="comfortable"
-        rounded="sm"
-        :disabled="isNextMonthFuture"
-        @click="nextMonth"
-      >
-        Next Month
-        <v-icon end size="16">mdi-chevron-right</v-icon>
-      </v-btn>
-    </div>
+  <v-container fluid class="pa-6">
+    <!-- Header -->
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <div class="text-h5 font-weight-bold">Debt Payoff Planner</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          Get out of debt faster. See how extra payments can save you time and money!
+        </div>
+      </v-col>
+      <v-col cols="auto" class="pa-0">
+        <v-select
+          :model-value="debtsStore.strategy"
+          :items="strategyOptions"
+          item-title="title"
+          item-value="value"
+          label="Strategy"
+          variant="solo-filled"
+          density="comfortable"
+          rounded="lg"
+          color="primary"
+          hide-details
+          style="min-width: 260px"
+          @update:model-value="debtsStore.setStrategy"
+        />
+      </v-col>
+    </v-row>
 
-    <!-- Control Bar -->
-    <v-card class="mb-6" rounded elevation="2">
-      <v-card-text class="pa-5">
-        <v-row align="stretch">
-          <!-- Inputs: Extra Payment + Strategy -->
-          <v-col
-            cols="12"
-            md="4"
-            class="d-flex flex-column gap-4 pe-6"
-            style="border-right: 1px solid rgba(255, 255, 255, 0.12)"
-          >
-            <div>
-              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
-                Extra Monthly Payment
-              </div>
-              <v-text-field
-                :model-value="debtsStore.extraPayment"
-                type="number"
-                :prefix="userSettings.currencySymbol"
-                variant="outlined"
-                density="compact"
-                hide-details
-                style="max-width: 200px"
-                @update:model-value="debtsStore.setExtraPayment"
-              />
+    <!-- Tabs -->
+    <v-tabs v-model="activeTab" class="mb-6" color="primary">
+      <v-tab value="list" prepend-icon="mdi-format-list-bulleted">Main</v-tab>
+      <v-tab value="calendar" prepend-icon="mdi-calendar-month-outline">Calendar</v-tab>
+    </v-tabs>
+
+    <div v-show="activeTab === 'list'">
+      <!-- Impact Calculator / Banner -->
+      <v-card rounded="lg" class="pa-6 mb-8">
+        <v-row align="center">
+          <v-col cols="12" md="6">
+            <div class="text-h6 font-weight-bold mb-2">Extra Payment Impact Calculator</div>
+            <div class="text-body-2 mb-4">
+              How much extra can you put towards your debt each month? Even a small amount makes a
+              huge difference!
             </div>
-            <div>
-              <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
-                Strategy
+            <v-slider
+              :model-value="debtsStore.extraPayment"
+              :min="0"
+              :max="2000"
+              :step="50"
+              thumb-label="always"
+              color="primary"
+              @update:model-value="debtsStore.setExtraPayment"
+            >
+              <template #thumb-label="{ modelValue }">
+                {{ formatCurrency(modelValue) }}
+              </template>
+            </v-slider>
+          </v-col>
+          <v-col cols="12" md="6" class="text-md-right mt-4 mt-md-0">
+            <div v-if="activeSimulation.totalMonths > 0">
+              <div class="text-h5 font-weight-bold text-primary mb-1">
+                Debt-free by {{ estimatedPayoffDate }}
               </div>
-              <v-btn-toggle
-                :model-value="debtsStore.strategy"
-                mandatory
-                divided
+              <div class="text-body-2 font-weight-medium">
+                You will pay a total of
+                <strong>{{ formatCurrency(activeSimulation.totalInterest) }}</strong> in interest.
+              </div>
+              <v-chip
+                color="success"
                 variant="flat"
-                density="compact"
-                color="primary"
-                @update:model-value="debtsStore.setStrategy"
+                class="mt-3 font-weight-bold"
+                prepend-icon="mdi-party-popper"
               >
-                <v-btn value="avalanche" size="small" prepend-icon="mdi-fire">Avalanche</v-btn>
-                <v-btn value="snowball" size="small" prepend-icon="mdi-snowflake">Snowball</v-btn>
-              </v-btn-toggle>
+                Keep it up! You're on track.
+              </v-chip>
             </div>
-          </v-col>
-
-          <!-- Current Focus Debt -->
-          <v-col
-            cols="12"
-            md="3"
-            class="px-6 d-flex flex-column justify-center"
-            style="border-right: 1px solid rgba(255, 255, 255, 0.12)"
-          >
-            <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-3">
-              Current Focus Debt
+            <div v-else class="text-h6 font-weight-bold text-success">
+              You are completely debt free!
             </div>
-            <template v-if="focusDebt">
-              <div class="text-subtitle-1 font-weight-bold mb-2">{{ focusDebt.name }}</div>
-              <div class="d-flex align-center gap-2 flex-wrap">
-                <v-chip color="error" variant="flat" size="small">
-                  {{ formatPercent(focusDebt.interestRate) }} Annual Percentage Rate
-                </v-chip>
-                <v-chip variant="flat" size="small">
-                  {{ formatCurrency(focusDebt.currentBalance) }}
-                </v-chip>
-                <v-chip color="primary" variant="flat" size="small">
-                  {{ formatCurrency(focusPayment) }}/month
-                </v-chip>
-              </div>
-            </template>
-            <div v-else class="text-medium-emphasis text-body-2">No active debts</div>
-          </v-col>
-
-          <!-- Summary Stats -->
-          <v-col cols="12" md="5" class="ps-6">
-            <v-row dense>
-              <v-col cols="6" class="pb-4">
-                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-1">
-                  Estimated Payoff
-                </div>
-                <div class="text-h6 font-weight-black">{{ estimatedPayoffDate }}</div>
-                <div
-                  v-if="minimumsSimulation.totalMonths"
-                  class="text-caption text-medium-emphasis mt-1"
-                >
-                  vs {{ fmtDuration(minimumsSimulation.totalMonths) }} with minimums
-                </div>
-              </v-col>
-              <v-col cols="6" class="pb-4">
-                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-1">
-                  Total Interest Paid
-                </div>
-                <div class="text-h6 font-weight-black text-warning">
-                  {{ formatCurrency(activeSimulation.totalInterest) }}
-                </div>
-                <div v-if="interestSaved > 0" class="text-caption text-success mt-1">
-                  You save {{ formatCurrency(interestSaved) }}
-                </div>
-              </v-col>
-              <v-col cols="6">
-                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-1">
-                  Debt Free In
-                </div>
-                <div class="text-h6 font-weight-black">{{ debtFreeIn }}</div>
-                <div v-if="monthsSaved > 0" class="text-caption text-success mt-1">
-                  {{ monthsSaved }} months faster
-                </div>
-              </v-col>
-              <v-col cols="6">
-                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-1">
-                  Total Paid
-                </div>
-                <div class="text-h6 font-weight-black">
-                  {{ formatCurrency(activeSimulation.totalPaid) }}
-                </div>
-                <div
-                  v-if="minimumsSimulation.totalPaid"
-                  class="text-caption text-medium-emphasis mt-1"
-                >
-                  vs {{ formatCurrency(minimumsSimulation.totalPaid) }} with minimums
-                </div>
-              </v-col>
-            </v-row>
           </v-col>
         </v-row>
-      </v-card-text>
-    </v-card>
+      </v-card>
 
-    <!-- Left Panel: Debt List + How It Works  |  Right Panel: Payoff Timeline -->
-    <v-row class="mb-6" align="stretch">
-      <!-- Left: Debt List + How It Works -->
-      <v-col cols="12" md="5" class="d-flex flex-column gap-4">
-        <v-card rounded="sm" elevation="2" class="h-100">
-          <v-card-item class="pa-4 pb-2">
-            <v-card-title class="text-subtitle-1 font-weight-bold">Payoff Order</v-card-title>
-            <template #append>
+      <!-- Summary Cards -->
+      <v-row class="mb-8">
+        <v-col cols="12" sm="6" md="3">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-6 d-flex flex-column h-100"
+          >
+            <div class="d-flex align-center mb-4">
+              <v-avatar color="error" variant="flat" size="48" class="mr-4">
+                <v-icon>mdi-credit-card-remove-outline</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                  Total Debt
+                </div>
+                <div class="text-h4 font-weight-black text-error">
+                  {{ formatCurrency(totalDebt) }}
+                </div>
+              </div>
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-6 d-flex flex-column h-100"
+          >
+            <div class="d-flex align-center mb-4">
+              <v-avatar color="success" variant="flat" size="48" class="mr-4">
+                <v-icon>mdi-check-decagram-outline</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                  Total Paid Off
+                </div>
+                <div class="text-h4 font-weight-black text-success">
+                  {{ formatCurrency(paidOff) }}
+                </div>
+              </div>
+            </div>
+            <div class="mt-auto">
+              <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
+                <span>Progress to debt-free</span>
+                <span>{{ paidOffPercent }}%</span>
+              </div>
+              <v-progress-linear
+                :model-value="overallProgress"
+                color="success"
+                height="8"
+                rounded
+              />
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-6 d-flex flex-column h-100"
+          >
+            <div class="d-flex align-center mb-4">
+              <v-avatar color="primary" variant="flat" size="48" class="mr-4">
+                <v-icon>mdi-calendar-month-outline</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                  Min. Payment
+                </div>
+                <div class="text-h4 font-weight-black">
+                  {{ formatCurrency(monthlyPayment) }}
+                </div>
+              </div>
+            </div>
+            <div class="text-body-2 text-medium-emphasis mt-auto">
+              Plus extra <strong>{{ formatCurrency(debtsStore.extraPayment) }}</strong>
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="6" md="3">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-6 d-flex flex-column h-100"
+          >
+            <div class="d-flex align-center mb-4">
+              <v-avatar color="warning" variant="flat" size="48" class="mr-4">
+                <v-icon>mdi-cash-remove</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
+                  Total Est. Interest
+                </div>
+                <div class="text-h4 font-weight-black text-warning">
+                  {{ formatCurrency(activeSimulation.totalInterest) }}
+                </div>
+              </div>
+            </div>
+            <div class="text-body-2 text-medium-emphasis mt-auto">
+              Paid over {{ activeSimulation.totalMonths }} months
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <div class="text-h5 font-weight-bold mb-4">Your Debts</div>
+
+      <!-- Per-debt Cards -->
+      <v-row v-if="debtCardRows.length > 0">
+        <v-col v-for="debt in debtCardRows" :key="debt.id" cols="12" md="6" lg="4">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-5 d-flex flex-column h-100 debt-card"
+          >
+            <div class="d-flex justify-space-between align-start mb-4">
+              <div>
+                <div class="text-h6 font-weight-bold line-clamp-1">{{ debt.name }}</div>
+                <div class="text-body-2 text-medium-emphasis">
+                  {{ debt.rawAccount.ORG || 'Unknown Institution' }}
+                </div>
+              </div>
+              <v-btn
+                icon="mdi-dots-horizontal"
+                variant="text"
+                density="comfortable"
+                @click="openEditDialog(debt.rawAccount)"
+              />
+            </div>
+
+            <div class="d-flex justify-space-between align-center mb-4">
+              <div class="text-h5 font-weight-bold text-error">
+                {{ formatCurrency(debt.currentBalance) }}
+              </div>
               <v-chip
-                :color="debtsStore.strategy === 'avalanche' ? 'error' : 'info'"
                 variant="flat"
                 size="small"
-                :prepend-icon="debtsStore.strategy === 'avalanche' ? 'mdi-fire' : 'mdi-snowflake'"
+                class="font-weight-bold"
+                :color="debt.isHighApr ? 'error' : 'warning'"
               >
-                {{ debtsStore.strategy === 'avalanche' ? 'Avalanche' : 'Snowball' }}
+                {{ formatPercent(debt.interestRate) }} APR
               </v-chip>
-            </template>
-          </v-card-item>
-
-          <v-table density="compact" class="px-2">
-            <thead>
-              <tr>
-                <th style="width: 36px"></th>
-                <th class="text-start text-caption font-weight-bold">Debt</th>
-                <th class="text-right text-caption font-weight-bold">Balance</th>
-                <th class="text-right text-caption font-weight-bold">Annual Percentage Rate</th>
-                <th class="text-right text-caption font-weight-bold">Minimum Payment</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="strategyRows.length === 0">
-                <td colspan="5" class="text-center py-6 text-medium-emphasis text-body-2">
-                  No active debts
-                </td>
-              </tr>
-              <tr v-for="row in strategyRows" :key="row.id">
-                <td class="py-2">
-                  <v-avatar
-                    size="22"
-                    :color="row.priority === 1 ? 'primary' : 'surface-variant'"
-                    class="text-caption font-weight-bold"
-                  >
-                    {{ row.priority }}
-                  </v-avatar>
-                </td>
-                <td class="text-body-2 font-weight-medium">
-                  {{ row.name }}
-                  <v-chip
-                    v-if="row.priority === 1"
-                    color="primary"
-                    variant="flat"
-                    size="x-small"
-                    class="ml-1"
-                    >FOCUS</v-chip
-                  >
-                </td>
-                <td class="text-right text-body-2">{{ formatCurrency(row.currentBalance) }}</td>
-                <td class="text-right text-body-2">
-                  <span :class="`text-${aprColor(row.interestRate)} font-weight-bold`">
-                    {{ formatPercent(row.interestRate) }}
-                  </span>
-                </td>
-                <td class="text-right text-body-2">
-                  {{ formatCurrency(row.minimumPayment) }}
-                  <span class="text-caption text-medium-emphasis ml-1">
-                    /
-                    {{
-                      row.paymentFrequency === 'BiWeekly'
-                        ? 'Bi-Weekly'
-                        : row.paymentFrequency === 'Weekly'
-                          ? 'Weekly'
-                          : 'Monthly'
-                    }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-            <tfoot v-if="strategyRows.length > 0">
-              <tr style="border-top: 1px solid rgba(255, 255, 255, 0.12)">
-                <td></td>
-                <td class="text-caption text-medium-emphasis font-weight-bold py-2">TOTAL</td>
-                <td class="text-right text-body-2 font-weight-bold">
-                  {{ formatCurrency(strategyRows.reduce((s, r) => s + r.currentBalance, 0)) }}
-                </td>
-                <td></td>
-                <td class="text-right text-body-2 font-weight-bold">
-                  {{ formatCurrency(strategyRows.reduce((s, r) => s + r.minimumPayment, 0)) }}
-                </td>
-              </tr>
-            </tfoot>
-          </v-table>
-        </v-card>
-      </v-col>
-
-      <!-- Right: Payoff Timeline -->
-      <v-col cols="12" md="7">
-        <v-card rounded="sm" elevation="2" class="h-100 d-flex flex-column">
-          <v-card-item class="pa-4 pb-2">
-            <v-card-title class="text-subtitle-1 font-weight-bold">Payoff Timeline</v-card-title>
-            <template #append>
-              <v-icon color="primary" size="18">mdi-calendar-clock</v-icon>
-            </template>
-          </v-card-item>
-
-          <v-table density="compact" class="px-2">
-            <thead>
-              <tr>
-                <th style="width: 36px"></th>
-                <th class="text-start text-caption font-weight-bold">Debt</th>
-                <th class="text-right text-caption font-weight-bold">Month #</th>
-                <th class="text-right text-caption font-weight-bold">Payoff Date</th>
-                <th class="text-right text-caption font-weight-bold">Duration</th>
-                <th class="text-right text-caption font-weight-bold">Interest</th>
-                <th class="text-right text-caption font-weight-bold">Payment at Payoff</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="timelineRows.length === 0">
-                <td colspan="7" class="text-center py-6 text-medium-emphasis text-body-2">
-                  No active debts
-                </td>
-              </tr>
-              <tr v-for="row in timelineRows" :key="row.id">
-                <td class="py-2">
-                  <v-avatar
-                    size="22"
-                    :color="row.isFocus ? 'primary' : 'surface-variant'"
-                    class="text-caption font-weight-bold"
-                  >
-                    {{ row.priority }}
-                  </v-avatar>
-                </td>
-                <td class="text-body-2 font-weight-medium">
-                  {{ row.name }}
-                  <v-chip
-                    v-if="row.isFocus"
-                    color="primary"
-                    variant="flat"
-                    size="x-small"
-                    class="ml-1"
-                    >FOCUS</v-chip
-                  >
-                </td>
-                <td class="text-right text-body-2 text-medium-emphasis">
-                  {{ row.payoffMonth }}
-                </td>
-                <td class="text-right text-body-2 font-weight-medium">{{ row.payoffDate }}</td>
-                <td class="text-right text-body-2">{{ fmtDuration(row.payoffMonth) }}</td>
-                <td class="text-right text-body-2 text-warning">
-                  {{ formatCurrency(row.totalInterest) }}
-                </td>
-                <td class="text-right text-body-2 font-weight-bold text-success">
-                  {{ formatCurrency(row.paymentAtPayoff) }}
-                </td>
-              </tr>
-            </tbody>
-            <tfoot v-if="timelineRows.length > 0">
-              <tr style="border-top: 1px solid rgba(255, 255, 255, 0.12)">
-                <td></td>
-                <td class="text-caption text-medium-emphasis font-weight-bold py-2">TOTAL</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td class="text-right text-body-2 font-weight-bold text-warning">
-                  {{ formatCurrency(activeSimulation.totalInterest) }}
-                </td>
-                <td class="text-right text-body-2 font-weight-bold text-success">
-                  {{ formatCurrency(timelineRows.at(-1)?.paymentAtPayoff ?? 0) }}
-                </td>
-              </tr>
-            </tfoot>
-          </v-table>
-
-          <div v-if="timelineRows.length > 0" class="pa-3 pt-2 mt-auto">
-            <div class="text-caption text-medium-emphasis d-flex align-center gap-1">
-              <v-icon size="14" color="success">mdi-trending-up</v-icon>
-              Payment grows as debts are paid off!
             </div>
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
 
-    <!-- Bottom Row: Snowball Chart + Avalanche vs Snowball -->
-    <v-row class="mb-6">
-      <!-- Payment Snowball Over Time -->
-      <v-col cols="12" md="7">
-        <v-card rounded="sm" elevation="2" class="h-100">
-          <v-card-item class="pa-4 pb-2">
-            <v-card-title class="text-subtitle-1 font-weight-bold">
-              Payment Snowball Over Time
-            </v-card-title>
-          </v-card-item>
-          <v-card-text class="pa-4 pt-2">
-            <div v-if="chartBars.length > 0" style="height: 220px">
-              <Bar :data="snowballChartData" :options="snowballChartOptions" />
+            <!-- Credit Utilization (if limit exists) -->
+            <div v-if="debt.creditLimit > 0" class="mb-4">
+              <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
+                <span>Credit Utilization</span>
+                <span :class="getUtilizationColorClass(debt.utilization)"
+                  >{{ debt.utilization }}%</span
+                >
+              </div>
+              <v-progress-linear
+                :model-value="debt.utilization"
+                :color="getUtilizationColor(debt.utilization)"
+                height="6"
+                rounded
+              />
+              <div class="text-caption text-medium-emphasis mt-1">
+                Limit: {{ formatCurrency(debt.creditLimit) }}
+              </div>
             </div>
-            <div v-else class="text-center py-8 text-medium-emphasis text-body-2">
-              No active debts
+            <!-- Payoff Progress (if no limit, show starting balance progress) -->
+            <div v-else class="mb-4">
+              <div class="d-flex justify-space-between text-caption font-weight-medium mb-1">
+                <span>Payoff Progress</span>
+                <span class="text-success">{{ Math.round(debt.progress) }}%</span>
+              </div>
+              <v-progress-linear :model-value="debt.progress" color="success" height="6" rounded />
+              <div class="text-caption text-medium-emphasis mt-1">
+                Starting: {{ formatCurrency(debt.startingBalance) }}
+              </div>
             </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <!-- Avalanche vs Snowball Comparison -->
-      <v-col cols="12" md="5">
-        <v-card rounded="sm" elevation="2" class="h-100">
-          <v-card-item class="pa-4 pb-2">
-            <v-card-title class="text-subtitle-1 font-weight-bold">
-              Avalanche vs Snowball
-            </v-card-title>
-          </v-card-item>
-          <v-card-text class="pa-4 pt-2">
-            <v-row dense>
-              <!-- Avalanche -->
-              <v-col
-                cols="6"
-                class="pe-4"
-                style="border-right: 1px solid rgba(255, 255, 255, 0.12)"
-              >
-                <div class="d-flex align-center gap-2 mb-3">
-                  <v-icon color="error" size="18">mdi-fire</v-icon>
-                  <span class="font-weight-bold text-body-2">Avalanche</span>
-                </div>
-                <div class="d-flex flex-column gap-3">
-                  <div>
-                    <div class="text-caption text-medium-emphasis mb-1">Total Interest</div>
-                    <div class="text-body-2 font-weight-bold text-warning">
-                      {{ formatCurrency(avalancheSimulation.totalInterest) }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-caption text-medium-emphasis mb-1">Months to Debt Free</div>
-                    <div class="text-body-2 font-weight-bold">
-                      {{ fmtDuration(avalancheSimulation.totalMonths) }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-caption text-medium-emphasis mb-1">First Debt Paid Off</div>
-                    <div class="text-body-2 font-weight-bold">
-                      {{ avalancheFirstPaid?.name ?? '—' }}
-                    </div>
-                    <div class="text-caption text-medium-emphasis">
-                      Month {{ avalancheFirstPaid?.payoffMonth ?? '—' }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-caption text-medium-emphasis mb-1">Saved vs Minimums</div>
-                    <div class="text-body-2 font-weight-bold text-success">
-                      {{
-                        formatCurrency(
-                          minimumsSimulation.totalInterest - avalancheSimulation.totalInterest
-                        )
-                      }}
-                    </div>
-                  </div>
-                </div>
-              </v-col>
-
-              <!-- Snowball -->
-              <v-col cols="6" class="ps-4">
-                <div class="d-flex align-center gap-2 mb-3">
-                  <v-icon color="info" size="18">mdi-snowflake</v-icon>
-                  <span class="font-weight-bold text-body-2">Snowball</span>
-                </div>
-                <div class="d-flex flex-column gap-3">
-                  <div>
-                    <div class="text-caption text-medium-emphasis mb-1">Total Interest</div>
-                    <div class="text-body-2 font-weight-bold text-warning">
-                      {{ formatCurrency(snowballSimulation.totalInterest) }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-caption text-medium-emphasis mb-1">Months to Debt Free</div>
-                    <div class="text-body-2 font-weight-bold">
-                      {{ fmtDuration(snowballSimulation.totalMonths) }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-caption text-medium-emphasis mb-1">First Debt Paid Off</div>
-                    <div class="text-body-2 font-weight-bold">
-                      {{ snowballFirstPaid?.name ?? '—' }}
-                    </div>
-                    <div class="text-caption text-medium-emphasis">
-                      Month {{ snowballFirstPaid?.payoffMonth ?? '—' }}
-                    </div>
-                  </div>
-                  <div>
-                    <div class="text-caption text-medium-emphasis mb-1">Saved vs Minimums</div>
-                    <div class="text-body-2 font-weight-bold text-success">
-                      {{
-                        formatCurrency(
-                          minimumsSimulation.totalInterest - snowballSimulation.totalInterest
-                        )
-                      }}
-                    </div>
-                  </div>
-                </div>
-              </v-col>
-            </v-row>
 
             <v-divider class="my-4" />
-            <div class="text-caption text-medium-emphasis d-flex align-start gap-2">
-              <v-icon size="14" color="primary" class="mt-1 flex-shrink-0"
-                >mdi-lightbulb-outline</v-icon
-              >
-              {{ strategySummary }}
+
+            <div class="d-flex justify-space-between align-center mt-auto">
+              <div class="text-body-2">
+                <div class="text-medium-emphasis text-caption">Min. Payment</div>
+                <div class="font-weight-bold">{{ formatCurrency(debt.monthlyMinimumPayment) }}</div>
+              </div>
+              <div class="text-center">
+                <div class="text-medium-emphasis text-caption">Est. Interest</div>
+                <div class="font-weight-bold text-warning">
+                  {{ formatCurrency(debt.interestPaid) }}
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-medium-emphasis text-caption">Target Payoff</div>
+                <div class="font-weight-bold text-primary">{{ debt.payoffDate }}</div>
+              </div>
             </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <!-- Manage Debt Details (collapsible) -->
-    <v-card rounded="sm" elevation="2">
-      <v-card-title
-        class="pa-4 d-flex align-center justify-space-between cursor-pointer"
-        @click="showDetails = !showDetails"
+          </v-card>
+        </v-col>
+      </v-row>
+      <v-card
+        v-else
+        variant="flat"
+        rounded="lg"
+        class="pa-12 text-center text-medium-emphasis border-dashed"
       >
-        <div class="d-flex align-center gap-2">
-          <v-icon color="error" size="20" :opacity="0.7">mdi-cash-remove</v-icon>
-          <span class="text-h6 font-weight-bold">Manage Debt Details</span>
-        </div>
-        <v-icon>{{ showDetails ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-      </v-card-title>
+        <v-icon size="64" class="mb-4" color="success">mdi-check-circle-outline</v-icon>
+        <div class="text-h6 font-weight-bold">No Debts Found</div>
+        <div class="text-body-1">Add a loan or credit card to start tracking your payoff!</div>
+      </v-card>
+    </div>
 
-      <v-expand-transition>
-        <div v-if="showDetails">
-          <v-divider />
-          <v-table density="comfortable">
-            <thead>
-              <tr>
-                <th class="text-center font-weight-bold text-uppercase text-caption pl-4">
-                  Priority
-                </th>
-                <th class="text-start font-weight-bold text-uppercase text-caption">Debt</th>
-                <th class="text-center font-weight-bold text-uppercase text-caption">
-                  Current Balance
-                </th>
-                <th class="text-center font-weight-bold text-uppercase text-caption">
-                  Annual Percentage Rate
-                </th>
-                <th class="text-center font-weight-bold text-uppercase text-caption">Due Date</th>
-                <th class="text-center font-weight-bold text-uppercase text-caption">
-                  Min Payment
-                </th>
-                <th class="text-center font-weight-bold text-uppercase text-caption">
-                  Planned Payment
-                </th>
-                <th class="text-center font-weight-bold text-uppercase text-caption">
-                  Credit Limit
-                </th>
-                <th class="text-center font-weight-bold text-uppercase text-caption">Paid</th>
-                <th class="text-center font-weight-bold text-uppercase text-caption">
-                  Utilization
-                </th>
-                <th class="text-center font-weight-bold text-uppercase text-caption">
-                  Payoff Progress
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="debtRows.length === 0">
-                <td colspan="7" class="text-center py-8 text-medium-emphasis">
-                  No credit card accounts yet.
-                </td>
-              </tr>
-              <tr v-for="(debt, idx) in debtRows" :key="debt.id">
-                <td class="text-center text-medium-emphasis">{{ idx + 1 }}</td>
-                <td class="font-weight-medium text-body-2 text-uppercase">{{ debt.name }}</td>
-                <td>
-                  <v-text-field
-                    :model-value="debt.currentBalance"
-                    type="number"
-                    :prefix="userSettings.currencySymbol"
-                    variant="solo"
-                    flat
-                    density="compact"
-                    hide-details
-                    @update:model-value="
-                      (val) => updateDebtDetail(debt.id, { currentBalance: val })
-                    "
-                  />
-                </td>
-                <td>
-                  <v-text-field
-                    :model-value="debt.interestRate"
-                    type="number"
-                    suffix="%"
-                    variant="solo"
-                    flat
-                    density="compact"
-                    hide-details
-                    @update:model-value="
-                      (val) =>
-                        accountsStore.updateAccount(debt.id, { interestRate: Number(val) || 0 })
-                    "
-                  />
-                </td>
-                <td>
-                  <div class="text-caption px-2">
-                    {{
-                      debt.paymentFrequency === 'BiWeekly'
-                        ? 'Bi-Weekly'
-                        : debt.paymentFrequency || 'Monthly'
-                    }}
-                  </div>
-                  <div
-                    v-if="
-                      (debt.paymentFrequency === 'Monthly' || !debt.paymentFrequency) &&
-                      debt.dueDate
-                    "
-                    class="text-caption text-medium-emphasis px-2"
-                  >
-                    Day {{ debt.dueDate }}
-                  </div>
-                </td>
-                <td>
-                  <v-text-field
-                    :model-value="debt.minimumPayment"
-                    type="number"
-                    :prefix="userSettings.currencySymbol"
-                    variant="solo"
-                    flat
-                    density="compact"
-                    hide-details
-                    @update:model-value="
-                      (val) => updateDebtDetail(debt.id, { minimumPayment: val })
-                    "
-                  />
-                </td>
-                <td>
-                  <v-text-field
-                    :model-value="debt.projected"
-                    type="number"
-                    :prefix="userSettings.currencySymbol"
-                    variant="solo"
-                    flat
-                    density="compact"
-                    hide-details
-                    @update:model-value="(val) => updateBudgetInline(debt.id, val)"
-                  />
-                </td>
-                <td>
-                  <v-text-field
-                    :model-value="debt.creditLimit"
-                    type="number"
-                    :prefix="userSettings.currencySymbol"
-                    variant="solo"
-                    flat
-                    density="compact"
-                    hide-details
-                    @update:model-value="(val) => updateDebtDetail(debt.id, { creditLimit: val })"
-                  />
-                </td>
-                <td class="text-center text-body-2 font-weight-bold">
-                  {{ formatCurrency(debt.actual) }}
-                </td>
-                <td class="text-center text-body-2 font-weight-bold">
-                  <span :class="debt.utilization >= 70 ? 'text-warning' : 'text-medium-emphasis'"
-                    >{{ debt.utilization }}%</span
-                  >
-                </td>
-                <td class="text-center" style="min-width: 120px">
-                  <div class="d-flex align-center gap-2 px-2">
-                    <v-progress-linear
-                      :model-value="debt.progress"
-                      :color="debt.progress >= 100 ? 'success' : 'primary'"
-                      height="4"
-                      rounded
-                    />
-                    <span class="text-caption text-medium-emphasis" style="min-width: 32px">{{
-                      debt.progressLabel
-                    }}</span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
-        </div>
-      </v-expand-transition>
-    </v-card>
+    <!-- ── CALENDAR VIEW ── -->
+    <div v-if="activeTab === 'calendar'">
+      <Calendar display-type="debt" />
+    </div>
+
+    <!-- Edit Debt Dialog -->
+    <v-dialog v-model="editDialog" max-width="500">
+      <v-card rounded="lg">
+        <v-card-title class="pa-6 pb-4">
+          <div class="d-flex align-center justify-space-between">
+            <div class="d-flex align-center ga-3">
+              <v-icon color="primary" size="20">mdi-pencil-outline</v-icon>
+              <span class="text-h6 font-weight-bold">Edit Debt Details</span>
+            </div>
+            <v-btn icon="mdi-close" variant="text" density="compact" @click="editDialog = false" />
+          </div>
+          <div class="text-body-2 text-medium-emphasis mt-1">{{ editForm.displayName }}</div>
+        </v-card-title>
+        <v-divider />
+        <v-card-text class="pa-6">
+          <v-row>
+            <v-col cols="6">
+              <v-text-field
+                v-model.number="editForm.startingBalance"
+                label="Starting Balance"
+                prefix="$"
+                variant="solo-filled"
+                density="comfortable"
+                rounded="lg"
+                type="number"
+                color="primary"
+                hide-details="auto"
+                class="mb-4"
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model.number="editForm.minimumPayment"
+                label="Min. Payment"
+                prefix="$"
+                variant="solo-filled"
+                density="comfortable"
+                rounded="lg"
+                type="number"
+                color="primary"
+                hide-details="auto"
+                class="mb-4"
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model.number="editForm.interestRate"
+                label="Interest Rate (APR)"
+                suffix="%"
+                variant="solo-filled"
+                density="comfortable"
+                rounded="lg"
+                type="number"
+                color="primary"
+                hide-details="auto"
+                class="mb-4"
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model.number="editForm.creditLimit"
+                label="Credit Limit (Optional)"
+                prefix="$"
+                variant="solo-filled"
+                density="comfortable"
+                rounded="lg"
+                type="number"
+                color="primary"
+                hide-details="auto"
+                class="mb-4"
+              />
+            </v-col>
+          </v-row>
+
+          <v-card variant="flat" color="primary" class="mt-4 pa-4" rounded="lg">
+            <div class="d-flex align-center mb-2">
+              <v-icon size="20" class="mr-2">mdi-link</v-icon>
+              <div class="font-weight-bold">Automate Tracking</div>
+            </div>
+            <div class="text-body-2 mb-3">
+              Create a rule to automatically link your payments from checking to this debt account,
+              shrinking your balance effortlessly!
+            </div>
+            <v-btn
+              color="primary"
+              variant="flat"
+              block
+              rounded="lg"
+              prepend-icon="mdi-plus"
+              @click="openRuleDialog"
+            >
+              Create Payment Rule
+            </v-btn>
+          </v-card>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-6">
+          <v-spacer />
+          <v-btn variant="text" @click="editDialog = false">Cancel</v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            rounded="lg"
+            :loading="accountsStore.loading"
+            @click="saveAccount"
+          >
+            Save Changes
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Create Payment Rule Dialog -->
+    <v-dialog v-model="ruleDialog" max-width="500">
+      <v-card rounded="lg">
+        <v-card-title class="pa-6 pb-4">
+          <div class="d-flex align-center justify-space-between">
+            <div class="d-flex align-center ga-3">
+              <v-icon color="primary" size="20">mdi-link-plus</v-icon>
+              <span class="text-h6 font-weight-bold">Create Payment Rule</span>
+            </div>
+            <v-btn icon="mdi-close" variant="text" density="compact" @click="ruleDialog = false" />
+          </div>
+          <div class="text-body-2 text-medium-emphasis mt-1">
+            Link transactions to {{ editForm.displayName }}
+          </div>
+        </v-card-title>
+        <v-divider />
+        <v-card-text class="pa-6">
+          <div class="text-body-2 mb-4">
+            Enter a keyword that appears in your checking account when you pay this debt (e.g.
+            "Capital One", "Chase Credit Card").
+          </div>
+          <v-text-field
+            v-model="ruleForm.keyword"
+            label="Transaction name contains"
+            variant="solo-filled"
+            density="comfortable"
+            rounded="lg"
+            color="primary"
+            hide-details="auto"
+            placeholder="e.g. Capital One"
+          />
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-6">
+          <v-spacer />
+          <v-btn variant="text" @click="ruleDialog = false">Cancel</v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            rounded="lg"
+            :disabled="!ruleForm.keyword"
+            :loading="rulesStore.loading"
+            @click="saveRule"
+          >
+            Save Rule
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
-import { Bar } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js'
-
-ChartJS.register(BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend)
-
+import Calendar from '../components/Calendar.vue'
+import { computed, ref, onMounted } from 'vue'
 import { useUserAccountsStore } from '../stores/userAccounts'
-import { useUserBudgetsStore } from '../stores/userBudgets'
 import { useUserDebtsStore } from '../stores/userDebts'
 import { useUserTransactionsStore } from '../stores/userTransactions'
+import { useUserRulesStore } from '../stores/userRules'
 import { useUserSettingsStore } from '../stores/userSettings'
 
 const accountsStore = useUserAccountsStore()
-const budgetsStore = useUserBudgetsStore()
 const debtsStore = useUserDebtsStore()
-const transactionsStore = useUserTransactionsStore()
+const txStore = useUserTransactionsStore()
+const rulesStore = useUserRulesStore()
 const userSettings = useUserSettingsStore()
 const { formatCurrency } = userSettings
 
-function currentMonthValue() {
-  const now = new Date()
-  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
-}
-function offsetMonth(yyyymm, delta) {
-  const year = Number(yyyymm.slice(0, 4))
-  const month = Number(yyyymm.slice(4)) - 1
-  const d = new Date(year, month + delta, 1)
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-const selectedMonth = ref(currentMonthValue())
-const isNextMonthFuture = computed(() => offsetMonth(selectedMonth.value, 1) > currentMonthValue())
-function prevMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, -1)
-}
-function nextMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, 1)
-}
+const activeTab = ref('list')
 
-// ── Period Picker Logic ───────────────────────────────────────────────────────
-const periodBounds = computed(() => {
-  const y = parseInt(selectedMonth.value.slice(0, 4))
-  const m = parseInt(selectedMonth.value.slice(4, 6)) - 1
-  return {
-    start: new Date(y, m, 1),
-    end: new Date(y, m + 1, 0, 23, 59, 59, 999)
-  }
-})
-
-async function applyPeriod() {
-  await transactionsStore.fetchTransactionsByMonth(selectedMonth.value)
-}
-
-// ── Categories Management ──────────────────────────────────────────────────────
-// ── Budgets Management ───────────────────────────────────────────────────────
-
-async function updateBudgetInline(accountId, amount) {
-  await budgetsStore.upsertBudget(accountId, Number(amount) || 0)
-}
-
-function getDebtDetail(id) {
-  return debtsStore.getDetail(id)
-}
-
-async function updateDebtDetail(id, updates) {
-  await debtsStore.upsertDebtDetail(id, updates)
-}
-
-// ── Data Aggregation ─────────────────────────────────────────────────────────
-
-const debtAccounts = computed(() =>
-  accountsStore.accounts.filter((account) => {
-    const accountType = String(account.ACCTTYPE || '').toLowerCase()
-    return (
-      accountType.includes('credit') ||
-      accountType.includes('loan') ||
-      accountType.includes('mortgage') ||
-      accountType.includes('buy now pay later') ||
-      accountType.includes('medical debt') ||
-      accountType === 'other'
-    )
-  })
-)
-
-// Filter transactions to strictly within the period bounds
-const currentTransactions = computed(() => {
-  const bounds = periodBounds.value
-  if (!bounds) return []
-
-  return transactionsStore.transactions.filter((t) => {
-    // DTPOSTED is YYYYMMDD...
-    const s = String(t.DTPOSTED || '')
-    const y = parseInt(s.slice(0, 4))
-    const m = parseInt(s.slice(4, 6)) - 1
-    const d = parseInt(s.slice(6, 8))
-    const tDate = new Date(y, m, d)
-    return tDate >= bounds.start && tDate <= bounds.end
-  })
-})
-
-const paymentsByAccount = computed(() => {
-  const payments = new Map()
-  for (const t of currentTransactions.value) {
-    const accountId = t.ACCTID
-    const amount = Number(t.TRNAMT) || 0
-    // Credit card payments reduce balance → negative TRNAMT in OFX
-    if (!accountId || amount >= 0) continue
-    payments.set(accountId, (payments.get(accountId) || 0) + Math.abs(amount))
-  }
-  return payments
-})
-
-const debtRows = computed(() => {
-  return debtAccounts.value
-    .map((account) => {
-      const accountId = account.ACCTID
-      const details = getDebtDetail(accountId)
-      const projected =
-        budgetsStore.getBudget(accountId)?.amount || Number(details.minimumPayment) || 0
-      const actual = paymentsByAccount.value.get(accountId) || 0
-      const remaining = Math.max(projected - actual, 0)
-      const rawProgress = projected > 0 ? (actual / projected) * 100 : 0
-      const payoffProgress =
-        details.startingBalance > 0
-          ? ((details.startingBalance - details.currentBalance) / details.startingBalance) * 100
-          : rawProgress
-      const utilization =
-        details.creditLimit > 0 ? (details.currentBalance / details.creditLimit) * 100 : 0
-
-      const paymentFrequency = account.paymentFrequency ?? null
-      const minimumPayment = Number(details.minimumPayment) || 0
-      const monthlyMinimumPayment = minimumPayment * freqToMonthlyFactor(paymentFrequency)
-      return {
-        id: accountId,
-        name: account.displayName || account.ORG || `Account ${accountId}`,
-        accountType: account.ACCTTYPE || 'Credit account',
-        projected,
-        actual,
-        ...details,
-        interestRate: account.interestRate || details.interestRate || 0,
-        dueDate: account.dueDate ?? null,
-        paymentFrequency,
-        paymentCount: account.paymentCount ?? null,
-        monthlyMinimumPayment,
-        remaining,
-        progress: Math.min(Math.max(payoffProgress, 0), 100),
-        progressLabel: `${Math.round(Math.max(payoffProgress, 0))}%`,
-        utilization: Math.round(utilization)
-      }
-    })
-    .sort((a, b) => b.interestRate - a.interestRate || b.currentBalance - a.currentBalance)
-})
-
-// ── Rollover Simulation Engine ────────────────────────────────────────────────
+const strategyOptions = [
+  { title: 'Snowball (Smallest balance first)', value: 'snowball' },
+  { title: 'Avalanche (Highest interest first)', value: 'avalanche' }
+]
 
 function freqToMonthlyFactor(freq) {
   if (freq === 'Weekly') return 52 / 12
   if (freq === 'BiWeekly') return 26 / 12
   return 1
+}
+
+function formatPercent(val) {
+  return `${Number(val || 0).toFixed(1)}%`
+}
+
+function getUtilizationColor(percent) {
+  if (percent < 30) return 'success'
+  if (percent < 70) return 'warning'
+  return 'error'
+}
+
+function getUtilizationColorClass(percent) {
+  if (percent < 30) return 'text-success'
+  if (percent < 70) return 'text-warning'
+  return 'text-error'
+}
+
+const debtAccounts = computed(() =>
+  accountsStore.accounts.filter((account) => {
+    const t = String(account.ACCTTYPE || '').toLowerCase()
+    return (
+      t.includes('credit') ||
+      t.includes('loan') ||
+      t.includes('mortgage') ||
+      t.includes('buy now pay later') ||
+      t.includes('medical debt') ||
+      t === 'other'
+    )
+  })
+)
+
+const debtRows = computed(() =>
+  debtAccounts.value
+    .map((account) => {
+      const accountId = account.ACCTID
+      const paymentFrequency = account.paymentFrequency ?? null
+      const minimumPayment = Number(account.minimumPayment) || 0
+      const monthlyMinimumPayment = minimumPayment * freqToMonthlyFactor(paymentFrequency)
+
+      const sb =
+        account.startingBalance !== null && account.startingBalance !== undefined
+          ? Math.abs(account.startingBalance)
+          : 0
+
+      const creditLimit = Number(account.creditLimit) || 0
+
+      // Calculate payments made from transactions via linkedAccount
+      // Note: TRNAMT is usually negative for expenses, so Math.abs() gives us the magnitude of the payment.
+      const paymentsObj = txStore.debtPayments.find((p) => p.linkedAccount === accountId)
+      const paymentsTotal = paymentsObj ? Math.abs(paymentsObj.total) : 0
+
+      const currentBalance = Math.max(0, sb - paymentsTotal)
+      const progress = sb > 0 ? Math.min(100, Math.max(0, ((sb - currentBalance) / sb) * 100)) : 0
+
+      const utilization =
+        creditLimit > 0 ? Math.min(100, Math.round((currentBalance / creditLimit) * 100)) : 0
+
+      return {
+        id: accountId,
+        name: account.displayName || account.ORG || `Account ${maskAcctid(accountId)}`,
+        currentBalance,
+        startingBalance: sb,
+        creditLimit,
+        interestRate: Number(account.interestRate) || 0,
+        minimumPayment,
+        monthlyMinimumPayment,
+        paymentFrequency,
+        progress,
+        utilization,
+        rawAccount: account
+      }
+    })
+    .sort((a, b) => b.interestRate - a.interestRate || b.currentBalance - a.currentBalance)
+)
+
+function maskAcctid(id) {
+  return String(id || '').slice(-4)
 }
 
 function runSimulation(debts, extra, strategy) {
@@ -810,9 +589,7 @@ function runSimulation(debts, extra, strategy) {
 
   const n = sorted.length
   const balances = sorted.map((d) => d.currentBalance)
-  const minimums = sorted.map(
-    (d) => d.monthlyMinimumPayment ?? d.minimumPayment * freqToMonthlyFactor(d.paymentFrequency)
-  )
+  const minimums = sorted.map((d) => d.monthlyMinimumPayment)
   const rates = sorted.map((d) => d.interestRate / 100 / 12)
   const interestAccum = new Array(n).fill(0)
   const payoffMonth = new Array(n).fill(null)
@@ -862,15 +639,8 @@ function runSimulation(debts, extra, strategy) {
   return {
     results: sorted.map((d, i) => ({
       id: d.id,
-      name: d.name,
-      priority: i + 1,
-      currentBalance: d.currentBalance,
-      interestRate: d.interestRate,
-      minimumPayment: d.minimumPayment,
-      paymentFrequency: d.paymentFrequency ?? null,
       payoffMonth: payoffMonth[i] ?? totalMonths,
-      totalInterest: interestAccum[i],
-      paymentAtPayoff: paymentAtPayoff[i]
+      interestPaid: interestAccum[i]
     })),
     totalMonths,
     totalInterest,
@@ -886,213 +656,118 @@ const activeSimulation = computed(() =>
   )
 )
 
-const focusDebt = computed(() => {
-  const first = activeSimulation.value.results[0]
-  return first ? (debtRows.value.find((d) => d.id === first.id) ?? null) : null
-})
-
-const focusPayment = computed(() =>
-  focusDebt.value ? (focusDebt.value.monthlyMinimumPayment || 0) + debtsStore.extraPayment : 0
-)
-
 const estimatedPayoffDate = computed(() => {
   const m = activeSimulation.value.totalMonths
   if (!m) return 'N/A'
   const d = new Date()
   d.setMonth(d.getMonth() + m)
-  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 })
 
-const debtFreeIn = computed(() => {
-  const m = activeSimulation.value.totalMonths
-  if (!m) return 'N/A'
-  const y = Math.floor(m / 12)
-  const mo = m % 12
-  const yPart = y === 1 ? '1 year' : y > 1 ? `${y} years` : ''
-  const moPart = mo === 1 ? '1 month' : mo > 1 ? `${mo} months` : ''
-  return [yPart, moPart].filter(Boolean).join(' ') || '0 months'
-})
+const totalDebt = computed(() => debtRows.value.reduce((s, d) => s + d.currentBalance, 0))
 
-const minimumsSimulation = computed(() =>
-  runSimulation(
-    debtRows.value.filter((d) => d.currentBalance > 0),
-    0,
-    debtsStore.strategy
+const totalStartingBalance = computed(() =>
+  debtRows.value.reduce(
+    (s, d) => s + (d.startingBalance > 0 ? d.startingBalance : d.currentBalance),
+    0
   )
 )
 
-const avalancheSimulation = computed(() =>
-  runSimulation(
-    debtRows.value.filter((d) => d.currentBalance > 0),
-    debtsStore.extraPayment,
-    'avalanche'
-  )
+const paidOff = computed(() => Math.max(0, totalStartingBalance.value - totalDebt.value))
+
+const paidOffPercent = computed(() =>
+  totalStartingBalance.value > 0
+    ? Math.round((paidOff.value / totalStartingBalance.value) * 100)
+    : 0
 )
 
-const snowballSimulation = computed(() =>
-  runSimulation(
-    debtRows.value.filter((d) => d.currentBalance > 0),
-    debtsStore.extraPayment,
-    'snowball'
-  )
+const monthlyPayment = computed(() =>
+  debtRows.value.reduce((s, d) => s + d.monthlyMinimumPayment, 0)
 )
 
-const strategyRows = computed(() =>
-  activeSimulation.value.results.map((r) => {
-    const debt = debtRows.value.find((d) => d.id === r.id)
-    return {
-      ...r,
-      projected: debt?.projected ?? 0,
-      actual: debt?.actual ?? 0,
-      creditLimit: debt?.creditLimit ?? 0,
-      utilization: debt?.utilization ?? 0
-    }
-  })
+const overallProgress = computed(() =>
+  totalStartingBalance.value > 0 ? (paidOff.value / totalStartingBalance.value) * 100 : 0
 )
 
-const timelineRows = computed(() => {
+const debtCardRows = computed(() => {
   const base = new Date()
-  return activeSimulation.value.results.map((r) => {
-    const d = new Date(base)
-    d.setMonth(base.getMonth() + r.payoffMonth)
-    return {
-      ...r,
-      payoffDate: d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-      isFocus: r.priority === 1
-    }
-  })
-})
-
-const chartBars = computed(() => {
-  const base = new Date()
-  return [...activeSimulation.value.results]
-    .sort((a, b) => a.payoffMonth - b.payoffMonth)
-    .map((r) => {
+  const simMap = new Map(activeSimulation.value.results.map((r) => [r.id, r]))
+  return debtRows.value.map((debt) => {
+    const sim = simMap.get(debt.id)
+    let payoffDate = '—'
+    let interestPaid = 0
+    if (sim) {
       const d = new Date(base)
-      d.setMonth(base.getMonth() + r.payoffMonth)
-      return {
-        id: r.id,
-        label: r.name,
-        month: r.payoffMonth,
-        monthLabel: d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-        amount: r.paymentAtPayoff,
-        isFocus: r.priority === 1
-      }
-    })
+      d.setMonth(base.getMonth() + sim.payoffMonth)
+      payoffDate = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      interestPaid = sim.interestPaid
+    }
+    return {
+      ...debt,
+      payoffDate,
+      interestPaid,
+      isHighApr: debt.interestRate >= 15
+    }
+  })
 })
 
-const interestSaved = computed(() =>
-  Math.max(0, minimumsSimulation.value.totalInterest - activeSimulation.value.totalInterest)
-)
+// ── Edit Dialog ─────────────────────────────────────────────────────────────
+const editDialog = ref(false)
+const editForm = ref({})
 
-const monthsSaved = computed(() =>
-  Math.max(0, minimumsSimulation.value.totalMonths - activeSimulation.value.totalMonths)
-)
-
-const avalancheFirstPaid = computed(() =>
-  avalancheSimulation.value.results.reduce(
-    (min, r) => (!min || r.payoffMonth < min.payoffMonth ? r : min),
-    null
-  )
-)
-
-const snowballFirstPaid = computed(() =>
-  snowballSimulation.value.results.reduce(
-    (min, r) => (!min || r.payoffMonth < min.payoffMonth ? r : min),
-    null
-  )
-)
-
-const strategySummary = computed(() => {
-  const a = avalancheSimulation.value
-  const s = snowballSimulation.value
-  if (!a.totalMonths && !s.totalMonths) return 'Add debts to see a strategy comparison.'
-  const interestDiff = a.totalInterest - s.totalInterest
-  const firstDiff =
-    (snowballFirstPaid.value?.payoffMonth ?? 0) - (avalancheFirstPaid.value?.payoffMonth ?? 0)
-  if (Math.abs(interestDiff) < 1 && firstDiff === 0)
-    return 'Both strategies perform identically with your current debts.'
-  const parts = []
-  if (Math.abs(interestDiff) >= 1) {
-    const winner = interestDiff > 0 ? 'Avalanche' : 'Snowball'
-    parts.push(`${winner} saves ${formatCurrency(Math.abs(interestDiff))} more in interest`)
+function openEditDialog(account) {
+  editForm.value = {
+    ACCTID: account.ACCTID,
+    displayName: account.displayName || account.ORG || `Account ${maskAcctid(account.ACCTID)}`,
+    startingBalance: account.startingBalance !== null ? Math.abs(account.startingBalance) : 0,
+    minimumPayment: account.minimumPayment || 0,
+    interestRate: account.interestRate || 0,
+    creditLimit: account.creditLimit || 0
   }
-  if (Math.abs(firstDiff) > 0) {
-    const winner = firstDiff > 0 ? 'Avalanche' : 'Snowball'
-    parts.push(
-      `${winner} eliminates the first debt ${Math.abs(firstDiff)} month${Math.abs(firstDiff) > 1 ? 's' : ''} faster`
-    )
-  }
-  return parts.join('; ') + '.'
-})
+  editDialog.value = true
+}
 
-const snowballChartData = computed(() => ({
-  labels: chartBars.value.map((b) => `${b.label} · ${b.monthLabel}`),
-  datasets: [
-    {
-      label: 'Payment at Payoff',
-      data: chartBars.value.map((b) => b.amount),
-      backgroundColor: chartBars.value.map((b) =>
-        b.isFocus ? 'rgba(100,181,246,0.9)' : 'rgba(100,181,246,0.4)'
-      ),
-      borderRadius: 4,
-      borderSkipped: false
-    }
-  ]
-}))
+async function saveAccount() {
+  await accountsStore.updateAccount(editForm.value.ACCTID, {
+    startingBalance: editForm.value.startingBalance,
+    minimumPayment: editForm.value.minimumPayment,
+    interestRate: editForm.value.interestRate,
+    creditLimit: editForm.value.creditLimit
+  })
+  editDialog.value = false
+}
 
-const snowballChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx) => ` ${formatCurrency(ctx.parsed.y)}/month`
+// ── Rule Dialog ──────────────────────────────────────────────────────────────
+const ruleDialog = ref(false)
+const ruleForm = ref({ keyword: '' })
+
+function openRuleDialog() {
+  ruleForm.value.keyword = ''
+  ruleDialog.value = true
+}
+
+async function saveRule() {
+  await rulesStore.createRule({
+    name: `Payment to ${editForm.value.displayName}`,
+    priority: 100,
+    conditions: [
+      {
+        field: 'NAME',
+        operator: 'contains',
+        value: ruleForm.value.keyword
       }
-    }
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { color: 'rgba(255,255,255,0.6)', maxRotation: 30 }
-    },
-    y: {
-      grid: { color: 'rgba(255,255,255,0.08)' },
-      ticks: {
-        color: 'rgba(255,255,255,0.6)',
-        callback: (v) => formatCurrency(v)
+    ],
+    actions: [
+      {
+        type: 'linkAccount',
+        value: editForm.value.ACCTID
       }
-    }
-  }
-}
-
-const showDetails = ref(false)
-
-function aprColor(rate) {
-  if (rate >= 20) return 'error'
-  if (rate >= 12) return 'warning'
-  return 'success'
-}
-
-function formatPercent(val) {
-  return `${Number(val || 0).toFixed(2)}%`
-}
-
-function fmtDuration(m) {
-  const y = Math.floor(m / 12)
-  const mo = m % 12
-  const yPart = y === 1 ? '1 year' : y > 1 ? `${y} years` : ''
-  const moPart = mo === 1 ? '1 month' : mo > 1 ? `${mo} months` : ''
-  return [yPart, moPart].filter(Boolean).join(' ') || '0 months'
+    ]
+  })
+  ruleDialog.value = false
 }
 
 onMounted(async () => {
-  await Promise.all([accountsStore.fetchAccounts(), budgetsStore.fetchBudgets()])
-  await applyPeriod()
-})
-
-watch(selectedMonth, async () => {
-  await applyPeriod()
+  await Promise.all([accountsStore.fetchAccounts(), txStore.fetchDebtPayments()])
 })
 </script>

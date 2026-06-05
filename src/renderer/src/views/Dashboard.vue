@@ -1,297 +1,336 @@
 <template>
-  <v-container fluid class="pa-4">
-    <div class="d-flex justify-center align-center mb-3">
-      <v-btn variant="flat" density="comfortable" rounded="sm" @click="prevMonth">
-        <v-icon start size="16">mdi-chevron-left</v-icon>
-        Last Month
-      </v-btn>
-      <span class="text-subtitle-1 font-weight-bold mx-6">This Month</span>
-      <v-btn
-        variant="flat"
-        density="comfortable"
-        rounded="sm"
-        :disabled="isNextMonthFuture"
-        @click="nextMonth"
-      >
-        Next Month
-        <v-icon end size="16">mdi-chevron-right</v-icon>
-      </v-btn>
-    </div>
+  <v-container fluid class="pa-6">
+    <!-- Header -->
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <div class="text-h5 font-weight-bold mb-1">Overview</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          Where your money went · {{ periodLabel }}
+        </div>
+      </v-col>
+      <v-col cols="auto" class="pa-0">
+        <FilterComponent />
+      </v-col>
+    </v-row>
 
-    <v-alert v-if="dashboardError" type="error" variant="tonal" class="mb-3">
+    <v-alert v-if="dashboardError" type="error" variant="flat" class="mb-5 rounded-xl border">
       {{ dashboardError }}
     </v-alert>
 
-    <!-- Current Spend + Upcoming row -->
-    <v-row class="mb-3">
-      <v-col cols="12" lg="6">
-        <!-- Current Spend -->
-        <v-card rounded="sm" elevation="2" class="h-100">
-          <v-card-item class="pa-4 pb-2">
-            <v-card-title class="text-h6 font-weight-bold">Current Spend</v-card-title>
-            <template #append>
-              <div v-if="spendVsLastMonth" class="d-flex align-center gap-1">
-                <v-icon :color="spendVsLastMonth.less ? 'success' : 'error'" size="16">{{
-                  spendVsLastMonth.less
-                    ? 'mdi-arrow-down-circle-outline'
-                    : 'mdi-arrow-up-circle-outline'
-                }}</v-icon>
-                <span
-                  class="text-caption"
-                  :class="spendVsLastMonth.less ? 'text-success' : 'text-error'"
-                >
-                  You've spent {{ formatCurrency(spendVsLastMonth.diff) }}
-                  {{ spendVsLastMonth.less ? 'less' : 'more' }} than last month
-                </span>
-              </div>
-            </template>
-          </v-card-item>
-          <div class="px-4 pb-1">
-            <div class="text-h4 font-weight-black">{{ formatCurrency(totalSpending) }}</div>
+    <!-- Stat cards -->
+    <v-row class="mb-5">
+      <v-col cols="12" sm="6" lg="3">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div class="sparkline-bg">
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[1]"
+              :line-width="1"
+              :model-value="sparklineIncome"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
-          <div style="height: 160px; padding: 0 8px 4px">
-            <Line :data="currentSpendChartData" :options="currentSpendChartOptions" />
-          </div>
-          <div class="d-flex gap-4 px-4 pb-3 pt-1">
-            <div class="d-flex align-center gap-2">
-              <div style="width: 20px; height: 2px; background: #5c6bc0; border-radius: 1px"></div>
-              <span class="text-caption text-medium-emphasis">This Month</span>
+          <v-card-text class="pa-5 stat-card-content">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Income</span
+              >
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
+                <v-icon size="20">mdi-arrow-down-thin</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black text-success mb-1">
+              {{ formatCurrency(totalIncome) }}
             </div>
-            <div class="d-flex align-center gap-2">
-              <div
-                style="
-                  width: 20px;
-                  height: 2px;
-                  background: rgba(92, 107, 192, 0.4);
-                  border-radius: 1px;
-                  border-top: 2px dashed rgba(92, 107, 192, 0.4);
-                "
-              ></div>
-              <span class="text-caption text-medium-emphasis">Last Month</span>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+              <v-icon size="14" color="success">mdi-check-circle-outline</v-icon>
+              <span>of {{ formatCurrency(incomeBudget) }} planned</span>
             </div>
-          </div>
+          </v-card-text>
         </v-card>
       </v-col>
 
-      <!-- Upcoming -->
-      <v-col cols="12" lg="6">
-        <v-card rounded="sm" elevation="2" class="h-100">
-          <v-card-item class="pa-4 pb-2">
-            <v-card-title class="text-h6 font-weight-bold">Upcoming</v-card-title>
-          </v-card-item>
-
-          <div class="px-4 pb-2 text-body-2 text-medium-emphasis">
-            <template v-if="soonItems.length">
-              You have {{ soonItems.length }} recurring charge{{
-                soonItems.length !== 1 ? 's' : ''
-              }}
-              due within the next 7 days for {{ formatCurrencyCompact(soonTotal) }}.
-            </template>
-            <template v-else>No upcoming charges in the next 7 days.</template>
+      <v-col cols="12" sm="6" lg="3">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div class="sparkline-bg">
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[0]"
+              :line-width="1"
+              :color="sparklineLineColor"
+              :model-value="sparklineSpending"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
-
-          <div class="d-flex px-2 pb-2" style="min-height: 110px">
-            <div
-              v-for="(day, i) in upcomingDays"
-              :key="i"
-              class="d-flex flex-column align-center py-2 flex-grow-1"
-              :style="i < 6 ? 'border-right: 1px solid rgba(128,128,128,0.15)' : ''"
-            >
-              <div
-                class="text-caption font-weight-bold mb-1"
-                :class="day.isToday ? 'text-error' : 'text-medium-emphasis'"
+          <v-card-text class="pa-5 stat-card-content">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Spent</span
               >
-                {{ day.dayName }}
-              </div>
-              <div
-                class="text-body-2 font-weight-bold mb-2"
-                :class="day.isToday ? 'text-error' : ''"
-              >
-                {{ day.dayNum }}
-              </div>
-              <div class="d-flex flex-column align-center gap-1 flex-grow-1">
-                <v-avatar
-                  v-for="item in day.items.slice(0, 2)"
-                  :key="item.name"
-                  :color="item.urgencyColor"
-                  variant="tonal"
-                  size="26"
-                >
-                  <span class="text-caption font-weight-bold" style="font-size: 10px">{{
-                    item.initials
-                  }}</span>
-                </v-avatar>
-                <span v-if="day.items.length > 2" class="text-caption text-medium-emphasis"
-                  >+{{ day.items.length - 2 }}</span
-                >
-              </div>
-              <div class="mt-1" style="min-height: 20px">
-                <v-chip v-if="day.total > 0" size="x-small" variant="tonal">
-                  {{ formatCurrencyCompact(day.total) }}
-                </v-chip>
-              </div>
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
+                <v-icon size="20">mdi-arrow-up-thin</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">
+              {{ formatCurrency(totalSpending) }}
             </div>
-          </div>
+            <div class="text-caption text-medium-emphasis mb-0 mt-2">{{ spendPct }}% of income</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
-          <div class="px-4 pb-4 pt-1">
-            <v-btn variant="flat" size="small" rounded="sm" @click="emit('navigate', 'Recurring')">
-              See All Upcoming
-            </v-btn>
+      <v-col cols="12" sm="6" lg="3">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div class="sparkline-bg">
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[3]"
+              :line-width="1"
+              :color="sparklineLineColor"
+              :model-value="sparklineLeftToBudget"
+              :min="0"
+              :max="2"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
           </div>
+          <v-card-text class="pa-5 stat-card-content">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Left to budget</span
+              >
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
+                <v-icon size="20">mdi-view-grid-outline</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">
+              {{ formatCurrency(leftToBudget) }}
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+              <v-icon size="14">mdi-information-outline</v-icon>
+              <span>assign every dollar</span>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" lg="3">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div class="sparkline-bg">
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[1]"
+              :line-width="1"
+              :color="sparklineLineColor"
+              :model-value="sparklineLeftToSpend"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 stat-card-content">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Left to Spend</span
+              >
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
+                <v-icon size="20">mdi-wallet-outline</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">
+              {{ formatCurrency(netCash) }}
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+              <v-icon size="16" :color="netPeriodChange >= 0 ? 'success' : 'error'">
+                {{ netPeriodChange >= 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}
+              </v-icon>
+              <span :class="netPeriodChange >= 0 ? 'text-success' : 'text-error'">
+                {{ formatCurrency(Math.abs(netPeriodChange)) }}
+              </span>
+              <span>this period</span>
+            </div>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Recent Transactions + sidebar row -->
-    <v-row>
-      <v-col cols="12" lg="6">
-        <!-- Recent Transactions -->
-        <v-card rounded="sm" elevation="2">
-          <v-card-item class="pa-4 pb-0">
-            <template #prepend>
-              <v-icon color="primary" size="20" :opacity="0.7">mdi-receipt-text-outline</v-icon>
-            </template>
-            <v-card-title class="text-h6 font-weight-bold pl-2">Recent Transactions</v-card-title>
+    <!-- Spending chart + Top categories -->
+    <v-row class="mb-5">
+      <v-col cols="12" lg="7">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="h-100 d-flex flex-column"
+          min-height="300"
+        >
+          <v-card-item class="pa-5 pb-0">
+            <v-card-title class="text-body-1 font-weight-bold">Spending vs budget</v-card-title>
           </v-card-item>
-
-          <div class="py-1">
-            <div
-              v-if="recentTransactions.length === 0"
-              class="py-4 text-center text-medium-emphasis text-body-2"
-            >
-              No transactions this month.
-            </div>
-            <template v-for="transaction in recentTransactions" :key="transaction.FITID">
-              <div class="d-flex align-center justify-space-between px-5 py-3">
-                <div>
-                  <div class="text-body-2 font-weight-medium">
-                    {{ transaction.NAME || transaction.MEMO || transaction.FITID }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ formatTransactionDate(transaction.DTPOSTED) }}
-                  </div>
-                </div>
-                <span
-                  class="text-body-2 font-weight-bold"
-                  :class="Number(transaction.TRNAMT) >= 0 ? 'text-success' : 'text-error'"
-                >
-                  {{ formatCurrency(Number(transaction.TRNAMT) || 0) }}
-                </span>
-              </div>
-            </template>
-          </div>
+          <v-card-text class="pa-5 flex-grow-1">
+            <Bar :data="chartJsData" :options="chartJsOptions" />
+          </v-card-text>
         </v-card>
+      </v-col>
 
-        <!-- Accounts -->
-        <v-card rounded="sm" elevation="2" class="mt-3">
-          <v-card-item class="pa-4 pb-0">
-            <v-card-title class="text-h6 font-weight-bold">Accounts</v-card-title>
+      <v-col cols="12" lg="5">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="h-100">
+          <v-card-item class="pa-5 pb-3">
+            <v-card-title class="text-body-1 font-weight-bold">Top categories</v-card-title>
+          </v-card-item>
+          <v-card-text class="px-5 pb-5 pt-0">
+            <p v-if="topCategories.length === 0" class="text-body-2 text-medium-emphasis">
+              No spending this period.
+            </p>
+            <v-table v-else hover density="compact" class="mt-n2">
+              <tbody>
+                <tr v-for="cat in topCategories" :key="cat.id">
+                  <td class="py-3">
+                    <v-row no-gutters class="mb-2 align-center justify-space-between">
+                      <span class="text-body-2">{{ cat.name }}</span>
+                      <span class="text-body-2 font-weight-medium">{{
+                        formatCurrency(cat.amount)
+                      }}</span>
+                    </v-row>
+                    <v-progress-linear
+                      :model-value="cat.progress"
+                      :color="cat.over ? 'error' : 'primary'"
+                      height="5"
+                      rounded
+                      bg-color="surface-variant"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Needs review + Upcoming bills -->
+    <v-row class="mb-5">
+      <v-col cols="12" lg="7">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="h-100">
+          <v-card-item class="pa-5 pb-2">
+            <v-card-title class="text-body-1 font-weight-bold">Needs review</v-card-title>
             <template #append>
               <v-btn
                 variant="text"
                 size="small"
                 density="compact"
-                @click="emit('navigate', 'Accounts')"
+                color="primary"
+                @click="emit('navigate', 'Transactions')"
               >
-                See All
+                Review all
               </v-btn>
             </template>
           </v-card-item>
-
-          <div
-            v-if="accountRows.length === 0"
-            class="py-4 text-center text-medium-emphasis text-body-2"
+          <p
+            v-if="needsReview.length === 0"
+            class="px-5 pb-5 text-body-2 text-medium-emphasis mb-0"
           >
-            No accounts yet.
-          </div>
-
-          <v-list v-else density="compact" class="py-1">
-            <template v-for="(account, i) in accountRows" :key="account.id">
-              <v-list-item class="px-5 py-2">
-                <template #prepend>
-                  <v-avatar :color="account.color" variant="tonal" size="30" class="mr-3">
-                    <v-icon :icon="account.icon" size="16" />
-                  </v-avatar>
-                </template>
-                <v-list-item-title class="text-body-2 font-weight-medium">
-                  {{ account.name }}
-                </v-list-item-title>
-                <template #append>
+            All transactions are categorized.
+          </p>
+          <v-table v-else hover density="compact">
+            <tbody>
+              <tr v-for="tx in needsReview" :key="tx.FITID">
+                <td class="py-2">
+                  <p class="text-body-2 font-weight-medium mb-0">
+                    {{ tx.NAME || tx.MEMO || tx.FITID }}
+                  </p>
+                  <p class="text-caption text-medium-emphasis mb-0">
+                    {{ formatTransactionDate(tx.DTPOSTED) }}
+                  </p>
+                </td>
+                <td class="text-right py-2">
+                  <v-chip size="x-small" variant="flat">
+                    {{ tx.category ? tx.category : 'Uncategorized' }}
+                  </v-chip>
+                </td>
+                <td class="text-right py-2">
                   <span
-                    class="text-body-2 font-weight-bold"
-                    :class="account.balance !== null && account.balance < 0 ? 'text-error' : ''"
+                    class="text-body-2 font-weight-medium"
+                    :class="Number(tx.TRNAMT) >= 0 ? 'text-success' : ''"
                   >
-                    {{ account.balance !== null ? formatCurrency(account.balance) : '—' }}
+                    {{ formatCurrency(Number(tx.TRNAMT)) }}
                   </span>
-                </template>
-              </v-list-item>
-              <v-divider v-if="i < accountRows.length - 1" class="mx-5" />
-            </template>
-
-            <v-divider />
-            <v-list-item class="px-5 py-2" color="primary" rounded="0">
-              <v-list-item-title class="text-body-2 font-weight-medium">Net Cash</v-list-item-title>
-              <template #append>
-                <span
-                  class="text-body-2 font-weight-bold mr-1"
-                  :class="netCash >= 0 ? 'text-success' : 'text-error'"
-                >
-                  {{ formatCurrency(netCash) }}
-                </span>
-                <v-icon size="15" :opacity="0.4">mdi-information-outline</v-icon>
-              </template>
-            </v-list-item>
-          </v-list>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
         </v-card>
       </v-col>
 
-      <!-- Right column -->
-      <v-col cols="12" lg="6">
-        <!-- Budget -->
-        <v-card rounded="sm" elevation="2">
-          <v-card-item class="pa-4 pb-2">
-            <v-card-title class="text-h6 font-weight-bold">Budget</v-card-title>
+      <v-col cols="12" lg="5">
+        <v-card rounded="lg" elevation="0" variant="flat" border hover class="h-100">
+          <v-card-item class="pa-5 pb-2">
+            <v-card-title class="text-body-1 font-weight-bold">Upcoming bills</v-card-title>
+            <template #append>
+              <v-chip size="x-small" variant="flat" color="primary">Next 7 days</v-chip>
+            </template>
           </v-card-item>
-
-          <div class="px-4 pb-2">
-            <div v-for="row in budgetRows" :key="row.type" class="mb-4">
-              <div class="d-flex align-start justify-space-between mb-1">
-                <div>
-                  <div class="d-flex align-center mb-1">
-                    <v-icon size="15" :opacity="0.6" class="mr-2">{{ row.icon }}</v-icon>
-                    <span class="text-body-2 font-weight-medium">{{ row.label }}</span>
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ formatCurrencyCompact(row.actual) }} {{ row.actualLabel }}
-                  </div>
-                </div>
-                <div class="text-end">
-                  <div
-                    class="text-body-2 font-weight-bold"
-                    :class="row.over ? 'text-error' : row.short ? 'text-warning' : ''"
-                  >
-                    {{ formatCurrencyCompact(row.remaining) }}
-                    {{ row.over ? 'over' : row.short ? 'short' : 'left' }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ formatCurrencyCompact(row.budget) }} budget
-                  </div>
-                </div>
-              </div>
-              <v-progress-linear
-                :model-value="row.progress"
-                :color="row.over ? 'error' : row.rawProgress >= 90 ? 'warning' : 'primary'"
-                height="4"
-                rounded
-              />
-            </div>
-          </div>
-
-          <div class="px-4 pb-4">
-            <v-btn variant="flat" size="small" rounded="sm" @click="emit('navigate', 'Budgets')">
-              See All Categories
-            </v-btn>
-          </div>
+          <p v-if="soonItems.length === 0" class="px-5 pb-5 text-body-2 text-medium-emphasis mb-0">
+            No upcoming bills in the next 7 days.
+          </p>
+          <v-table v-else hover density="compact">
+            <tbody>
+              <tr v-for="item in soonItems" :key="item.name">
+                <td class="py-2" style="width: 52px">
+                  <v-avatar color="primary" variant="flat" size="36" rounded="lg">
+                    <v-icon size="18">mdi-receipt-text-outline</v-icon>
+                  </v-avatar>
+                </td>
+                <td class="py-2">
+                  <p class="text-body-2 font-weight-medium mb-0">{{ item.name }}</p>
+                  <p class="text-caption text-medium-emphasis mb-0">
+                    Due {{ formatDueDate(item.days) }}
+                  </p>
+                </td>
+                <td class="text-right py-2">
+                  <span class="text-body-2 font-weight-medium">{{
+                    formatCurrency(item.typicalAmount)
+                  }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
         </v-card>
       </v-col>
     </v-row>
@@ -300,16 +339,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip
-} from 'chart.js'
-import { Line } from 'vue-chartjs'
+import FilterComponent from '../components/filterComponent.vue'
 import {
   useUserAccountsStore,
   accountTypeIcon,
@@ -320,57 +350,61 @@ import { useUserBudgetsStore } from '../stores/userBudgets'
 import { useUserCategoriesStore } from '../stores/userCategories'
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserSettingsStore } from '../stores/userSettings'
+import { storeToRefs } from 'pinia'
+import { usePeriodFilter } from '../stores/usePeriodFilter'
+import { useTheme } from 'vuetify'
+import { Bar } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale
+} from 'chart.js'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip)
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const emit = defineEmits(['navigate'])
 
+const theme = useTheme()
 const ipc = window.electron?.ipcRenderer
 const accountsStore = useUserAccountsStore()
 const budgetsStore = useUserBudgetsStore()
 const categoriesStore = useUserCategoriesStore()
 const transactionsStore = useUserTransactionsStore()
 const { formatCurrency } = useUserSettingsStore()
+
 const dashboardError = ref(null)
-const lastMonthTransactions = ref([])
+const periodTransactions = ref([])
 const recurringTransactions = ref([])
 
-function currentMonthValue() {
-  const now = new Date()
-  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
-}
-function offsetMonth(yyyymm, delta) {
-  const year = Number(yyyymm.slice(0, 4))
-  const month = Number(yyyymm.slice(4)) - 1
-  const d = new Date(year, month + delta, 1)
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`
-}
-const selectedMonth = ref(currentMonthValue())
-const isNextMonthFuture = computed(() => offsetMonth(selectedMonth.value, 1) > currentMonthValue())
-function prevMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, -1)
-}
-function nextMonth() {
-  selectedMonth.value = offsetMonth(selectedMonth.value, 1)
-}
+// ── Period navigation ─────────────────────────────────────────────────────────
+const _pf = usePeriodFilter()
+const { periodStart, periodMonths, periodLabel } = storeToRefs(_pf)
+const { currentMonthValue, offsetMonth } = _pf
 
 // ── Period bounds ─────────────────────────────────────────────────────────────
 const periodBounds = computed(() => {
-  const y = parseInt(selectedMonth.value.slice(0, 4))
-  const m = parseInt(selectedMonth.value.slice(4, 6)) - 1
-  return { start: new Date(y, m, 1), end: new Date(y, m + 1, 0, 23, 59, 59, 999) }
+  const lastMonth = periodMonths.value[periodMonths.value.length - 1]
+  const sy = parseInt(periodStart.value.slice(0, 4))
+  const sm = parseInt(periodStart.value.slice(4, 6)) - 1
+  const ey = parseInt(lastMonth.slice(0, 4))
+  const em = parseInt(lastMonth.slice(4, 6)) - 1
+  return { start: new Date(sy, sm, 1), end: new Date(ey, em + 1, 0, 23, 59, 59, 999) }
 })
 
 const currentTransactions = computed(() => {
-  const bounds = periodBounds.value
-  if (!bounds) return []
-  return transactionsStore.transactions.filter((t) => {
+  const { start, end } = periodBounds.value
+  return periodTransactions.value.filter((t) => {
     const s = String(t.DTPOSTED || '')
-    const y = parseInt(s.slice(0, 4))
-    const m = parseInt(s.slice(4, 6)) - 1
-    const d = parseInt(s.slice(6, 8))
-    const tDate = new Date(y, m, d)
-    return tDate >= bounds.start && tDate <= bounds.end
+    const tDate = new Date(
+      parseInt(s.slice(0, 4)),
+      parseInt(s.slice(4, 6)) - 1,
+      parseInt(s.slice(6, 8))
+    )
+    return tDate >= start && tDate <= end
   })
 })
 
@@ -388,213 +422,253 @@ const totalSpending = computed(() =>
   )
 )
 
+// ── Stat card derived ─────────────────────────────────────────────────────────
+function sumBudgetByType(type, yyyymm) {
+  return categoriesStore.categories
+    .filter((c) => c.type === type)
+    .reduce((sum, c) => sum + (budgetsStore.getBudget(c.id, yyyymm)?.amount || 0), 0)
+}
+
+const incomeBudget = computed(() =>
+  periodMonths.value.reduce((sum, m) => sum + sumBudgetByType('income', m), 0)
+)
+
+const totalExpenseBudget = computed(() =>
+  periodMonths.value.reduce(
+    (sum, m) =>
+      sum +
+      categoriesStore.categories
+        .filter((c) => c.type !== 'income')
+        .reduce((s, c) => s + (budgetsStore.getBudget(c.id, m)?.amount || 0), 0),
+    0
+  )
+)
+
+const spendPct = computed(() =>
+  totalIncome.value > 0 ? Math.round((totalSpending.value / totalIncome.value) * 100) : 0
+)
+const leftToBudget = computed(() => incomeBudget.value - totalExpenseBudget.value)
+const netPeriodChange = computed(() => totalIncome.value - totalSpending.value)
+
 // ── actualsMap ────────────────────────────────────────────────────────────────
 const actualsMap = computed(() => {
   const map = new Map()
   for (const t of currentTransactions.value) {
-    const trnAmt = Number(t.TRNAMT)
-    if (t.category)
-      map.set(t.category, (map.get(t.category) || 0) + (trnAmt < 0 ? Math.abs(trnAmt) : 0))
-    if (t.splitCategory1 && t.splitAmount1 > 0)
-      map.set(t.splitCategory1, (map.get(t.splitCategory1) || 0) + t.splitAmount1)
-    if (t.splitCategory2 && t.splitAmount2 > 0)
-      map.set(t.splitCategory2, (map.get(t.splitCategory2) || 0) + t.splitAmount2)
+    if (t.splitCategory2) {
+      if (t.category && Number(t.splitAmount1) < 0)
+        map.set(t.category, (map.get(t.category) || 0) + Math.abs(Number(t.splitAmount1)))
+      if (Number(t.splitAmount2) < 0)
+        map.set(
+          t.splitCategory2,
+          (map.get(t.splitCategory2) || 0) + Math.abs(Number(t.splitAmount2))
+        )
+    } else if (t.category && Number(t.TRNAMT) < 0) {
+      map.set(t.category, (map.get(t.category) || 0) + Math.abs(Number(t.TRNAMT)))
+    }
   }
   return map
 })
 
-// ── Current Spend chart ───────────────────────────────────────────────────────
-function buildDailyCumulative(transactions, yyyymm) {
-  const year = parseInt(yyyymm.slice(0, 4))
-  const month = parseInt(yyyymm.slice(4, 6)) - 1
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const daily = new Array(daysInMonth).fill(0)
-  for (const t of transactions) {
-    const amt = Number(t.TRNAMT)
-    if (amt >= 0) continue
-    const s = String(t.DTPOSTED || '')
-    const d = parseInt(s.slice(6, 8)) - 1
-    if (d >= 0 && d < daysInMonth) daily[d] += Math.abs(amt)
-  }
-  let sum = 0
-  return daily.map((v) => (sum += v))
-}
-
-function ordinalDay(n) {
-  const s = ['th', 'st', 'nd', 'rd']
-  const v = n % 100
-  return n + (s[(v - 20) % 10] || s[v] || s[0])
-}
-
-const currentSpendChartData = computed(() => {
-  const y = parseInt(selectedMonth.value.slice(0, 4))
-  const m = parseInt(selectedMonth.value.slice(4, 6)) - 1
-  const daysInMonth = new Date(y, m + 1, 0).getDate()
-  const labels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1))
-
-  const isCurrentMonth = selectedMonth.value === currentMonthValue()
-  const today = isCurrentMonth ? new Date().getDate() : daysInMonth
-
-  const thisData = buildDailyCumulative(currentTransactions.value, selectedMonth.value)
-  const lastData = buildDailyCumulative(
-    lastMonthTransactions.value,
-    offsetMonth(selectedMonth.value, -1)
+// ── Top categories ────────────────────────────────────────────────────────────
+const topCategories = computed(() => {
+  const incomeIds = new Set(
+    categoriesStore.categories.filter((c) => c.type === 'income').map((c) => c.id)
   )
+  return [...actualsMap.value.entries()]
+    .filter(([id]) => !incomeIds.has(id))
+    .map(([id, amount]) => {
+      const cat = categoriesStore.categories.find((c) => c.id === id)
+      const budget = periodMonths.value.reduce(
+        (sum, m) => sum + (budgetsStore.getBudget(id, m)?.amount || 0),
+        0
+      )
+      return {
+        id,
+        name: cat?.name ?? String(id),
+        amount,
+        budget,
+        progress: budget > 0 ? Math.min((amount / budget) * 100, 100) : 100,
+        over: budget > 0 && amount > budget
+      }
+    })
+    .filter((c) => c.amount > 0)
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 5)
+})
 
-  const thisMonthData = thisData.map((v, i) => (i < today ? v : null))
-  const lastMonthData = Array.from({ length: daysInMonth }, (_, i) => lastData[i] ?? null)
+// ── Needs review ──────────────────────────────────────────────────────────────
+const needsReview = computed(() =>
+  [...currentTransactions.value]
+    .filter((t) => !t.category)
+    .sort((a, b) => String(b.DTPOSTED || '').localeCompare(String(a.DTPOSTED || '')))
+    .slice(0, 5)
+)
 
+// ── Spending vs budget chart (last 6 monthly totals) ─────────────────────────
+const last6MonthlyTotals = ref([])
+
+const gradient = [
+  [theme.current.value.colors.primary, theme.current.value.colors['primary-container']],
+  [theme.current.value.colors.success, theme.current.value.colors['success-container']],
+  [theme.current.value.colors.info, theme.current.value.colors['info-container']],
+  [theme.current.value.colors.secondary, theme.current.value.colors['secondary-container']]
+]
+
+const sparklineLineColor = computed(() => (theme.current.value.dark ? 'white' : 'black'))
+
+const chartData = computed(() => {
+  const points = []
+
+  if (periodMonths.value.length > 1) {
+    // Group by month
+    for (const m of periodMonths.value) {
+      const y = parseInt(m.slice(0, 4))
+      const mo = parseInt(m.slice(4, 6)) - 1
+      points.push({
+        key: m,
+        label: new Date(y, mo, 1).toLocaleDateString('en-US', { month: 'short' }),
+        spending: 0,
+        income: 0
+      })
+    }
+
+    for (const t of currentTransactions.value) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 6) {
+        const monthKey = s.slice(0, 6)
+        const p = points.find((pt) => pt.key === monthKey)
+        if (p) {
+          if (Number(t.TRNAMT) < 0) {
+            p.spending += Math.abs(Number(t.TRNAMT))
+          } else {
+            p.income += Number(t.TRNAMT)
+          }
+        }
+      }
+    }
+  } else {
+    // Group by day
+    const { start, end } = periodBounds.value
+    let current = new Date(start)
+    while (current <= end) {
+      points.push({
+        date: new Date(current),
+        label: current.getDate().toString(),
+        spending: 0,
+        income: 0
+      })
+      current.setDate(current.getDate() + 1)
+    }
+
+    for (const t of currentTransactions.value) {
+      const s = String(t.DTPOSTED || '')
+      if (s.length >= 8) {
+        const tDate = new Date(
+          parseInt(s.slice(0, 4)),
+          parseInt(s.slice(4, 6)) - 1,
+          parseInt(s.slice(6, 8))
+        )
+        const dayIndex = points.findIndex(
+          (d) =>
+            d.date &&
+            d.date.getFullYear() === tDate.getFullYear() &&
+            d.date.getMonth() === tDate.getMonth() &&
+            d.date.getDate() === tDate.getDate()
+        )
+        if (dayIndex !== -1) {
+          if (Number(t.TRNAMT) < 0) {
+            points[dayIndex].spending += Math.abs(Number(t.TRNAMT))
+          } else {
+            points[dayIndex].income += Number(t.TRNAMT)
+          }
+        }
+      }
+    }
+  }
+  return points
+})
+
+const chartJsData = computed(() => {
+  const isDark = theme.current.value.dark
   return {
-    labels,
+    labels: ['Spending', 'Budget'],
     datasets: [
       {
-        label: 'This Month',
-        data: thisMonthData,
-        borderColor: '#5c6bc0',
-        backgroundColor: 'rgba(92, 107, 192, 0.15)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: thisMonthData.map((v, i) => (i === today - 1 && v !== null ? 5 : 0)),
-        pointBackgroundColor: '#fff',
-        pointBorderColor: '#5c6bc0',
-        pointBorderWidth: 2,
-        borderWidth: 2,
-        spanGaps: false
-      },
-      {
-        label: 'Last Month',
-        data: lastMonthData,
-        borderColor: 'rgba(92, 107, 192, 0.4)',
-        backgroundColor: 'rgba(92, 107, 192, 0.06)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-        borderWidth: 1.5,
-        borderDash: [5, 5],
-        spanGaps: false
+        data: [totalSpending.value, totalExpenseBudget.value],
+        backgroundColor: [
+          theme.current.value.colors.primary,
+          isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+        ],
+        borderColor: ['transparent', isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'],
+        borderWidth: 1,
+        borderRadius: 4,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9
       }
     ]
   }
 })
 
-const currentSpendChartOptions = computed(() => {
-  const y = parseInt(selectedMonth.value.slice(0, 4))
-  const m = parseInt(selectedMonth.value.slice(4, 6)) - 1
-  const daysInMonth = new Date(y, m + 1, 0).getDate()
-  const tickDays = new Set([1, 9, 16, 24, daysInMonth])
+const chartJsOptions = computed(() => {
+  const isDark = theme.current.value.dark
+  const textColor = isDark ? '#ffffff' : '#000000'
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
+
   return {
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 300 },
+    indexAxis: 'y',
     plugins: {
-      legend: { display: false },
+      legend: {
+        display: false
+      },
       tooltip: {
         callbacks: {
-          title: (items) => ordinalDay(Number(items[0].label)),
-          label: (ctx) => ` ${formatCurrency(ctx.parsed.y)}`
+          label: (context) => {
+            if (context.parsed.x !== null) {
+              return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+              }).format(context.parsed.x)
+            }
+            return ''
+          }
         }
       }
     },
     scales: {
       x: {
-        grid: { display: false },
-        border: { display: false },
+        grid: { color: gridColor },
         ticks: {
-          color: 'rgba(255,255,255,0.4)',
-          font: { size: 11 },
-          maxRotation: 0,
-          callback: (_val, index) => (tickDays.has(index + 1) ? ordinalDay(index + 1) : '')
+          color: textColor,
+          callback: function (value) {
+            return '$' + value
+          }
         }
       },
       y: {
-        grid: { color: 'rgba(255,255,255,0.06)' },
-        border: { display: false },
-        ticks: {
-          color: 'rgba(255,255,255,0.4)',
-          font: { size: 11 },
-          callback: (v) => (v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}`)
-        }
+        grid: { display: false },
+        ticks: { color: textColor }
       }
     }
   }
 })
 
-const spendVsLastMonth = computed(() => {
-  if (selectedMonth.value !== currentMonthValue()) return null
-  const today = new Date().getDate()
-  const thisData = buildDailyCumulative(currentTransactions.value, selectedMonth.value)
-  const lastData = buildDailyCumulative(
-    lastMonthTransactions.value,
-    offsetMonth(selectedMonth.value, -1)
-  )
-  const thisTotal = thisData[today - 1] || 0
-  const lastTotal = lastData[today - 1] || 0
-  const diff = lastTotal - thisTotal
-  return { diff: Math.abs(diff), less: diff >= 0 }
-})
-
-// ── Budget rows ───────────────────────────────────────────────────────────────
-function sumBudgetByType(type) {
-  return categoriesStore.categories
-    .filter((c) => c.type === type)
-    .reduce((sum, c) => sum + budgetsStore.getEffectiveBudget(c.id, selectedMonth.value), 0)
-}
-
-function sumActualByCategoryType(type) {
-  const ids = new Set(categoriesStore.categories.filter((c) => c.type === type).map((c) => c.id))
-  let total = 0
-  for (const [id, amt] of actualsMap.value) {
-    if (ids.has(id)) total += amt
-  }
-  return total
-}
-
-const budgetSections = [
-  { type: 'income', label: 'Earnings', icon: 'mdi-cash-plus', actualLabel: 'earned' },
-  { type: 'variable', label: 'Spending', icon: 'mdi-credit-card-outline', actualLabel: 'spent' },
-  {
-    type: 'bills',
-    label: 'Bills & Utilities',
-    icon: 'mdi-receipt-text-outline',
-    actualLabel: 'paid'
-  }
-]
-
-const budgetRows = computed(() =>
-  budgetSections.map(({ type, label, icon, actualLabel }) => {
-    const budget = sumBudgetByType(type)
-    const actual = type === 'income' ? totalIncome.value : sumActualByCategoryType(type)
-    const rawProgress = budget > 0 ? (actual / budget) * 100 : actual > 0 ? 100 : 0
-    const diff = type === 'income' ? actual - budget : budget - actual
-    return {
-      type,
-      label,
-      icon,
-      actualLabel,
-      budget,
-      actual,
-      remaining: Math.abs(diff),
-      progress: Math.min(rawProgress, 100),
-      rawProgress,
-      over: type !== 'income' && diff < 0,
-      short: type === 'income' && diff < 0
-    }
+const sparklineSpending = computed(() => chartData.value.map((d) => d.spending))
+const sparklineIncome = computed(() => chartData.value.map((d) => d.income))
+const sparklineLeftToSpend = computed(() => {
+  let running = 0
+  return chartData.value.map((d) => {
+    running += d.income - d.spending
+    return running
   })
-)
-
-// ── Recent transactions ───────────────────────────────────────────────────────
-const recentTransactions = computed(() =>
-  [...currentTransactions.value]
-    .sort((a, b) => String(b.DTPOSTED || '').localeCompare(String(a.DTPOSTED || '')))
-    .slice(0, 5)
-)
+})
+const sparklineLeftToBudget = computed(() => chartData.value.map(() => 1))
 
 // ── Accounts ──────────────────────────────────────────────────────────────────
 const txSummaryMap = computed(() => {
   const map = {}
-  for (const s of transactionsStore.accountSummary) {
-    map[s.ACCTID] = s.total ?? 0
-  }
+  for (const s of transactionsStore.accountSummary) map[s.ACCTID] = s.total ?? 0
   return map
 })
 
@@ -635,14 +709,7 @@ function daysUntil(dayOfMonth) {
   return Math.round((target - now) / 86400000)
 }
 
-function recurringUrgencyColor(days) {
-  if (days === null) return 'default'
-  if (days < 0) return 'error'
-  if (days <= 3) return 'warning'
-  return 'primary'
-}
-
-const recurringAllItems = computed(() => {
+const soonItems = computed(() => {
   const map = new Map()
   for (const tx of recurringTransactions.value) {
     const key = tx.NAME || 'Unknown'
@@ -653,53 +720,16 @@ const recurringAllItems = computed(() => {
     if (tx.DTPOSTED?.length >= 8) g.days.push(parseInt(tx.DTPOSTED.slice(6, 8), 10))
   }
   return [...map.values()]
-    .map((g) => {
-      const typicalAmount = recurringMedian(g.amounts)
-      const typicalDay = g.days.length ? recurringMedian(g.days) : null
-      const days = daysUntil(typicalDay)
-      const initials = g.name
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase() ?? '')
-        .join('')
-      return {
-        name: g.name,
-        typicalAmount,
-        typicalDay,
-        days,
-        urgencyColor: recurringUrgencyColor(days),
-        initials
-      }
-    })
-    .filter(
-      (item) => item.typicalDay !== null && item.days !== null && item.days >= 0 && item.days <= 7
-    )
+    .map((g) => ({
+      name: g.name,
+      typicalAmount: recurringMedian(g.amounts),
+      days: daysUntil(g.days.length ? recurringMedian(g.days) : null)
+    }))
+    .filter((item) => item.days !== null && item.days >= 0 && item.days <= 7)
     .sort((a, b) => a.days - b.days)
 })
 
-const soonItems = computed(() => recurringAllItems.value)
-const soonTotal = computed(() => soonItems.value.reduce((sum, i) => sum + i.typicalAmount, 0))
-
-const upcomingDays = computed(() => {
-  const now = new Date()
-  return Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i)
-    const items = soonItems.value.filter((item) => item.days === i)
-    return {
-      dayName: i === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' }),
-      dayNum: date.getDate(),
-      items,
-      total: items.reduce((sum, item) => sum + item.typicalAmount, 0),
-      isToday: i === 0
-    }
-  })
-})
-
 // ── Formatters ────────────────────────────────────────────────────────────────
-function formatCurrencyCompact(value) {
-  return formatCurrency(value)
-}
-
 function formatTransactionDate(value) {
   const text = String(value || '')
   if (text.length < 8) return '-'
@@ -710,6 +740,12 @@ function formatTransactionDate(value) {
   ).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function formatDueDate(days) {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 // ── Data loading ──────────────────────────────────────────────────────────────
 async function loadDashboard() {
   dashboardError.value = null
@@ -717,16 +753,35 @@ async function loadDashboard() {
     await Promise.all([
       accountsStore.fetchAccounts(),
       budgetsStore.fetchBudgets(),
-      budgetsStore.fetchRollovers(),
       categoriesStore.fetchCategories(),
       transactionsStore.fetchAccountSummary()
     ])
-    const [, lastResult, recurringResult] = await Promise.all([
-      transactionsStore.fetchTransactionsByMonth(selectedMonth.value),
-      ipc?.invoke('transactions:fetch', { DTPOSTED: offsetMonth(selectedMonth.value, -1) }),
-      ipc?.invoke('transactions:fetch', { recurring: 1 })
-    ])
-    lastMonthTransactions.value = lastResult?.success ? (lastResult.data ?? []) : []
+
+    // Fetch all months in the selected period
+    const monthResults = await Promise.all(
+      periodMonths.value.map((m) => ipc?.invoke('transactions:fetch', { DTPOSTED: m }))
+    )
+    periodTransactions.value = monthResults.filter((r) => r?.success).flatMap((r) => r.data ?? [])
+
+    // Build last-6-months totals for the chart (always ends at previous completed month)
+    const chartMonths = Array.from({ length: 6 }, (_, i) =>
+      offsetMonth(currentMonthValue(), -(6 - i))
+    )
+    const chartResults = await Promise.all(
+      chartMonths.map((m) => ipc?.invoke('transactions:fetch', { DTPOSTED: m }))
+    )
+    last6MonthlyTotals.value = chartMonths.map((month, i) => {
+      const data = chartResults[i]?.success ? (chartResults[i].data ?? []) : []
+      const spending = data.reduce(
+        (sum, t) => sum + (Number(t.TRNAMT) < 0 ? Math.abs(Number(t.TRNAMT)) : 0),
+        0
+      )
+      const budget = sumBudgetByType('variable', month) + sumBudgetByType('bills', month)
+      return { month, spending, budget }
+    })
+
+    // Recurring for upcoming bills
+    const recurringResult = await ipc?.invoke('transactions:fetch', { subscription: 1 })
     recurringTransactions.value = recurringResult?.success ? (recurringResult.data ?? []) : []
   } catch (err) {
     dashboardError.value = err?.message ?? String(err)
@@ -734,5 +789,5 @@ async function loadDashboard() {
 }
 
 onMounted(loadDashboard)
-watch(selectedMonth, loadDashboard)
+watch(periodStart, loadDashboard)
 </script>

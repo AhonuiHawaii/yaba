@@ -2,16 +2,31 @@
   /* --- Surfaces --- */
   --color-background: rgb(var(--v-theme-background));
   --color-surface: rgb(var(--v-theme-surface));
+  --color-surface-dim: rgb(var(--v-theme-surface-dim));
   --color-surface-bright: rgb(var(--v-theme-surface-bright));
   --color-surface-light: rgb(var(--v-theme-surface-light));
   --color-surface-variant: rgb(var(--v-theme-surface-variant));
+  --color-surface-container-lowest: rgb(var(--v-theme-surface-container-lowest));
+  --color-surface-container-low: rgb(var(--v-theme-surface-container-low));
+  --color-surface-container: rgb(var(--v-theme-surface-container));
+  --color-surface-container-high: rgb(var(--v-theme-surface-container-high));
+  --color-surface-container-highest: rgb(var(--v-theme-surface-container-highest));
 
   /* --- Brand colors --- */
   --color-primary: rgb(var(--v-theme-primary));
+  --color-primary-container: rgb(var(--v-theme-primary-container));
   --color-primary-darken: rgb(var(--v-theme-primary-darken-1));
+
   --color-secondary: rgb(var(--v-theme-secondary));
+  --color-secondary-container: rgb(var(--v-theme-secondary-container));
   --color-secondary-darken: rgb(var(--v-theme-secondary-darken-1));
+
+  --color-tertiary: rgb(var(--v-theme-tertiary));
+  --color-tertiary-container: rgb(var(--v-theme-tertiary-container));
+
   --color-error: rgb(var(--v-theme-error));
+  --color-error-container: rgb(var(--v-theme-error-container));
+
   --color-info: rgb(var(--v-theme-info));
   --color-success: rgb(var(--v-theme-success));
   --color-warning: rgb(var(--v-theme-warning));
@@ -21,11 +36,23 @@
   --color-on-surface: rgb(var(--v-theme-on-surface));
   --color-on-surface-variant: rgb(var(--v-theme-on-surface-variant));
   --color-on-primary: rgb(var(--v-theme-on-primary));
+  --color-on-primary-container: rgb(var(--v-theme-on-primary-container));
   --color-on-secondary: rgb(var(--v-theme-on-secondary));
+  --color-on-secondary-container: rgb(var(--v-theme-on-secondary-container));
+  --color-on-tertiary: rgb(var(--v-theme-on-tertiary));
+  --color-on-tertiary-container: rgb(var(--v-theme-on-tertiary-container));
   --color-on-error: rgb(var(--v-theme-on-error));
+  --color-on-error-container: rgb(var(--v-theme-on-error-container));
   --color-on-info: rgb(var(--v-theme-on-info));
   --color-on-success: rgb(var(--v-theme-on-success));
   --color-on-warning: rgb(var(--v-theme-on-warning));
+
+  /* --- Outlines & Extras --- */
+  --color-outline: rgb(var(--v-theme-outline));
+  --color-outline-variant: rgb(var(--v-theme-outline-variant));
+  --color-inverse-surface: rgb(var(--v-theme-inverse-surface));
+  --color-inverse-on-surface: rgb(var(--v-theme-inverse-on-surface));
+  --color-inverse-primary: rgb(var(--v-theme-inverse-primary));
 
   /* --- Text — derived from on-surface, flips with theme --- */
   --color-text-primary: color-mix(in srgb, rgb(var(--v-theme-on-surface)) 87%, transparent);
@@ -33,9 +60,9 @@
   --color-text-disabled: color-mix(in srgb, rgb(var(--v-theme-on-surface)) 38%, transparent);
   --color-text-hint: color-mix(in srgb, rgb(var(--v-theme-on-surface)) 24%, transparent);
 
-  /* --- Borders & dividers (prefer elevation over borders) --- */
-  --color-border: color-mix(in srgb, rgb(var(--v-theme-on-surface)) 12%, transparent);
-  --color-border-strong: color-mix(in srgb, rgb(var(--v-theme-on-surface)) 24%, transparent);
+  /* --- Borders & dividers --- */
+  --color-border: color-mix(in srgb, rgb(var(--v-theme-outline)) 30%, transparent);
+  --color-border-strong: color-mix(in srgb, rgb(var(--v-theme-outline)) 60%, transparent);
 
   /* --- Overlays --- */
   --color-overlay-hover: color-mix(in srgb, rgb(var(--v-theme-on-surface)) 4%, transparent);
@@ -83,8 +110,17 @@
 
   /* --- Transitions --- */
   --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 400ms ease;
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   GLOBAL STYLES & RESET
+   ========================================================================== */
+
+/* --- Subtle theme-aware view background --- */
+.v-main {
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-background));
 }
 
 body {
@@ -98,4 +134,83 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Premium Custom Scrollbar --- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-variant);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
+/* --- Dynamic Text Selection --- */
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  color: var(--color-text-primary);
+}
+
+/* ==========================================================================
+   PREMIUM UTILITIES (Glassmorphism & Animations)
+   ========================================================================== */
+
+/* --- Micro-Animations --- */
+.hover-lift {
+  transition:
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.pulse-soft {
+  animation: pulse-soft 2s infinite ease-in-out;
+}
+
+@keyframes pulse-soft {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.02);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fade-in var(--transition-slow) forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

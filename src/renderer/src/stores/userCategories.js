@@ -1,26 +1,22 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import db from './dexie'
+import { computed, ref } from 'vue'
 
 export const useUserCategoriesStore = defineStore('userCategories', () => {
   const categories = ref([])
 
-  async function fetchCategories() {
-    const [income, savings, variable, bills, debt] = await Promise.all([
-      db.incomeCategories.toArray(),
-      db.savingsCategories.toArray(),
-      db.variableCategories.toArray(),
-      db.billsCategories.toArray(),
-      db.debtCategories.toArray()
-    ])
+  const categoryById = computed(() => {
+    const map = {}
+    for (const c of categories.value) map[c.id] = c
+    return map
+  })
 
-    categories.value = [
-      ...income.map((c) => ({ ...c, type: 'income' })),
-      ...savings.map((c) => ({ ...c, type: 'savings' })),
-      ...variable.map((c) => ({ ...c, type: 'variable' })),
-      ...bills.map((c) => ({ ...c, type: 'bills' })),
-      ...debt.map((c) => ({ ...c, type: 'debt' }))
-    ]
+  async function fetchCategories() {
+    const res = await window.electron.ipcRenderer.invoke('categories:fetch')
+    if (res.success) {
+      categories.value = res.data
+    } else {
+      console.error(res.error)
+    }
   }
 
   function getCategoriesByType(type) {
@@ -28,38 +24,30 @@ export const useUserCategoriesStore = defineStore('userCategories', () => {
   }
 
   async function addCategory(category) {
-    const type = category.type
-    const table = db[`${type}Categories`]
-    if (!table) throw new Error(`Unknown category type: ${type}`)
-
-    const newCategory = {
-      id: crypto.randomUUID(),
-      name: category.name,
-      createdAt: new Date().toISOString()
+    const res = await window.electron.ipcRenderer.invoke('categories:create', category)
+    if (res.success) {
+      await fetchCategories()
+      return res.data
     }
-
-    await table.add(newCategory)
-    await fetchCategories()
-    return { ...newCategory, type }
+    throw new Error(res.error)
   }
 
   async function updateCategory(id, updates) {
-    const cat = categories.value.find((c) => c.id === id)
-    if (!cat) throw new Error(`Category not found: ${id}`)
-    const toUpdate = { ...updates }
-    delete toUpdate.type
-    await db[`${cat.type}Categories`].update(id, toUpdate)
-    await fetchCategories()
+    const res = await window.electron.ipcRenderer.invoke('categories:update', id, updates)
+    if (res.success) {
+      await fetchCategories()
+      return res.data
+    }
+    throw new Error(res.error)
   }
 
   async function deleteCategory(id) {
-    const cat = categories.value.find((c) => c.id === id)
-    if (!cat) return
-    await Promise.all([
-      db[`${cat.type}Categories`].delete(id),
-      db.budgets.where('categoryId').equals(id).delete()
-    ])
-    await fetchCategories()
+    const res = await window.electron.ipcRenderer.invoke('categories:delete', id)
+    if (res.success) {
+      await fetchCategories()
+    } else {
+      throw new Error(res.error)
+    }
   }
 
   // Initial load
@@ -67,6 +55,7 @@ export const useUserCategoriesStore = defineStore('userCategories', () => {
 
   return {
     categories,
+    categoryById,
     fetchCategories,
     getCategoriesByType,
     addCategory,

@@ -1,17 +1,12 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import db from './dexie'
 
 export const useUserBudgetsStore = defineStore('userBudgets', () => {
   const budgets = ref([])
-  const rollovers = ref([])
+  const types = ref([])
   const loadingCount = ref(0)
   const loading = computed(() => loadingCount.value > 0)
   const error = ref(null)
-
-  const monthlyBudgets = computed(() =>
-    budgets.value.filter((budget) => !budget.period || budget.period === 'monthly')
-  )
 
   function setError(err) {
     error.value = err?.message ?? String(err)
@@ -21,92 +16,12 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
     loadingCount.value++
     error.value = null
     try {
-      budgets.value = await db.budgets.toArray()
-    } catch (err) {
-      setError(err)
-    } finally {
-      loadingCount.value--
-    }
-  }
-
-  async function fetchRollovers() {
-    rollovers.value = await db.budgetRollovers.toArray()
-  }
-
-  function getRolloverAmount(categoryId, month) {
-    return (
-      rollovers.value.find((r) => r.categoryId === categoryId && r.month === month)
-        ?.rolloverAmount || 0
-    )
-  }
-
-  function getEffectiveBudget(categoryId, month) {
-    const base = getBudget(categoryId)?.amount || 0
-    return base + getRolloverAmount(categoryId, month)
-  }
-
-  // Returns the unused budget amount for a category in a given month.
-  // Call with the actual spending for that month; persists nothing on its own.
-  function calculateRollover(categoryId, month, actual) {
-    const budget = getBudget(categoryId)
-    if (!budget?.rolloverEnabled) return 0
-    return Math.max((budget.amount || 0) - Math.abs(actual), 0)
-  }
-
-  async function upsertRollover(categoryId, month, rolloverAmount) {
-    const existing = rollovers.value.find((r) => r.categoryId === categoryId && r.month === month)
-    const now = new Date().toISOString()
-    if (existing) {
-      await db.budgetRollovers.update(existing.id, { rolloverAmount, updatedAt: now })
-    } else {
-      await db.budgetRollovers.add({
-        id: crypto.randomUUID(),
-        categoryId,
-        month,
-        rolloverAmount,
-        createdAt: now
-      })
-    }
-    await fetchRollovers()
-  }
-
-  async function toggleRolloverEnabled(categoryId, enabled) {
-    const budget = getBudget(categoryId)
-    if (budget) {
-      await db.budgets.update(budget.id, { rolloverEnabled: !!enabled })
-      await fetchBudgets()
-    }
-  }
-
-  function getBudget(categoryId, period = 'monthly') {
-    return budgets.value.find(
-      (budget) => budget.categoryId === categoryId && (budget.period || 'monthly') === period
-    )
-  }
-
-  async function upsertBudget(categoryId, amount, period = 'monthly') {
-    loadingCount.value++
-    error.value = null
-    try {
-      const existingRows = await db.budgets.where('categoryId').equals(categoryId).toArray()
-      const existing = existingRows.find((budget) => (budget.period || 'monthly') === period)
-
-      const normalizedAmount = Number(amount) || 0
-      const now = new Date().toISOString()
-
-      if (existing) {
-        await db.budgets.update(existing.id, { amount: normalizedAmount, period, updatedAt: now })
+      const res = await window.electron.ipcRenderer.invoke('budgets:fetch')
+      if (res.success) {
+        budgets.value = res.data
       } else {
-        await db.budgets.add({
-          id: crypto.randomUUID(),
-          categoryId,
-          period,
-          amount: normalizedAmount,
-          createdAt: now,
-          updatedAt: now
-        })
+        setError(res.error)
       }
-      await fetchBudgets()
     } catch (err) {
       setError(err)
     } finally {
@@ -114,17 +29,49 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
     }
   }
 
-  async function deleteBudget(id) {
+  async function fetchTypes() {
+    try {
+      const res = await window.electron.ipcRenderer.invoke('budgets:fetchTypes')
+      if (res.success) {
+        types.value = res.data
+      }
+    } catch (err) {
+      setError(err)
+    }
+  }
+
+  function getBudget(categoryId, month = null) {
+    return budgets.value.find(
+      (b) => b.categoryId === categoryId && (month ? b.month === month : true)
+    )
+  }
+
+  async function upsertBudget(categoryId, amount, month) {
     loadingCount.value++
     error.value = null
     try {
-      if (!budgets.value.some((budget) => budget.id === id)) return
-      await db.budgets.delete(id)
-      await fetchBudgets()
+      const res = await window.electron.ipcRenderer.invoke(
+        'budgets:upsert',
+        categoryId,
+        amount,
+        month
+      )
+      if (res.success) {
+        await fetchBudgets()
+      } else {
+        setError(res.error)
+      }
     } catch (err) {
       setError(err)
     } finally {
       loadingCount.value--
+    }
+  }
+
+  async function addType(name) {
+    if (!types.value.includes(name)) {
+      types.value.push(name)
+      types.value.sort()
     }
   }
 
@@ -134,24 +81,18 @@ export const useUserBudgetsStore = defineStore('userBudgets', () => {
 
   // Initial load
   fetchBudgets()
-  fetchRollovers()
+  fetchTypes()
 
   return {
     budgets,
-    rollovers,
-    monthlyBudgets,
+    types,
     loading,
     error,
     fetchBudgets,
-    fetchRollovers,
+    fetchTypes,
     getBudget,
-    getEffectiveBudget,
-    getRolloverAmount,
-    calculateRollover,
-    upsertRollover,
-    toggleRolloverEnabled,
     upsertBudget,
-    deleteBudget,
+    addType,
     clearError
   }
 })

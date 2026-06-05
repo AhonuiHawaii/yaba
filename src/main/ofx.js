@@ -25,8 +25,13 @@ async function extractAccountData(ofxData) {
   // Check for bank account info
   const bankMsgs = OFX.BANKMSGSRSV1 || {}
   const ccMsgs = OFX.CREDITCARDMSGSRSV1 || {}
-  const bankAccount = ((bankMsgs.STMTTRNRS || {}).STMTRS || {}).BANKACCTFROM
-  const bankCreditCardAccount = ((ccMsgs.CCSTMTTRNRS || {}).CCSTMTRS || {}).CCACCTFROM
+
+  const stmtrs = (bankMsgs.STMTTRNRS || {}).STMTRS || {}
+  const ccstmtrs = (ccMsgs.CCSTMTTRNRS || {}).CCSTMTRS || {}
+
+  const bankAccount = stmtrs.BANKACCTFROM
+  const bankCreditCardAccount = ccstmtrs.CCACCTFROM
+  const ledgerBal = stmtrs.LEDGERBAL || ccstmtrs.LEDGERBAL || null
 
   if (!bankAccount && !bankCreditCardAccount) return null
 
@@ -48,7 +53,9 @@ async function extractAccountData(ofxData) {
         CREDITLINE: 'Credit Line'
       }[bankAccount && bankAccount.ACCTTYPE] || 'Credit Line',
     INTU_BID: sonrs['INTU.BID'] || fi['INTU.BID'] || null,
-    ORG: fi.ORG || null
+    ORG: fi.ORG || null,
+    BALAMT: ledgerBal ? ledgerBal.BALAMT : null,
+    DTASOF: ledgerBal ? ledgerBal.DTASOF : null
   }
 }
 
@@ -149,4 +156,4 @@ async function extractTransactionData(ofxData) {
   })
 }
 
-export { readOfxData, extractAccountData, extractTransactionData }
+export { extractAccountData, extractTransactionData }

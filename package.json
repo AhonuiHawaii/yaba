@@ -36,6 +36,7 @@
     "material-symbols": "^0.44.6",
     "node-dpapi-prebuilt": "^1.0.4",
     "ofx-js": "^0.2.0",
+    "papaparse": "^5.5.3",
     "pinia": "^3.0.4",
     "vue-chartjs": "^5.3.3"
   },

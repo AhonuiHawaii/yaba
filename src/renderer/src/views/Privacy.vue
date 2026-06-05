@@ -1,8 +1,8 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-6">
     <v-row>
       <v-col cols="12">
-        <v-card rounded="sm" elevation="2" class="mb-3">
+        <v-card rounded="lg" elevation="0" variant="flat" border class="mb-3">
           <v-card-item class="pa-4 pb-0">
             <template #prepend>
               <v-icon color="primary" size="20" :opacity="0.7">mdi-shield-lock-outline</v-icon>
@@ -13,7 +13,7 @@
           <v-card-text class="pt-3 text-body-2" style="line-height: 1.7">
             <v-alert
               type="success"
-              variant="tonal"
+              variant="flat"
               icon="mdi-lan-disconnect"
               class="mb-4"
               border="start"
@@ -76,7 +76,7 @@
 
             <v-alert
               type="success"
-              variant="tonal"
+              variant="flat"
               icon="mdi-shield-check"
               class="mb-3"
               border="start"

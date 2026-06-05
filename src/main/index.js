@@ -1,11 +1,11 @@
-import { app, shell, BrowserWindow, ipcMain, session } from 'electron'
+import { app, shell, BrowserWindow, session } from 'electron'
 
-app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { setupIpcHandlers } from './ipcHandler.js'
 
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1728,

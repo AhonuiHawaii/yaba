@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar location="bottom" density="compact" elevation="0">
+  <v-app-bar location="bottom" density="compact" elevation="0" class="app-footer">
     <div class="status-text text-caption text-medium-emphasis">
       &copy; {{ new Date().getFullYear() }} {{ productName }}. All rights reserved.
     </div>

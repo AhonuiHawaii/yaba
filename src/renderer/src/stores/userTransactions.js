@@ -13,6 +13,7 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
   const accountSummary = ref([]) // [{ ACCTID, count, total }]
   const monthlyTotals = ref([]) // [{ month, income, spending }]
   const netWorthHistory = ref([]) // [{ month, assets, liabilities, netWorth }]
+  const debtPayments = ref([]) // [{ linkedAccount, total }]
 
   const loadingCount = ref(0)
   const loading = computed(() => loadingCount.value > 0)
@@ -149,24 +150,6 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
     }
   }
 
-  /**
-   * Delete all transactions for a given account.
-   * @param {string} acctid
-   */
-  async function removeAccountTransactions(acctid) {
-    loadingCount.value++
-    error.value = null
-    try {
-      const result = await ipc.invoke('transactions:removeByAccount', acctid)
-      if (!result.success) throw new Error(result.error)
-      transactions.value = transactions.value.filter((t) => t.ACCTID !== acctid)
-    } catch (err) {
-      setError(err)
-    } finally {
-      loadingCount.value--
-    }
-  }
-
   // ── Reports ───────────────────────────────────────────────────────────────
 
   /**
@@ -179,6 +162,20 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
       const result = await ipc.invoke('reports:accountSummary')
       if (!result.success) throw new Error(result.error)
       accountSummary.value = result.data
+    } catch (err) {
+      setError(err)
+    } finally {
+      loadingCount.value--
+    }
+  }
+
+  async function fetchDebtPayments() {
+    loadingCount.value++
+    error.value = null
+    try {
+      const result = await ipc.invoke('reports:debtPayments')
+      if (!result.success) throw new Error(result.error)
+      debtPayments.value = result.data
     } catch (err) {
       setError(err)
     } finally {
@@ -240,11 +237,10 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
   return {
     // State
     transactions,
-    monthsWithData,
-    activeMonth,
     accountSummary,
     monthlyTotals,
     netWorthHistory,
+    debtPayments,
     loading,
     error,
     // Transactions
@@ -254,12 +250,12 @@ export const useUserTransactionsStore = defineStore('userTransactions', () => {
     importTransactionsFromOfx,
     editTransaction,
     removeTransaction,
-    removeAccountTransactions,
     // Reports
     fetchAccountSummary,
     fetchMonthsWithData,
     fetchMonthlyTotals,
     fetchNetWorthHistory,
+    fetchDebtPayments,
     // Util
     clearError
   }

@@ -1,11 +1,12 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-6">
     <v-alert
       v-if="error"
       type="error"
       variant="flat"
-      class="mb-3"
       closable
+      rounded="lg"
+      class="mb-4"
       @click:close="error = ''"
     >
       {{ error }}
@@ -15,111 +16,186 @@
       v-if="success"
       type="success"
       variant="flat"
-      class="mb-3"
       closable
+      rounded="lg"
+      class="mb-4"
       @click:close="success = ''"
     >
       {{ success }}
     </v-alert>
 
-    <v-row>
-      <v-col cols="12">
-        <v-card rounded="sm" elevation="2">
-          <v-card-item class="pa-4 pb-0">
-            <template #prepend>
-              <v-icon color="primary" size="20" :opacity="0.7">mdi-shield-lock-outline</v-icon>
-            </template>
-            <v-card-title class="text-h6 font-weight-bold pl-2">Encrypted Backup</v-card-title>
-          </v-card-item>
+    <!-- Header -->
+    <div class="mb-6">
+      <div class="text-h5 font-weight-bold">Backup & Restore</div>
+      <div class="text-body-2 text-medium-emphasis mt-1">
+        Your data lives in a single local file — keep copies somewhere safe
+      </div>
+    </div>
 
-          <v-card-text class="pa-4">
-            <p class="text-body-2 text-medium-emphasis mb-4">
-              Securely export your full database to an encrypted file, or restore a previous backup.
-              A passphrase is required to encrypt and decrypt. Keep it safe — backups cannot be
-              restored without it.
-            </p>
-
-            <v-text-field
-              v-model="passphrase"
-              label="Encryption Passphrase"
-              type="password"
-              variant="solo-filled"
-              density="comfortable"
-              rounded="sm"
-              hint="Must be at least 8 characters. Do not lose this passphrase."
-              persistent-hint
-              class="mb-4"
-            />
-
-            <v-btn-group divided variant="flat" density="comfortable" rounded="sm">
-              <v-btn
-                prepend-icon="mdi-export"
-                :disabled="!isValid"
-                :loading="isExporting"
-                @click="handleExport"
-              >
-                Export Backup
-              </v-btn>
-              <v-btn
-                prepend-icon="mdi-import"
-                :disabled="!isValid"
-                :loading="isImporting"
-                @click="handleImport"
-              >
-                Restore Backup
-              </v-btn>
-            </v-btn-group>
-          </v-card-text>
+    <!-- Stats -->
+    <v-row class="mb-2">
+      <v-col cols="12" md="4">
+        <v-card elevation="0" variant="flat" border rounded="lg" class="pa-5 h-100">
+          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
+            Database Size
+          </div>
+          <div class="text-h4 font-weight-bold">{{ formattedDbSize }}</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">
+            {{ totalTransactions.toLocaleString() }} transactions
+          </div>
+          <code
+            v-if="dbPath"
+            class="d-inline-block text-truncate text-caption mt-2"
+            :title="dbPath"
+          >
+            {{ dbPath }}
+          </code>
         </v-card>
       </v-col>
 
-      <v-col cols="12">
-        <v-card rounded="sm" elevation="2">
-          <v-card-item class="pa-4 pb-0">
-            <template #prepend>
-              <v-icon color="primary" size="20" :opacity="0.7">mdi-code-json</v-icon>
-            </template>
-            <v-card-title class="text-h6 font-weight-bold pl-2">Export JSON</v-card-title>
-          </v-card-item>
+      <v-col cols="12" md="4">
+        <v-card elevation="0" variant="flat" border rounded="lg" class="pa-5 h-100">
+          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
+            Accounts
+          </div>
+          <div class="text-h4 font-weight-bold">{{ totalAccounts }}</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">
+            {{ linkedAccountsCount }} linked via OFX/QFX
+          </div>
+        </v-card>
+      </v-col>
 
-          <v-card-text class="pa-4">
-            <p class="text-body-2 text-medium-emphasis mb-4">
-              Download a plain-text JSON snapshot of your budgets and categories. Useful for sharing
-              data, reporting, or migrating outside the app. Not encrypted — don't share if it
-              contains sensitive details.
-            </p>
-
-            <v-btn
-              variant="flat"
-              rounded="sm"
-              prepend-icon="mdi-download-outline"
-              :loading="isExportingJson"
-              @click="handleExportJson"
-            >
-              Export Budgets as JSON
-            </v-btn>
-          </v-card-text>
+      <v-col cols="12" md="4">
+        <v-card elevation="0" variant="flat" border rounded="lg" class="pa-5 h-100">
+          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
+            Encryption
+          </div>
+          <div class="text-h4 font-weight-bold text-success">On</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">AES-256</div>
         </v-card>
       </v-col>
     </v-row>
 
+    <!-- Actions -->
+    <v-row>
+      <!-- Export -->
+      <v-col cols="12" md="6">
+        <v-card
+          elevation="0"
+          variant="flat"
+          border
+          rounded="lg"
+          class="pa-6 d-flex flex-column h-100"
+        >
+          <div class="d-flex align-center ga-3 mb-3">
+            <v-avatar color="primary" variant="flat" size="34" rounded="lg">
+              <v-icon size="18">mdi-export</v-icon>
+            </v-avatar>
+            <div class="text-subtitle-1 font-weight-bold">Export a backup</div>
+          </div>
+
+          <div class="text-body-2 text-medium-emphasis mb-5">
+            Save a snapshot of your transactions, accounts and budgets to a standard SQLite
+            <code>.db</code> file. For safekeeping, store it in OneDrive, Google Drive, or iCloud —
+            they encrypt files at rest and keep automatic copies.
+          </div>
+
+          <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
+            Included in backup
+          </div>
+          <div class="d-flex flex-wrap ga-2 mb-5">
+            <v-chip size="small" variant="flat" color="primary" prepend-icon="mdi-swap-vertical">
+              Transactions
+            </v-chip>
+            <v-chip size="small" variant="flat" color="primary" prepend-icon="mdi-bank-outline">
+              Accounts
+            </v-chip>
+            <v-chip size="small" variant="flat" color="primary" prepend-icon="mdi-sitemap-outline">
+              Budgets & rules
+            </v-chip>
+          </div>
+
+          <v-spacer />
+
+          <div class="d-flex ga-3 mt-4">
+            <v-btn
+              color="primary"
+              variant="flat"
+              rounded="lg"
+              prepend-icon="mdi-download"
+              :loading="isExporting"
+              @click="handleExport"
+            >
+              Export now
+            </v-btn>
+            <v-btn
+              color="primary"
+              variant="flat"
+              rounded="lg"
+              prepend-icon="mdi-file-delimited-outline"
+              :loading="isCsvExporting"
+              @click="handleExportAllCsv"
+            >
+              Export all to CSV
+            </v-btn>
+          </div>
+        </v-card>
+      </v-col>
+
+      <!-- Restore -->
+      <v-col cols="12" md="6">
+        <v-card
+          elevation="0"
+          variant="flat"
+          border
+          rounded="lg"
+          class="pa-6 d-flex flex-column h-100"
+        >
+          <div class="d-flex align-center ga-3 mb-3">
+            <v-avatar color="primary" variant="flat" size="34" rounded="lg">
+              <v-icon size="18">mdi-import</v-icon>
+            </v-avatar>
+            <div class="text-subtitle-1 font-weight-bold">Restore from a backup</div>
+          </div>
+
+          <div class="text-body-2 text-medium-emphasis mb-5">
+            Replace the current data with a saved backup file. This cannot be undone.
+          </div>
+
+          <v-sheet
+            color="primary-container"
+            rounded="lg"
+            border="solid 1px"
+            class="d-flex flex-column align-center justify-center pa-8 mb-5"
+            @click="handleImport"
+          >
+            <v-icon size="28" color="primary">mdi-upload</v-icon>
+            <span class="text-body-2 text-medium-emphasis mt-2">or click to browse</span>
+          </v-sheet>
+
+          <v-spacer />
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Confirm Dialog -->
     <v-dialog v-model="showConfirmDialog" max-width="400" persistent>
-      <v-card rounded="sm">
-        <v-card-title class="pa-6 pb-4 text-h6 font-weight-bold">Confirm Restore</v-card-title>
-        <v-card-text class="pa-6 pt-0 text-body-1">
+      <v-card rounded="lg" class="pa-5">
+        <v-card-title class="text-h6 font-weight-bold pb-2 px-0">Confirm Restore</v-card-title>
+        <v-card-text class="text-body-2 text-medium-emphasis pb-4 px-0">
           Restoring a backup will overwrite your current database. Are you sure you want to proceed?
         </v-card-text>
-        <v-card-actions class="pa-6 pt-0">
+        <v-card-actions class="px-0 pb-0">
           <v-spacer />
-          <v-btn variant="text" @click="showConfirmDialog = false">Cancel</v-btn>
+          <v-btn variant="text" rounded="lg" @click="showConfirmDialog = false">Cancel</v-btn>
           <v-btn
-            color="error"
+            color="primary"
             variant="flat"
-            rounded="sm"
+            rounded="lg"
             :loading="isImporting"
             @click="confirmImport"
           >
-            Yes, Overwrite
+            Yes, overwrite
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -131,31 +207,79 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserBudgetsStore } from '../stores/userBudgets'
 import { useUserCategoriesStore } from '../stores/userCategories'
+import { useUserAccountsStore } from '../stores/userAccounts'
+import { useUserTransactionsStore } from '../stores/userTransactions'
 
 const budgetsStore = useUserBudgetsStore()
 const categoriesStore = useUserCategoriesStore()
+const accountsStore = useUserAccountsStore()
+const transactionsStore = useUserTransactionsStore()
 
-const passphrase = ref('')
 const isExporting = ref(false)
+const isCsvExporting = ref(false)
 const isImporting = ref(false)
-const isExportingJson = ref(false)
 const showConfirmDialog = ref(false)
 const error = ref('')
 const success = ref('')
 
-const isValid = computed(() => passphrase.value.length >= 8)
+const totalTransactions = computed(() => {
+  return transactionsStore.accountSummary.reduce((sum, item) => sum + item.count, 0)
+})
+
+const totalAccounts = computed(() => {
+  return accountsStore.accounts.length
+})
+
+const linkedAccountsCount = computed(() => {
+  return accountsStore.accounts.filter((a) => a.ORG || a.INTU_BID).length
+})
+
+const dbSize = ref(0)
+
+const formattedDbSize = computed(() => {
+  const bytes = dbSize.value
+  if (bytes === 0) {
+    if (totalAccounts.value > 0 || totalTransactions.value > 0) {
+      // Estimated base size of an empty SQLite DB file + schema
+      return '128.0 KB'
+    }
+    return '0.0 KB'
+  }
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+})
+
+const dbPath = computed(() => {
+  const isWindows = window.api?.platform === 'win32'
+  const isMac = window.api?.platform === 'darwin'
+  const productName = window.api?.productName || 'YetAnotherBudgetApp'
+
+  if (isWindows) {
+    return `%AppData%\\${productName}\\data`
+  } else if (isMac) {
+    return `~/Library/Application Support/${productName}/data`
+  } else {
+    return `~/.config/${productName}/data`
+  }
+})
+
+async function loadStats() {
+  await accountsStore.fetchAccounts()
+  await transactionsStore.fetchAccountSummary()
+  dbSize.value = await window.electron.ipcRenderer.invoke('backup:dbSize')
+}
 
 async function handleExport() {
   error.value = ''
   success.value = ''
   isExporting.value = true
   try {
-    const res = await window.electron.ipcRenderer.invoke('backup:export', passphrase.value)
+    const res = await window.electron.ipcRenderer.invoke('backup:export')
     if (res.canceled) {
-      // User canceled dialog, do nothing
+      // User canceled, do nothing
     } else if (res.success) {
       success.value = 'Backup exported successfully.'
-      passphrase.value = ''
+      await loadStats()
     } else {
       error.value = res.error || 'Failed to export backup.'
     }
@@ -163,6 +287,24 @@ async function handleExport() {
     error.value = err.message || 'An unexpected error occurred.'
   } finally {
     isExporting.value = false
+  }
+}
+
+async function handleExportAllCsv() {
+  error.value = ''
+  success.value = ''
+  isCsvExporting.value = true
+  try {
+    const res = await window.electron.ipcRenderer.invoke('csv:exportAll')
+    if (res?.success) {
+      success.value = `Exported ${res.data.files.length} CSV files to ${res.data.path}`
+    } else if (res?.error && res.error !== 'Cancelled') {
+      error.value = res.error || 'Failed to export CSV.'
+    }
+  } catch (err) {
+    error.value = err.message || 'An unexpected error occurred.'
+  } finally {
+    isCsvExporting.value = false
   }
 }
 
@@ -175,13 +317,12 @@ async function confirmImport() {
   success.value = ''
   isImporting.value = true
   try {
-    const res = await window.electron.ipcRenderer.invoke('backup:import', passphrase.value)
+    const res = await window.electron.ipcRenderer.invoke('backup:import')
     if (res.canceled) {
       showConfirmDialog.value = false
     } else if (res.success) {
       success.value =
-        'Backup restored successfully. Please restart the application to load your restored data.'
-      passphrase.value = ''
+        'Backup restored successfully. The application will now restart to load your restored data.'
       showConfirmDialog.value = false
     } else {
       error.value = res.error || 'Failed to restore backup.'
@@ -193,41 +334,9 @@ async function confirmImport() {
   }
 }
 
-async function handleExportJson() {
-  error.value = ''
-  success.value = ''
-  isExportingJson.value = true
-  try {
-    await Promise.all([categoriesStore.fetchCategories(), budgetsStore.fetchBudgets()])
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      categories: categoriesStore.categories,
-      budgets: categoriesStore.categories.map((c) => ({
-        categoryId: c.id,
-        categoryName: c.name,
-        type: c.type,
-        amount: budgetsStore.getBudget(c.id)?.amount || 0
-      }))
-    }
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `budgets-${new Date().toISOString().slice(0, 10)}.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    success.value = 'Budgets exported as JSON.'
-  } catch (err) {
-    error.value = err.message || 'Failed to export JSON.'
-  } finally {
-    isExportingJson.value = false
-  }
-}
-
 onMounted(() => {
   categoriesStore.fetchCategories()
   budgetsStore.fetchBudgets()
+  loadStats()
 })
 </script>

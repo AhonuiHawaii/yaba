@@ -1,302 +1,321 @@
 <template>
-  <v-container fluid class="pa-4">
-    <v-alert v-if="reportError" type="error" variant="flat" class="mb-4">
+  <v-container fluid class="pa-6">
+    <!-- Header -->
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <div class="text-h5 font-weight-bold mb-1">Net worth</div>
+        <div class="text-body-2 text-medium-emphasis mb-0">
+          Assets minus debts · {{ periodLabel }}
+        </div>
+      </v-col>
+      <v-col cols="auto" class="pa-0">
+        <FilterComponent />
+      </v-col>
+    </v-row>
+
+    <v-alert v-if="reportError" type="error" variant="flat" class="mb-5 rounded-xl border">
       {{ reportError }}
     </v-alert>
 
-    <v-row class="mb-6">
-      <!-- Net Worth Trend Chart -->
-      <v-col cols="12" lg="8">
-        <v-card rounded="sm" elevation="2" class="h-100">
-          <v-card-text class="pa-6 pb-4">
-            <div class="text-caption text-medium-emphasis font-weight-medium mb-1">
-              Total net worth
-            </div>
-            <div class="text-h4 font-weight-black mb-1">{{ formatCurrency(netWorth) }}</div>
-            <div v-if="netWorthHistory.length >= 2" class="d-flex align-center ga-1 mb-4">
-              <v-icon :color="sixMonthChange >= 0 ? 'success' : 'error'" size="16">
-                {{ sixMonthChange >= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down' }}
-              </v-icon>
-              <span
-                class="text-body-2"
-                :class="sixMonthChange >= 0 ? 'text-success' : 'text-error'"
+    <!-- Stat cards -->
+    <v-row class="mb-5">
+      <v-col cols="12" sm="6" lg="3">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div class="sparkline-bg">
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[1]"
+              :line-width="1"
+              :model-value="sparklineAssets"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 stat-card-content">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Assets</span
               >
-                {{ sixMonthChange >= 0 ? 'Up ' : 'Down '
-                }}{{ formatCurrency(Math.abs(sixMonthChange)) }} over the last 6 months
-              </span>
+              <v-avatar color="success" variant="flat" size="38" rounded="lg">
+                <v-icon size="20">mdi-bank</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black text-success mb-1">
+              {{ formatCurrency(displayAssets) }}
             </div>
-            <div v-else class="mb-4" />
-
-            <div style="height: 220px">
-              <Line
-                v-if="filteredChartData.labels.length > 0"
-                :data="filteredChartData"
-                :options="chartOptions"
-              />
-              <div
-                v-else
-                class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2"
-              >
-                No history yet
-              </div>
-            </div>
-
-            <div class="d-flex justify-center ga-1 mt-4">
-              <v-btn
-                v-for="range in timeRanges"
-                :key="range"
-                :variant="selectedRange === range ? 'flat' : 'text'"
-                size="small"
-                rounded="xl"
-                density="compact"
-                class="px-3"
-                @click="selectedRange = range"
-              >
-                {{ range }}
-              </v-btn>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+              <v-icon size="14">mdi-information-outline</v-icon>
+              <span>Total owned</span>
             </div>
           </v-card-text>
         </v-card>
       </v-col>
 
-      <!-- Summary card -->
-      <v-col cols="12" lg="4">
-        <v-card rounded="sm" elevation="2" class="h-100">
-          <v-card-text class="pa-6">
-            <p class="text-body-2 text-medium-emphasis mb-5" style="line-height: 1.6">
-              This is how your net worth is calculated. Make sure all of your accounts are connected
-              for an accurate summary.
-            </p>
-
-            <!-- Assets -->
-            <div class="d-flex align-center py-3">
-              <v-avatar size="32" color="success" variant="tonal" class="mr-3 flex-shrink-0">
-                <v-icon size="16">mdi-plus</v-icon>
-              </v-avatar>
-              <div class="flex-grow-1">
-                <div class="text-body-2 font-weight-semibold">Assets</div>
-                <div class="text-caption text-medium-emphasis">
-                  {{ assetRows.length }} account{{ assetRows.length !== 1 ? 's' : '' }}
-                </div>
-              </div>
-              <span class="text-body-2 font-weight-bold text-success text-no-wrap">
-                {{ formatCurrency(totalAssets) }}
-              </span>
-            </div>
-            <v-divider />
-
-            <!-- Debts -->
-            <div class="d-flex align-center py-3">
-              <v-avatar size="32" color="warning" variant="tonal" class="mr-3 flex-shrink-0">
-                <v-icon size="16">mdi-minus</v-icon>
-              </v-avatar>
-              <div class="flex-grow-1">
-                <div class="text-body-2 font-weight-semibold">Debts</div>
-                <div class="text-caption text-medium-emphasis">
-                  {{ liabilityRows.length }} account{{ liabilityRows.length !== 1 ? 's' : '' }}
-                </div>
-              </div>
-              <span class="text-body-2 font-weight-bold text-no-wrap">
-                {{ formatCurrency(totalLiabilities) }}
-              </span>
-            </div>
-            <v-divider />
-
-            <!-- Net Worth -->
-            <div class="d-flex align-center py-3">
-              <v-avatar size="32" variant="outlined" class="mr-3 flex-shrink-0">
-                <v-icon size="16">mdi-equal</v-icon>
-              </v-avatar>
-              <div class="flex-grow-1">
-                <div class="text-body-2 font-weight-semibold">Net Worth</div>
-                <div class="text-caption text-medium-emphasis">Assets - Debts</div>
-              </div>
-              <span
-                class="text-body-2 font-weight-bold text-no-wrap"
-                :class="netWorth >= 0 ? 'text-success' : 'text-error'"
+      <v-col cols="12" sm="6" lg="3">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div class="sparkline-bg">
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[0]"
+              :line-width="1"
+              :model-value="sparklineLiabilities"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 stat-card-content">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Debts</span
               >
-                {{ formatCurrency(netWorth) }}
+              <v-avatar color="error" variant="flat" size="38" rounded="lg">
+                <v-icon size="20">mdi-credit-card-outline</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black text-error mb-1">
+              {{ formatCurrency(displayLiabilities) }}
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+              <v-icon size="14">mdi-information-outline</v-icon>
+              <span>Total owed</span>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" lg="3">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div class="sparkline-bg">
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[2]"
+              :line-width="1"
+              :model-value="sparklineNetWorth"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 stat-card-content">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Net Worth</span
+              >
+              <v-avatar color="primary" variant="flat" size="38" rounded="lg">
+                <v-icon size="20">mdi-scale-balance</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">
+              {{ formatCurrency(displayNetWorth) }}
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+              <v-icon size="14">mdi-information-outline</v-icon>
+              <span>Assets minus debts</span>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" lg="3">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="position-relative overflow-hidden"
+        >
+          <div class="sparkline-bg">
+            <v-sparkline
+              :fill="true"
+              :gradient="gradient[3]"
+              :line-width="1"
+              :model-value="sparklinePeriodChange"
+              :color="sparklineLineColor"
+              :padding="0"
+              :smooth="16"
+              auto-draw
+            ></v-sparkline>
+          </div>
+          <v-card-text class="pa-5 stat-card-content">
+            <v-row no-gutters align="center" justify="space-between" class="mb-4">
+              <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
+                >Period Change</span
+              >
+              <v-avatar color="secondary" variant="flat" size="38" rounded="lg">
+                <v-icon size="20">mdi-trending-up</v-icon>
+              </v-avatar>
+            </v-row>
+            <div class="text-h4 font-weight-black mb-1">
+              <span :class="periodChange >= 0 ? 'text-success' : 'text-error'">
+                {{ periodChange >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(periodChange)) }}
               </span>
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+              <v-icon size="16" :color="periodChange >= 0 ? 'success' : 'error'">
+                {{ periodChange >= 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}
+              </v-icon>
+              <span>during {{ periodLabel }}</span>
             </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Assets by category -->
-    <v-card rounded="sm" elevation="2">
-      <v-card-item class="pa-4 pb-0">
-        <template #prepend>
-          <v-icon color="success" size="20" :opacity="0.7">mdi-bank-outline</v-icon>
-        </template>
-        <v-card-title class="text-h6 font-weight-bold pl-2">Assets</v-card-title>
-      </v-card-item>
-
-      <v-expansion-panels v-model="openPanels" multiple flat class="mt-2">
-        <v-expansion-panel
-          v-for="category in assetCategories"
-          :key="category.name"
-          :value="category.name"
+    <!-- Main Trend Chart -->
+    <v-row class="mb-5">
+      <v-col cols="12">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="h-100 d-flex flex-column"
+          min-height="350"
         >
-          <v-expansion-panel-title>
-            <div class="d-flex align-center w-100 ga-4">
-              <span class="text-body-2 font-weight-medium flex-grow-1">{{ category.name }}</span>
-              <span class="text-body-2 text-medium-emphasis text-right" style="min-width: 110px"
-                >{{ category.percentage }}% of assets</span
-              >
-              <span class="text-body-2 font-weight-bold text-right" style="min-width: 90px">{{
-                formatCurrency(category.total)
-              }}</span>
+          <v-card-item class="pa-5 pb-0">
+            <v-card-title class="text-body-1 font-weight-bold">Net Worth Trend</v-card-title>
+            <template #append>
+              <v-chip size="x-small" variant="flat" class="font-weight-medium" color="primary">{{
+                trendChipLabel
+              }}</v-chip>
+            </template>
+          </v-card-item>
+          <div class="pa-5 flex-grow-1 chart-area">
+            <Line
+              v-if="filteredChartData.labels.length > 0"
+              :data="filteredChartData"
+              :options="lineChartOptions"
+            />
+            <div
+              v-else
+              class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2"
+            >
+              No history yet
             </div>
-          </v-expansion-panel-title>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
 
-          <v-expansion-panel-text>
-            <v-card variant="flat" rounded="sm" class="mx-2 mb-2">
-              <div
-                class="d-flex align-center justify-space-between px-4 py-2 text-caption text-medium-emphasis"
-              >
-                <span
-                  >{{ category.accounts.length }} Account{{
-                    category.accounts.length !== 1 ? 's' : ''
-                  }}</span
-                >
-                <span>Balance</span>
-              </div>
-              <template v-for="account in category.accounts" :key="account.ACCTID">
-                <v-divider />
-                <div class="d-flex align-center px-4 py-3 ga-3">
-                  <v-avatar size="36" :color="accountTypeColor(account.ACCTTYPE)" variant="tonal">
-                    <v-icon :icon="accountTypeIcon(account.ACCTTYPE)" size="18" />
-                  </v-avatar>
-                  <div class="flex-grow-1">
-                    <div class="text-body-2 font-weight-medium">
-                      {{ account.displayName || account.ACCTTYPE || 'Account' }}
-                    </div>
-                    <div v-if="account.ORG" class="text-caption text-medium-emphasis">
-                      {{ account.ORG }}
-                    </div>
-                  </div>
-                  <span class="text-body-2 font-weight-bold">{{
-                    formatCurrency(account.balance)
-                  }}</span>
-                </div>
-              </template>
-            </v-card>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
-    </v-card>
-
-    <!-- Debts by category -->
-    <v-card rounded="sm" elevation="2" class="mt-6">
-      <v-card-item class="pa-4 pb-0">
-        <template #prepend>
-          <v-icon color="error" size="20" :opacity="0.7">mdi-credit-card-outline</v-icon>
-        </template>
-        <v-card-title class="text-h6 font-weight-bold pl-2">Debts</v-card-title>
-      </v-card-item>
-
-      <div
-        v-if="debtCategories.length === 0"
-        class="pa-6 text-center text-medium-emphasis text-body-2"
-      >
-        No debts. Nicely done.
-      </div>
-
-      <v-expansion-panels v-model="openDebtPanels" multiple flat class="mt-2">
-        <v-expansion-panel
-          v-for="category in debtCategories"
-          :key="category.name"
-          :value="category.name"
+    <!-- Allocation Charts -->
+    <v-row class="mb-5">
+      <v-col cols="12" md="6">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="h-100 d-flex flex-column"
+          min-height="350"
         >
-          <v-expansion-panel-title>
-            <div class="d-flex align-center w-100 ga-4">
-              <span class="text-body-2 font-weight-medium flex-grow-1">{{ category.name }}</span>
-              <span class="text-body-2 text-medium-emphasis text-right" style="min-width: 110px"
-                >{{ category.percentage }}% of debts</span
-              >
-              <span
-                class="text-body-2 font-weight-bold text-error text-right"
-                style="min-width: 90px"
-                >{{ formatCurrency(category.total) }}</span
-              >
+          <v-card-item class="pa-5 pb-0">
+            <v-card-title class="text-body-1 font-weight-bold">Asset Allocation</v-card-title>
+          </v-card-item>
+          <div class="pa-5 flex-grow-1 chart-area" style="display: flex; justify-content: center">
+            <Doughnut
+              v-if="assetAllocationData.labels.length > 0"
+              :data="assetAllocationData"
+              :options="doughnutOptions"
+            />
+            <div
+              v-else
+              class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2"
+            >
+              No assets found
             </div>
-          </v-expansion-panel-title>
+          </div>
+        </v-card>
+      </v-col>
 
-          <v-expansion-panel-text>
-            <v-card variant="flat" rounded="sm" class="mx-2 mb-2">
-              <div
-                class="d-flex align-center justify-space-between px-4 py-2 text-caption text-medium-emphasis"
-              >
-                <span
-                  >{{ category.accounts.length }} Account{{
-                    category.accounts.length !== 1 ? 's' : ''
-                  }}</span
-                >
-                <span>Balance Owed</span>
-              </div>
-              <template v-for="account in category.accounts" :key="account.ACCTID">
-                <v-divider />
-                <div class="d-flex align-center px-4 py-3 ga-3">
-                  <v-avatar size="36" :color="accountTypeColor(account.ACCTTYPE)" variant="tonal">
-                    <v-icon :icon="accountTypeIcon(account.ACCTTYPE)" size="18" />
-                  </v-avatar>
-                  <div class="flex-grow-1">
-                    <div class="text-body-2 font-weight-medium">
-                      {{ account.displayName || account.ACCTTYPE || 'Account' }}
-                    </div>
-                    <div v-if="account.ORG" class="text-caption text-medium-emphasis">
-                      {{ account.ORG }}
-                    </div>
-                  </div>
-                  <span class="text-body-2 font-weight-bold text-error">{{
-                    formatCurrency(account.balance)
-                  }}</span>
-                </div>
-              </template>
-            </v-card>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
-    </v-card>
+      <v-col cols="12" md="6">
+        <v-card
+          rounded="lg"
+          elevation="0"
+          variant="flat"
+          border
+          hover
+          class="h-100 d-flex flex-column"
+          min-height="350"
+        >
+          <v-card-item class="pa-5 pb-0">
+            <v-card-title class="text-body-1 font-weight-bold">Debt Allocation</v-card-title>
+          </v-card-item>
+          <div class="pa-5 flex-grow-1 chart-area" style="display: flex; justify-content: center">
+            <Doughnut
+              v-if="debtAllocationData.labels.length > 0"
+              :data="debtAllocationData"
+              :options="doughnutOptions"
+            />
+            <div
+              v-else
+              class="d-flex align-center justify-center h-100 text-medium-emphasis text-body-2"
+            >
+              No debts found
+            </div>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { Line } from 'vue-chartjs'
+import { storeToRefs } from 'pinia'
+import { usePeriodFilter } from '../stores/usePeriodFilter'
+import { Line, Doughnut } from 'vue-chartjs'
+import { useTheme } from 'vuetify'
+import FilterComponent from '../components/filterComponent.vue'
 import {
   Chart as ChartJS,
-  ArcElement,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  ArcElement
 } from 'chart.js'
-import {
-  useUserAccountsStore,
-  accountTypeColor,
-  accountTypeIcon,
-  resolveIsAsset,
-  CATEGORY_MAP,
-  CATEGORY_ORDER,
-  ALWAYS_SHOW_CATEGORIES
-} from '../stores/userAccounts'
+import { useUserAccountsStore, resolveIsAsset } from '../stores/userAccounts'
 import { useUserTransactionsStore } from '../stores/userTransactions'
-import { useUserDebtsStore } from '../stores/userDebts'
 import { useUserSettingsStore } from '../stores/userSettings'
 
 ChartJS.register(
-  ArcElement,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  Title,
+  ArcElement,
   Tooltip,
   Legend,
   Filler
@@ -304,74 +323,31 @@ ChartJS.register(
 
 const accountsStore = useUserAccountsStore()
 const transactionsStore = useUserTransactionsStore()
-const debtsStore = useUserDebtsStore()
 const { formatCurrency } = useUserSettingsStore()
 
+const theme = useTheme()
 const reportError = ref(null)
-const openPanels = ref([])
-const openDebtPanels = ref([])
-const selectedRange = ref('6M')
-const timeRanges = ['1M', '3M', '6M', '1Y', 'ALL']
 
-const ALWAYS_SHOW = ALWAYS_SHOW_CATEGORIES
+const _pf = usePeriodFilter()
+const { period, periodStart, periodMonths, periodLabel } = storeToRefs(_pf)
+const { offsetMonth } = _pf
 
 const netWorthHistory = computed(() => transactionsStore.netWorthHistory)
 const latest = computed(() => netWorthHistory.value[netWorthHistory.value.length - 1] || null)
-
 const netWorth = computed(() => latest.value?.netWorth ?? 0)
-const sixMonthChange = computed(() => {
-  const rows = netWorthHistory.value
-  if (rows.length < 2) return 0
-  const from = rows.length >= 7 ? rows[rows.length - 7] : rows[0]
-  return rows[rows.length - 1].netWorth - from.netWorth
-})
 
-const filteredChartData = computed(() => {
-  const all = netWorthHistory.value
-  const count = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12 }[selectedRange.value]
-  const rows = count ? all.slice(-count) : all
-  return {
-    labels: rows.map((r) => {
-      const y = r.month.slice(0, 4)
-      const m = parseInt(r.month.slice(4, 6)) - 1
-      return new Date(y, m, 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-    }),
-    datasets: [
-      {
-        label: 'Net Worth',
-        data: rows.map((r) => r.netWorth),
-        borderColor: '#1976d2',
-        backgroundColor: 'rgba(25,118,210,0.12)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        borderWidth: 2.5
-      },
-      {
-        label: 'Assets',
-        data: rows.map((r) => r.assets),
-        borderColor: '#4caf50',
-        backgroundColor: 'rgba(76,175,80,0.04)',
-        fill: false,
-        tension: 0.3,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        borderDash: [4, 4]
-      },
-      {
-        label: 'Liabilities',
-        data: rows.map((r) => r.liabilities),
-        borderColor: '#f44336',
-        backgroundColor: 'rgba(244,67,54,0.04)',
-        fill: false,
-        tension: 0.3,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        borderDash: [4, 4]
-      }
-    ]
-  }
+// Active period's history record
+const activePeriodRecord = computed(() => {
+  const history = netWorthHistory.value
+  if (!history || history.length === 0) return null
+
+  const activeMonths = periodMonths.value
+  if (activeMonths.length === 0) return null
+  const lastActiveMonth = activeMonths[activeMonths.length - 1]
+
+  const activeHistory = history.filter((r) => r.month <= lastActiveMonth)
+  if (activeHistory.length === 0) return null
+  return activeHistory[activeHistory.length - 1]
 })
 
 const accountBalances = computed(() => {
@@ -382,78 +358,281 @@ const accountBalances = computed(() => {
     const txTotal = balanceById.get(account.ACCTID) || 0
     const starting = Number(account.startingBalance) || 0
     const raw = starting + txTotal
-    const isAsset = resolveIsAsset(account) // honours accountCategory override
+    const isAsset = resolveIsAsset(account)
     return { ...account, isAsset, balance: isAsset ? raw : -raw }
   })
 })
 
-const assetRows = computed(() =>
-  accountBalances.value.filter((a) => a.isAsset).sort((a, b) => b.balance - a.balance)
+const totalAssets = computed(() =>
+  accountBalances.value.filter((a) => a.isAsset).reduce((sum, a) => sum + a.balance, 0)
+)
+const totalLiabilities = computed(() =>
+  accountBalances.value.filter((a) => !a.isAsset).reduce((sum, a) => sum + Math.abs(a.balance), 0)
 )
 
-const liabilityRows = computed(() =>
-  accountBalances.value.filter((a) => !a.isAsset).sort((a, b) => b.balance - a.balance)
+const displayAssets = computed(() => activePeriodRecord.value?.assets ?? totalAssets.value)
+const displayLiabilities = computed(
+  () => activePeriodRecord.value?.liabilities ?? totalLiabilities.value
 )
+const displayNetWorth = computed(() => activePeriodRecord.value?.netWorth ?? netWorth.value)
 
-const totalAssets = computed(() => assetRows.value.reduce((sum, a) => sum + a.balance, 0))
-const totalLiabilities = computed(() => liabilityRows.value.reduce((sum, a) => sum + a.balance, 0))
+// Net Worth change over the active period
+const periodChange = computed(() => {
+  const history = netWorthHistory.value
+  if (!history || history.length === 0) return 0
 
-const debtCategories = computed(() => {
-  const detailMap = new Map(debtsStore.details.map((d) => [d.id, d]))
-  const grouped = {}
-  for (const account of liabilityRows.value) {
-    const type = account.ACCTTYPE || 'Other'
-    if (!grouped[type]) grouped[type] = []
-    const detail = detailMap.get(account.ACCTID)
-    grouped[type].push({
-      ...account,
-      balance: detail?.currentBalance > 0 ? detail.currentBalance : account.balance
-    })
-  }
-  const total = totalLiabilities.value || 1
-  return Object.entries(grouped)
-    .map(([name, accounts]) => {
-      const catTotal = accounts.reduce((s, a) => s + a.balance, 0)
-      return { name, accounts, total: catTotal, percentage: Math.round((catTotal / total) * 100) }
-    })
-    .sort((a, b) => b.total - a.total)
+  const activeMonths = periodMonths.value
+  if (activeMonths.length === 0) return 0
+  const firstActiveMonth = activeMonths[0]
+  const endRecord = activePeriodRecord.value
+  if (!endRecord) return 0
+
+  const precedingMonth = offsetMonth(firstActiveMonth, -1)
+  const precedingRecord = history.find((r) => r.month === precedingMonth)
+  const startNetWorth = precedingRecord
+    ? precedingRecord.netWorth
+    : (history.filter((r) => r.month <= endRecord.month)[0]?.netWorth ?? 0)
+
+  return endRecord.netWorth - startNetWorth
 })
 
-const assetCategories = computed(() => {
-  const grouped = Object.fromEntries(CATEGORY_ORDER.map((n) => [n, []]))
-  for (const account of assetRows.value) {
-    const cat = CATEGORY_MAP[account.ACCTTYPE] || 'Other Assets'
-    grouped[cat].push(account)
+// Trend months to display
+const trendMonthKeys = computed(() => {
+  if (period.value === 'month') {
+    return Array.from({ length: 6 }, (_, i) => offsetMonth(periodStart.value, -(5 - i)))
+  } else {
+    return periodMonths.value
   }
-  const total = totalAssets.value || 1
-  return CATEGORY_ORDER.map((name) => {
-    const accounts = grouped[name]
-    const catTotal = accounts.reduce((s, a) => s + a.balance, 0)
-    return { name, accounts, total: catTotal, percentage: Math.round((catTotal / total) * 100) }
-  }).filter((c) => c.accounts.length > 0 || ALWAYS_SHOW.has(c.name))
 })
 
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: { mode: 'index', intersect: false },
-  plugins: {
-    legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } },
-    tooltip: {
-      callbacks: {
-        label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`
-      }
+const trendMonths = computed(() => {
+  const history = netWorthHistory.value || []
+  return trendMonthKeys.value.map((monthKey) => {
+    const pastRecords = history.filter((r) => r.month <= monthKey)
+    if (pastRecords.length > 0) {
+      return { month: monthKey, ...pastRecords[pastRecords.length - 1] }
     }
-  },
-  scales: {
-    x: { grid: { display: false } },
-    y: {
-      ticks: {
-        callback: (v) => formatCurrency(v)
-      }
-    }
-  }
+    return { month: monthKey, assets: 0, liabilities: 0, netWorth: 0 }
+  })
+})
+
+const trendChipLabel = computed(() => {
+  const n = trendMonths.value.length
+  if (n > 0) return n === 1 ? '1 month' : `${n} months`
+  const defaultMonths = { month: 6, quarter: 3, semi: 6, annual: 12 }[period.value] ?? 3
+  return `${defaultMonths} month${defaultMonths > 1 ? 's' : ''}`
+})
+
+const hexToRgba = (hex, alpha) => {
+  if (!hex) return `rgba(0, 0, 0, ${alpha})`
+  if (hex.startsWith('rgb')) return hex
+  let h = hex.slice(1)
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]
+  const r = parseInt(h.slice(0, 2), 16) || 0
+  const g = parseInt(h.slice(2, 4), 16) || 0
+  const b = parseInt(h.slice(4, 6), 16) || 0
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
+
+const gradient = [
+  [theme.current.value.colors.primary, theme.current.value.colors['primary-container']],
+  [theme.current.value.colors.success, theme.current.value.colors['success-container']],
+  [theme.current.value.colors.info, theme.current.value.colors['info-container']],
+  [theme.current.value.colors.secondary, theme.current.value.colors['secondary-container']]
+]
+const sparklineLineColor = computed(() => (theme.current.value.dark ? 'white' : 'black'))
+
+const ensureVariance = (data) => {
+  if (!data || data.length <= 1) return [0, 1]
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  if (min === max) {
+    const arr = [...data]
+    // Add an imperceptible variance so v-sparkline renders the flat line in the middle
+    arr[0] = min - (min === 0 ? 1 : Math.abs(min * 0.01))
+    arr[arr.length - 1] = max + (max === 0 ? 1 : Math.abs(max * 0.01))
+    return arr
+  }
+  return data
+}
+
+const sparklineAssets = computed(() => {
+  const data = trendMonths.value.map((r) => r.assets)
+  return ensureVariance(data)
+})
+const sparklineLiabilities = computed(() => {
+  const data = trendMonths.value.map((r) => r.liabilities)
+  return ensureVariance(data)
+})
+const sparklineNetWorth = computed(() => {
+  const data = trendMonths.value.map((r) => r.netWorth)
+  return ensureVariance(data)
+})
+const sparklinePeriodChange = computed(() => {
+  const data = trendMonths.value.map((r, i, arr) => {
+    if (i === 0) return 0
+    return r.netWorth - arr[i - 1].netWorth
+  })
+  return ensureVariance(data)
+})
+
+const filteredChartData = computed(() => {
+  const primaryColor = theme.current.value.colors.primary || '#1976d2'
+  const successColor = theme.current.value.colors.success || '#4caf50'
+  const errorColor = theme.current.value.colors.error || '#f44336'
+  const rows = trendMonths.value
+  return {
+    labels: rows.map((r) => {
+      const y = r.month.slice(0, 4)
+      const m = parseInt(r.month.slice(4, 6)) - 1
+      return new Date(y, m, 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+    }),
+    datasets: [
+      {
+        label: 'Net Worth',
+        data: rows.map((r) => r.netWorth),
+        borderColor: primaryColor,
+        backgroundColor: hexToRgba(primaryColor, 0.12),
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2.5
+      },
+      {
+        label: 'Assets',
+        data: rows.map((r) => r.assets),
+        borderColor: successColor,
+        backgroundColor: hexToRgba(successColor, 0.04),
+        fill: false,
+        tension: 0.3,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderDash: [4, 4]
+      },
+      {
+        label: 'Liabilities',
+        data: rows.map((r) => r.liabilities),
+        borderColor: errorColor,
+        backgroundColor: hexToRgba(errorColor, 0.04),
+        fill: false,
+        tension: 0.3,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderDash: [4, 4]
+      }
+    ]
+  }
+})
+
+const generateColors = (count) => {
+  const baseColors = [
+    theme.current.value.colors.primary,
+    theme.current.value.colors.success,
+    theme.current.value.colors.info,
+    theme.current.value.colors.warning,
+    theme.current.value.colors.error,
+    theme.current.value.colors.secondary
+  ]
+  return Array.from({ length: count }, (_, i) => baseColors[i % baseColors.length])
+}
+
+const assetAllocationData = computed(() => {
+  const assets = accountBalances.value
+    .filter((a) => a.isAsset && a.balance > 0)
+    .sort((a, b) => b.balance - a.balance)
+  return {
+    labels: assets.map((a) => a.displayName || a.ACCTTYPE || 'Unknown'),
+    datasets: [
+      {
+        data: assets.map((a) => a.balance),
+        backgroundColor: generateColors(assets.length),
+        borderWidth: 0,
+        hoverOffset: 4
+      }
+    ]
+  }
+})
+
+const debtAllocationData = computed(() => {
+  // Liabilities balances are negative in our calculation, so we use Math.abs
+  const debts = accountBalances.value
+    .filter((a) => !a.isAsset && Math.abs(a.balance) > 0)
+    .sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
+  return {
+    labels: debts.map((a) => a.displayName || a.ACCTTYPE || 'Unknown'),
+    datasets: [
+      {
+        data: debts.map((a) => Math.abs(a.balance)),
+        backgroundColor: generateColors(debts.length),
+        borderWidth: 0,
+        hoverOffset: 4
+      }
+    ]
+  }
+})
+
+const lineChartOptions = computed(() => {
+  const outlineColor = theme.current.value.colors.outline || '#9e9e9e'
+  const tickColor = hexToRgba(outlineColor, 0.6)
+  const gridColor = hexToRgba(outlineColor, 0.15)
+  const onSurfaceColor = theme.current.value.colors['on-surface'] || '#000'
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          color: onSurfaceColor,
+          usePointStyle: true,
+          padding: 16,
+          boxWidth: 6,
+          boxHeight: 6
+        }
+      },
+      tooltip: {
+        callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}` }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { color: tickColor, font: { size: 11 } }
+      },
+      y: {
+        grid: { color: gridColor },
+        border: { display: false },
+        ticks: { color: tickColor, font: { size: 11 }, callback: (v) => formatCurrency(v) }
+      }
+    }
+  }
+})
+
+const doughnutOptions = computed(() => {
+  const onSurfaceColor = theme.current.value.colors['on-surface'] || '#000'
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          color: onSurfaceColor,
+          usePointStyle: true,
+          padding: 16,
+          boxWidth: 8,
+          boxHeight: 8
+        }
+      },
+      tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${formatCurrency(ctx.parsed)}` } }
+    }
+  }
+})
 
 async function loadReport() {
   reportError.value = null
@@ -461,8 +640,7 @@ async function loadReport() {
     await Promise.all([
       transactionsStore.fetchNetWorthHistory(),
       transactionsStore.fetchAccountSummary(),
-      accountsStore.fetchAccounts(),
-      debtsStore.fetchDebtDetails()
+      accountsStore.fetchAccounts()
     ])
   } catch (err) {
     reportError.value = err?.message ?? String(err)

@@ -1,0 +1,543 @@
+<template>
+  <v-card rounded="lg" elevation="0" border>
+    <v-stepper v-model="step" :items="STEPS" rounded="xl" elevation="0">
+      <!-- STEP 1: UPLOAD -->
+      <template #item.1>
+        <v-card-text class="pa-8">
+          <v-card
+            :variant="isDragging ? 'tonal' : 'outlined'"
+            :color="selectedFiles.length ? 'success' : 'primary'"
+            class="d-flex flex-column align-center justify-center pa-10 rounded bg-surface cursor-pointer"
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @drop.prevent="handleDrop"
+            @click="$refs.fileInput.click()"
+          >
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".csv"
+              class="d-none"
+              @change="handleFileSelect"
+            />
+            <v-icon size="64" class="mb-4">
+              {{ selectedFiles.length ? 'mdi-file-check' : 'mdi-file-delimited-outline' }}
+            </v-icon>
+            <div v-if="selectedFiles.length" class="text-h6 font-weight-bold">
+              {{ selectedFiles[0].name }} selected
+            </div>
+            <div v-else class="text-h6 font-weight-bold text-on-surface">
+              Drag & Drop your CSV file here
+            </div>
+            <div class="text-body-2 text-medium-emphasis text-on-surface mt-2">
+              or click to browse (.csv)
+            </div>
+          </v-card>
+          <v-alert v-if="parseError" type="error" variant="flat" class="mt-4 rounded-lg">
+            {{ parseError }}
+          </v-alert>
+        </v-card-text>
+      </template>
+
+      <!-- STEP 2: MAP COLUMNS -->
+      <template #item.2>
+        <v-card-text class="pa-6">
+          <div class="text-subtitle-1 font-weight-medium mb-1">
+            Map your CSV columns to the database fields
+          </div>
+          <div class="text-caption text-medium-emphasis mb-4">
+            Every column must be mapped — choose <strong>Ignore</strong> for columns you don't need.
+          </div>
+          <v-divider class="mb-6" />
+
+          <div v-for="header in csvHeaders" :key="header" class="d-flex align-center mb-3">
+            <div class="d-flex align-center" style="width: 40%">
+              <v-icon
+                size="10"
+                class="mr-2"
+                :color="
+                  header in headerMapping && headerMapping[header] !== undefined
+                    ? 'success'
+                    : 'warning'
+                "
+              >
+                mdi-circle
+              </v-icon>
+              <span class="text-subtitle-1 font-weight-bold">{{ header }}</span>
+            </div>
+            <v-icon color="medium-emphasis" class="mx-4">mdi-arrow-right</v-icon>
+            <v-select
+              v-model="headerMapping[header]"
+              :items="targetOptions"
+              label="Map to Database Field"
+              variant="solo-filled"
+              rounded="lg"
+              density="compact"
+              hide-details
+              color="primary"
+              style="width: 50%"
+              :error="headerMapping[header] === undefined"
+            />
+          </div>
+
+          <v-alert
+            v-if="unmappedCount > 0"
+            type="warning"
+            variant="tonal"
+            density="compact"
+            rounded="lg"
+            class="mt-4"
+          >
+            {{ unmappedCount }} column{{ unmappedCount > 1 ? 's' : '' }} still need{{
+              unmappedCount === 1 ? 's' : ''
+            }}
+            to be mapped.
+          </v-alert>
+
+          <v-checkbox
+            v-model="invertAmount"
+            label="Invert Amounts (Check this if expenses show up as positive numbers)"
+            color="primary"
+            hide-details
+            class="mt-2"
+          />
+        </v-card-text>
+      </template>
+
+      <!-- STEP 3: MATCH ACCOUNTS -->
+      <template #item.3>
+        <v-card-text class="pa-6">
+          <div class="text-subtitle-1 font-weight-medium mb-4">
+            Select the account to import these transactions into
+          </div>
+          <v-divider class="mb-4" />
+
+          <v-row class="mb-4 align-center">
+            <v-col cols="12" sm="5">
+              <div class="text-body-2 font-weight-bold">
+                {{ selectedFiles[0]?.name }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                CSV File • {{ rowCount }} rows detected
+              </div>
+            </v-col>
+            <v-col cols="12" sm="2" class="text-center">
+              <v-icon color="medium-emphasis">mdi-arrow-right</v-icon>
+            </v-col>
+            <v-col cols="12" sm="5">
+              <v-select
+                v-model="targetAcctId"
+                :items="accountOptions"
+                label="Map to Account"
+                variant="solo-filled"
+                rounded="lg"
+                density="compact"
+                hide-details
+                color="primary"
+              />
+              <div v-if="!targetAcctId" class="text-caption text-success mt-1 d-flex align-center">
+                <v-icon size="14" start>mdi-plus-circle-outline</v-icon>
+                Will create new account
+              </div>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </template>
+
+      <!-- STEP 4: FINALIZE -->
+      <template #item.4>
+        <v-card-text class="pa-6">
+          <div class="text-center mb-8">
+            <div class="text-h5 font-weight-bold">Ready to Import</div>
+            <div class="text-body-2 text-medium-emphasis">
+              Review your final account balance before saving.
+            </div>
+          </div>
+
+          <v-row justify="center">
+            <v-col cols="12" md="8">
+              <v-card variant="flat" class="rounded-xl pa-5 mb-4 border bg-surface">
+                <div class="d-flex align-center justify-space-between mb-4">
+                  <div class="text-h6 font-weight-bold">{{ accountLabel(targetAcctId) }}</div>
+                  <v-chip color="primary" variant="flat">Importing {{ rowCount }} rows</v-chip>
+                </div>
+
+                <div class="bg-surface-variant rounded-lg pa-4">
+                  <div class="d-flex justify-space-between align-center mb-4">
+                    <span class="text-body-2 text-medium-emphasis">Current App Balance:</span>
+                    <span class="font-weight-bold text-h6">{{
+                      formatCurrency(currentDbBalance)
+                    }}</span>
+                  </div>
+
+                  <v-alert type="info" variant="flat" class="rounded-lg mb-0">
+                    <div class="mb-2">CSV files do not provide a verified ledger balance.</div>
+                    <div class="d-flex align-center gap-2 mt-2">
+                      <v-text-field
+                        v-model="targetBalance"
+                        label="Set Target Ledger Balance (Optional)"
+                        density="compact"
+                        variant="solo-filled"
+                        rounded="lg"
+                        hide-details
+                        prefix="$"
+                        type="number"
+                      />
+                    </div>
+                  </v-alert>
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </template>
+
+      <!-- NAVIGATION -->
+      <template #actions>
+        <v-card-actions class="pa-6 pt-0">
+          <v-btn v-if="step > 1" variant="text" size="large" @click="step--">Back</v-btn>
+          <v-spacer />
+
+          <v-btn
+            v-if="step === 1"
+            color="primary"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            :disabled="!selectedFiles.length"
+            :loading="parsing"
+            @click="doParseHeaders"
+          >
+            Map Columns <v-icon end>mdi-arrow-right</v-icon>
+          </v-btn>
+
+          <v-btn
+            v-else-if="step === 2"
+            color="primary"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            :disabled="!isMappingValid"
+            @click="step = 3"
+          >
+            Match Account <v-icon end>mdi-arrow-right</v-icon>
+          </v-btn>
+
+          <v-btn
+            v-else-if="step === 3"
+            color="primary"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            @click="step = 4"
+          >
+            Review & Finalize <v-icon end>mdi-arrow-right</v-icon>
+          </v-btn>
+
+          <v-btn
+            v-else-if="step === 4"
+            color="success"
+            variant="flat"
+            size="large"
+            rounded="lg"
+            :loading="importing"
+            @click="doImport"
+          >
+            Complete Import <v-icon end>mdi-check</v-icon>
+          </v-btn>
+        </v-card-actions>
+      </template>
+    </v-stepper>
+  </v-card>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useUserAccountsStore } from '../stores/userAccounts'
+import { useUserSettingsStore } from '../stores/userSettings'
+
+const ipc = window.electron.ipcRenderer
+const accountsStore = useUserAccountsStore()
+const settingsStore = useUserSettingsStore()
+const { formatCurrency } = settingsStore
+const emit = defineEmits(['navigate'])
+
+const STEPS = [
+  { title: 'Upload', value: 1 },
+  { title: 'Map Cols', value: 2 },
+  { title: 'Account', value: 3 },
+  { title: 'Finalize', value: 4 }
+]
+const step = ref(1)
+
+const isDragging = ref(false)
+const selectedFiles = ref([])
+const parseError = ref(null)
+const parsing = ref(false)
+const importing = ref(false)
+const fileInput = ref(null)
+
+/* -- TARGET_COLUMNS defines the possible database fields that CSV columns can be mapped to.
+    Each has:
+    - key: the internal identifier used in the code
+    - label: the user-friendly name shown in the UI
+    - required: whether this field is required for import
+    - multi: whether multiple CSV columns can be mapped to this field (e.g. multiple date columns like posted date, user date, etc.)
+    - core: whether this is a core field that should always be shown in the mapping options, even if not auto-mapped
+    MEMO is not the same as NOTE. MEMO is a specific field in the database, while "Note" is a more generic term that users will use to add notes to Transactions in Transactions.vue
+    */
+
+const TARGET_COLUMNS = [
+  { key: 'DTPOSTED', label: 'Posted Date (+ Time)', required: true, multi: true, core: true },
+  { key: 'TRNAMT', label: 'Amount', required: true, multi: false, core: true },
+  { key: 'TRNTYPE', label: 'Transaction Type', required: true, multi: false, core: true },
+  { key: 'NAME', label: 'Payee', required: false, multi: true, core: true },
+  { key: 'MEMO', label: 'Memo / Description', required: false, multi: true, core: true },
+  { key: 'CHECKNUM', label: 'Check Number', required: false, multi: false, core: true },
+  { key: 'REFNUM', label: 'Reference #', required: false, multi: false, core: true },
+  { key: 'DTUSER', label: 'User Date', required: false, multi: true, core: false },
+  { key: 'DTAVAIL', label: 'Available Date', required: false, multi: true, core: false },
+  { key: 'EXTDNAME', label: 'Extended Name', required: false, multi: true, core: false },
+  { key: 'PAYEEID', label: 'Payee ID', required: false, multi: false, core: false },
+  { key: 'SRVRTID', label: 'Server Transaction ID', required: false, multi: false, core: false },
+  { key: 'SIC', label: 'SIC Code', required: false, multi: false, core: false },
+  { key: 'ORG', label: 'Organization', required: false, multi: false, core: false }
+]
+
+// CSV specifics
+const csvText = ref('')
+const csvHeaders = ref([])
+const sampleRows = ref([])
+const rowCount = ref(0)
+const headerMapping = ref({})
+const invertAmount = ref(false)
+
+const targetAcctId = ref(null)
+const targetBalance = ref(null)
+
+onMounted(async () => {
+  await accountsStore.fetchAccounts()
+})
+
+const targetOptions = computed(() => {
+  const mappedTargets = Object.values(headerMapping.value).filter((v) => v)
+  const matchedKeys = new Set(mappedTargets)
+
+  return [
+    { title: '-- Ignore --', value: null },
+    ...TARGET_COLUMNS.filter((t) => t.core || matchedKeys.has(t.key)).map((t) => {
+      const isMapped = mappedTargets.includes(t.key)
+      const disabled = !t.multi && isMapped
+      return {
+        title: t.label + (t.required ? ' *' : ''),
+        value: t.key,
+        props: { disabled }
+      }
+    })
+  ]
+})
+
+const accountOptions = computed(() => [
+  { title: '-- Create New Account --', value: null },
+  ...accountsStore.accounts.map((a) => ({
+    title: `${a.displayName || a.ACCTTYPE} (${a.ORG || 'Unknown'})`,
+    value: a.ACCTID
+  }))
+])
+
+const currentDbBalance = computed(() => {
+  if (!targetAcctId.value) return 0
+  const acc = accountsStore.accounts.find((a) => a.ACCTID === targetAcctId.value)
+  return acc ? acc.BALAMT : 0
+})
+
+const isMappingValid = computed(() => {
+  // Every CSV header must have an explicit selection (a target key or null for "Ignore")
+  const allHeadersMapped = csvHeaders.value.every(
+    (h) => h in headerMapping.value && headerMapping.value[h] !== undefined
+  )
+  // All required target columns must be assigned
+  const mappedTargets = Object.values(headerMapping.value)
+  const allRequiredMapped = TARGET_COLUMNS.filter((t) => t.required).every((t) =>
+    mappedTargets.includes(t.key)
+  )
+  return allHeadersMapped && allRequiredMapped
+})
+
+const unmappedCount = computed(
+  () =>
+    csvHeaders.value.filter(
+      (h) => !(h in headerMapping.value) || headerMapping.value[h] === undefined
+    ).length
+)
+
+function handleDrop(e) {
+  isDragging.value = false
+  const dropped = Array.from(e.dataTransfer.files).filter((f) =>
+    f.name.toLowerCase().endsWith('.csv')
+  )
+  if (dropped.length) {
+    selectedFiles.value = [dropped[0]]
+    parseError.value = null
+  }
+}
+
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files)
+  if (files.length) {
+    selectedFiles.value = [files[0]]
+    parseError.value = null
+  }
+}
+
+function doParseHeaders() {
+  if (!selectedFiles.value.length) return
+  parsing.value = true
+  parseError.value = null
+
+  const file = selectedFiles.value[0]
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    try {
+      csvText.value = e.target.result
+      const res = await ipc.invoke('csv:extractHeaders', csvText.value)
+      if (res.success) {
+        csvHeaders.value = res.data.headers
+        sampleRows.value = res.data.sampleRows
+        rowCount.value = res.data.rowCount
+
+        csvHeaders.value.forEach((h) => {
+          headerMapping.value[h] = null
+        })
+
+        // Auto-guess: patterns ordered specific → general per target key
+        const GUESS_PATTERNS = {
+          DTPOSTED: [
+            /^dtposted$/i,
+            /post.*date|date.*post|settle.*date/i,
+            /^(trans|tran|trx).*date$/i,
+            /date|time/i
+          ],
+          TRNAMT: [
+            /^trnamt$/i,
+            /^(transaction\s*)?amount$/i,
+            /(trans|tran|trx).*amount/i,
+            /\bamount\b|\bvalue\b|\bsum\b/i
+          ],
+          TRNTYPE: [/^trntype$/i, /(trans|tran|trx).*type/i, /^type$/i],
+          NAME: [
+            /^name$/i,
+            /\bdescription\b|\bpayee\b|\bmerchant\b|\bbeneficiary\b/i,
+            /^(payee|desc)$/i
+          ],
+          MEMO: [/^memo$/i, /\bnarrative\b|\bnotes?\b|\bdetails?\b/i, /\bmemo\b|\bnote\b/i],
+          CHECKNUM: [/^checknum$/i, /check.*(num|no|#)|cheque/i, /^check$/i],
+          REFNUM: [
+            /^refnum$/i,
+            /ref.*(num|no|#)|reference\s*(num|no|#)/i,
+            /^ref(erence)?$|confirm/i
+          ],
+          DTUSER: [/^dtuser$/i, /user.*date|entry.*date|input.*date/i],
+          DTAVAIL: [/^dtavail$/i, /avail.*date|date.*avail/i],
+          EXTDNAME: [/^extdname$/i, /ext(ended)?.*(name|desc)/i],
+          PAYEEID: [/^payeeid$/i, /payee.*(id|num|no)/i],
+          SRVRTID: [/^srvrtid$/i, /server.*(ref|id|trans)|srv.*id/i],
+          SIC: [/^sic$/i, /\bsic\b/i],
+          ORG: [/^org$/i, /\borg\b|organization|institution/i]
+        }
+        const assigned = new Set()
+        for (const col of TARGET_COLUMNS) {
+          const patterns = GUESS_PATTERNS[col.key]
+          if (!patterns) continue
+          if (col.multi) {
+            const matches = []
+            for (const pat of patterns) {
+              csvHeaders.value
+                .filter((h) => !assigned.has(h) && pat.test(h))
+                .forEach((h) => {
+                  if (!matches.includes(h)) matches.push(h)
+                })
+            }
+            matches.forEach((h) => {
+              headerMapping.value[h] = col.key
+              assigned.add(h)
+            })
+          } else {
+            let found = null
+            for (const pat of patterns) {
+              found = csvHeaders.value.find((h) => !assigned.has(h) && pat.test(h))
+              if (found) break
+            }
+            if (found) {
+              headerMapping.value[found] = col.key
+              assigned.add(found)
+            }
+          }
+        }
+
+        step.value = 2
+      } else {
+        throw new Error(res.error)
+      }
+    } catch (err) {
+      parseError.value = err.message
+    } finally {
+      parsing.value = false
+    }
+  }
+  reader.onerror = () => {
+    parseError.value = 'Failed to read file'
+    parsing.value = false
+  }
+  reader.readAsText(file)
+}
+
+function getBatchPayload() {
+  // Clean up the mapping
+  const mapping = {}
+
+  for (const [csvHeader, targetKey] of Object.entries(headerMapping.value)) {
+    if (targetKey) {
+      if (!mapping[targetKey]) mapping[targetKey] = { columns: [] }
+      mapping[targetKey].columns.push(csvHeader)
+    }
+  }
+
+  return [
+    {
+      csvText: csvText.value,
+      mapping: mapping,
+      options: { invertAmount: invertAmount.value },
+      targetAcctId: targetAcctId.value,
+      accountStub: { ACCTTYPE: 'Checking', ORG: 'CSV Import' },
+      targetBalance: targetBalance.value ? Number(targetBalance.value) : null
+    }
+  ]
+}
+
+function accountLabel(id) {
+  const a = accountsStore.accounts.find((x) => x.ACCTID === id)
+  if (!a) return 'New Account'
+  return `${a.displayName || a.ACCTTYPE} (${a.ORG || 'Unknown'})`
+}
+
+async function doImport() {
+  importing.value = true
+  parseError.value = null
+  try {
+    const payload = getBatchPayload()
+    const res = await ipc.invoke('csv:importBatch', payload)
+    if (res.success) {
+      await accountsStore.fetchAccounts()
+      emit('navigate', 'Transactions')
+    } else {
+      throw new Error(res.error)
+    }
+  } catch (err) {
+    console.error(err)
+    parseError.value = err.message
+  } finally {
+    importing.value = false
+  }
+}
+</script>

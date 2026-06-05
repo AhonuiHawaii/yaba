@@ -52,12 +52,22 @@ const handleClose = () => window.api.window.close()
 <style scoped>
 .custom-title-bar {
   -webkit-app-region: drag;
+  /* Base color matches the app */
+  /* Base color matches your theme's primary container */
+  background-color: rgba(var(--v-theme-primary-container), 1) !important;
+  /* Overlay creates the OSX highlight/shadow effect on top of the color */
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--v-theme-primary-darken-1), 0.3) 0%,
+    rgba(var(--v-theme-primary-container), 1) 100%
+  ) !important;
+
   user-select: none;
 }
 
 .custom-title-bar :deep(.v-toolbar__content) {
   padding-left: 12px;
-  background-color: rgba(var(--v-theme-primary), 0.8);
+  border: 1px solid rgba(var(--v-theme-primary), 0) !important;
 }
 
 .title-text {
@@ -66,7 +76,6 @@ const handleClose = () => window.api.window.close()
   font-weight: 600;
   font-size: 13px;
   opacity: 0.75;
-  color: rgb(var(--v-theme-on-primary));
 }
 
 .traffic-lights {

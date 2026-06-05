@@ -2,9 +2,8 @@ import Database from 'better-sqlite3-multiple-ciphers'
 import dpapi from 'node-dpapi-prebuilt'
 import { app } from 'electron'
 import { join } from 'path'
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs'
+import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs'
 import { randomBytes } from 'crypto'
-import { buildMerchantHistory, scoreRecurring, rescanRecurring } from './util/detectRecurring.js'
 
 /*
   Database initialization
@@ -19,7 +18,7 @@ const KEY_PATH = join(DB_DIR, 'budget.key')
 
 mkdirSync(DB_DIR, { recursive: true })
 
-// Resolve or create encryption key — DPAPI CurrentUser scope ties it to this Windows account
+// // Resolve or create encryption key — DPAPI CurrentUser scope ties it to this Windows account
 const encryptionKey = (() => {
   if (existsSync(KEY_PATH)) {
     return dpapi.unprotectData(readFileSync(KEY_PATH), null, 'CurrentUser').toString('utf8')
@@ -36,24 +35,29 @@ db.pragma('foreign_keys = ON')
 
 // ── Schema initialization ─────────────────────────────────────────────────────
 
+// Linked bank accounts. accountCategory lets the user override whether an
+// account is treated as an asset or liability in net worth calculations.
 db.exec(`
   CREATE TABLE IF NOT EXISTS Accounts (
-    ACCTID      TEXT PRIMARY KEY,
-    ACCTTYPE    TEXT,
-    ORG         TEXT,
-    INTU_BID    TEXT,
-    displayName TEXT,
-    interestRate REAL,
-    dueDate INTEGER,
+    ACCTID          TEXT PRIMARY KEY,
+    ACCTTYPE        TEXT,
+    ORG             TEXT,
+    INTU_BID        TEXT,
+    displayName     TEXT,
+    interestRate    REAL,
+    dueDate         INTEGER,
     paymentFrequency TEXT,
     paymentStartDate TEXT,
-    paymentCount     INTEGER,
-    startingBalance  REAL,
-    createdAt   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    lastImport  TEXT
+    paymentCount    INTEGER,
+    startingBalance REAL,
+    accountCategory TEXT DEFAULT NULL,
+    createdAt       TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    lastImport      TEXT
   )
 `)
 
+// One row per OFX transaction. OFX fields come from the bank; app fields
+// (transactionType, category, split*, notes, recurring) are set by the user.
 db.exec(`
   CREATE TABLE IF NOT EXISTS Transactions (
     FITID           TEXT PRIMARY KEY,
@@ -76,26 +80,57 @@ db.exec(`
     createdAt       TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     transactionType TEXT,
     category        TEXT,
-    splitCategory1  TEXT,
     splitAmount1    REAL,
     splitCategory2  TEXT,
     splitAmount2    REAL,
     notes           TEXT,
-    recurring       INTEGER DEFAULT 0
+    tags            TEXT, 
+    dueDate         INTEGER,
+    frequency       TEXT,
+    subscription       INTEGER NOT NULL DEFAULT 0,
+    bill               INTEGER NOT NULL DEFAULT 0,
+    linkedAccount      TEXT
   )
 `)
 
-// 1.1: Indexes on hot columns (recreated after any migration, IF NOT EXISTS is idempotent)
+// Migrate: add linkedAccount if it doesn't exist yet (idempotent)
+try {
+  db.exec(`ALTER TABLE Transactions ADD COLUMN linkedAccount TEXT`)
+} catch {
+  /* column already exists */
+}
+
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_dtposted ON Transactions(DTPOSTED)`)
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_acctid   ON Transactions(ACCTID)`)
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_category ON Transactions(category)`)
 
-// 1.2: Add accountCategory column for user-defined asset/liability override (safe on existing DBs)
-try {
-  db.exec(`ALTER TABLE Accounts ADD COLUMN accountCategory TEXT DEFAULT NULL`)
-} catch {
-  /* column already exists */
-}
+// ── Categories & Budgets ──────────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS Categories (
+    id        TEXT PRIMARY KEY,
+    name      TEXT NOT NULL,
+    type      TEXT NOT NULL,
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`)
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS Budgets (
+    categoryId TEXT NOT NULL,
+    month      TEXT NOT NULL,
+    amount     REAL NOT NULL,
+    createdAt  TEXT DEFAULT CURRENT_TIMESTAMP,
+    updatedAt  TEXT DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (categoryId, month)
+  )
+`)
+
+// Clean up orphaned categories in Transactions & CategoryRules (from old Dexie state)
+db.exec(`
+  UPDATE Transactions SET category = NULL WHERE category IS NOT NULL AND category NOT IN (SELECT id FROM Categories);
+  UPDATE Transactions SET splitCategory2 = NULL WHERE splitCategory2 IS NOT NULL AND splitCategory2 NOT IN (SELECT id FROM Categories);
+`)
 
 // ── Column sets ──────────────────────────────────────────────────────────────
 
@@ -106,8 +141,7 @@ try {
 
   App fields (set by user in the app):
     transactionType = income, expense, bills, variable (expenses)
-    category        = main app category
-    splitCategory1  = first split category
+    category        = first split category (or regular category)
     splitAmount1    = first split amount
     splitCategory2  = second split category
     splitAmount2    = second split amount
@@ -136,13 +170,17 @@ const VALID_COLUMNS = new Set([
   'createdAt',
   'transactionType',
   'category',
-  'splitCategory1',
   'splitAmount1',
   'splitCategory2',
   'splitAmount2',
   'ORG',
   'notes',
-  'recurring'
+  'tags',
+  'dueDate',
+  'frequency',
+  'subscription',
+  'bill',
+  'linkedAccount'
 ])
 
 // OFX date columns — use LIKE prefix matching so partial dates work
@@ -158,16 +196,58 @@ const getTransactions = (filters = {}) => {
   if (entries.length === 0) {
     const now = new Date()
     const yyyymm = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
-    return db.prepare('SELECT * FROM Transactions WHERE DTPOSTED LIKE ?').all(`${yyyymm}%`)
+    return db
+      .prepare(
+        `
+      SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType,
+             c.name as categoryName, c.type as categoryType,
+             c2.name as splitCategory2Name, c2.type as splitCategory2Type
+      FROM Transactions t
+      LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
+      LEFT JOIN Categories c ON t.category = c.id
+      LEFT JOIN Categories c2 ON t.splitCategory2 = c2.id
+      WHERE t.DTPOSTED LIKE ?
+    `
+      )
+      .all(`${yyyymm}%`)
   }
 
-  const clauses = entries.map(([col]) => (DATE_COLUMNS.has(col) ? `${col} LIKE ?` : `${col} = ?`))
+  const clauses = entries.map(([col]) =>
+    DATE_COLUMNS.has(col) ? `t.${col} LIKE ?` : `t.${col} = ?`
+  )
   const values = entries.map(([col, val]) => (DATE_COLUMNS.has(col) ? `${val}%` : val))
 
-  return db.prepare(`SELECT * FROM Transactions WHERE ${clauses.join(' AND ')}`).all(...values)
+  return db
+    .prepare(
+      `
+    SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType,
+           c.name as categoryName, c.type as categoryType,
+           c2.name as splitCategory2Name, c2.type as splitCategory2Type
+    FROM Transactions t
+    LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
+    LEFT JOIN Categories c ON t.category = c.id
+    LEFT JOIN Categories c2 ON t.splitCategory2 = c2.id
+    WHERE ${clauses.join(' AND ')}
+  `
+    )
+    .all(...values)
 }
 
-const getAllTransactions = () => db.prepare('SELECT * FROM Transactions').all()
+const getAllTransactions = () => {
+  return db
+    .prepare(
+      `
+    SELECT t.*, a.displayName as accountName, a.ACCTTYPE as accountType,
+           c.name as categoryName, c.type as categoryType,
+           c2.name as splitCategory2Name, c2.type as splitCategory2Type
+    FROM Transactions t
+    LEFT JOIN Accounts a ON t.ACCTID = a.ACCTID
+    LEFT JOIN Categories c ON t.category = c.id
+    LEFT JOIN Categories c2 ON t.splitCategory2 = c2.id
+  `
+    )
+    .all()
+}
 
 // ── Transaction writes ───────────────────────────────────────────────────────
 
@@ -187,31 +267,6 @@ const updateTransaction = (fitid, updates = {}) => {
 }
 
 /**
- * Inserts a single transaction. Ignores duplicates on FITID (safe for OFX re-imports).
- * Account metadata must be upserted via upsertAccount() before calling this.
- *
- * @param {Object} txn - Transaction object from ofx.js extractTransactionData.
- * @returns {number} Rows inserted (0 = duplicate, 1 = inserted).
- */
-function createTransaction(txn) {
-  if (!txn) throw new Error('Transaction data is required to create a transaction.')
-  if (!txn.FITID) throw new Error('A valid FITID is required to create a transaction.')
-
-  const stmt = db.prepare(`
-    INSERT OR IGNORE INTO Transactions
-      (FITID, ACCTID, TRNTYPE, DTPOSTED, DTUSER, TRNAMT, NAME, MEMO,
-       CHECKNUM, REFNUM, DTAVAIL, SRVRTID, PAYEEID, EXTDNAME, SIC, ORG, rawTransaction, recurring)
-    VALUES
-      (@FITID, @ACCTID, @TRNTYPE, @DTPOSTED, @DTUSER, @TRNAMT, @NAME, COALESCE(NULLIF(@MEMO, ''), @NAME),
-       @CHECKNUM, @REFNUM, @DTAVAIL, @SRVRTID, @PAYEEID, @EXTDNAME, @SIC, @ORG, @rawTransaction, @recurring)
-  `)
-
-  const history = buildMerchantHistory(db)
-  const recurring = scoreRecurring(txn, history) ? 1 : 0
-  return stmt.run({ ...txn, rawTransaction: JSON.stringify(txn), recurring }).changes
-}
-
-/**
  * Bulk-inserts an array of transactions inside a single SQLite transaction.
  * A mid-import crash leaves no partial state.
  *
@@ -224,22 +279,18 @@ function createTransactions(txns) {
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO Transactions
       (FITID, ACCTID, TRNTYPE, DTPOSTED, DTUSER, TRNAMT, NAME, MEMO,
-       CHECKNUM, REFNUM, DTAVAIL, SRVRTID, PAYEEID, EXTDNAME, SIC, ORG, rawTransaction, recurring)
+       CHECKNUM, REFNUM, DTAVAIL, SRVRTID, PAYEEID, EXTDNAME, SIC, ORG, rawTransaction)
     VALUES
       (@FITID, @ACCTID, @TRNTYPE, @DTPOSTED, @DTUSER, @TRNAMT, @NAME, COALESCE(NULLIF(@MEMO, ''), @NAME),
-       @CHECKNUM, @REFNUM, @DTAVAIL, @SRVRTID, @PAYEEID, @EXTDNAME, @SIC, @ORG, @rawTransaction, @recurring)
+       @CHECKNUM, @REFNUM, @DTAVAIL, @SRVRTID, @PAYEEID, @EXTDNAME, @SIC, @ORG, @rawTransaction)
   `)
 
   let inserted = 0
   db.transaction((rows) => {
     for (const txn of rows) {
-      inserted += stmt.run({ ...txn, rawTransaction: JSON.stringify(txn), recurring: 0 }).changes
+      inserted += stmt.run({ ...txn, rawTransaction: JSON.stringify(txn) }).changes
     }
   })(txns)
-
-  // Authoritative pass — runs after every bulk import so newly-eligible
-  // merchants pick up their flag and stale flags get cleared.
-  rescanRecurring(db)
 
   return { total: txns.length, inserted, skipped: txns.length - inserted }
 }
@@ -278,17 +329,23 @@ function deleteTransaction(id, type = 'FITID') {
 function upsertAccount(acct) {
   if (!acct?.ACCTID) throw new Error('ACCTID is required to upsert an account.')
 
+  const data = {
+    ...acct,
+    startingBalance: acct.startingBalance !== undefined ? acct.startingBalance : null
+  }
+
   db.prepare(
     `
-    INSERT INTO Accounts (ACCTID, ACCTTYPE, ORG, INTU_BID, lastImport)
-    VALUES (@ACCTID, @ACCTTYPE, @ORG, @INTU_BID, CURRENT_TIMESTAMP)
+    INSERT INTO Accounts (ACCTID, ACCTTYPE, ORG, INTU_BID, startingBalance, lastImport)
+    VALUES (@ACCTID, @ACCTTYPE, @ORG, @INTU_BID, @startingBalance, CURRENT_TIMESTAMP)
     ON CONFLICT(ACCTID) DO UPDATE SET
-      ACCTTYPE   = excluded.ACCTTYPE,
-      ORG        = excluded.ORG,
-      INTU_BID   = excluded.INTU_BID,
-      lastImport = CURRENT_TIMESTAMP
+      ACCTTYPE        = excluded.ACCTTYPE,
+      ORG             = excluded.ORG,
+      INTU_BID        = excluded.INTU_BID,
+      startingBalance = COALESCE(excluded.startingBalance, startingBalance),
+      lastImport      = CURRENT_TIMESTAMP
   `
-  ).run(acct)
+  ).run(data)
 }
 
 /**
@@ -409,59 +466,248 @@ function deleteAccount(acctid) {
   })()
 }
 
-// ── Category Rules ───────────────────────────────────────────────────────────
+// ── Categories & Budgets API ──────────────────────────────────────────────────
+
+function getCategories() {
+  return db.prepare('SELECT * FROM Categories ORDER BY name ASC').all()
+}
+
+function createCategory(data) {
+  const id = crypto.randomUUID()
+  db.prepare('INSERT INTO Categories (id, name, type) VALUES (@id, @name, @type)').run({
+    id,
+    name: data.name,
+    type: data.type
+  })
+  return db.prepare('SELECT * FROM Categories WHERE id = ?').get(id)
+}
+
+function updateCategory(id, updates) {
+  const ALLOWED = new Set(['name', 'type'])
+  const entries = Object.entries(updates).filter(([col]) => ALLOWED.has(col))
+  if (entries.length === 0) return 0
+
+  const setClause = entries
+    .map(([col]) => `${col} = ?`)
+    .concat('updatedAt = CURRENT_TIMESTAMP')
+    .join(', ')
+  const values = entries.map(([, val]) => val)
+
+  return db.prepare(`UPDATE Categories SET ${setClause} WHERE id = ?`).run(...values, id).changes
+}
+
+function deleteCategory(id) {
+  return db.transaction(() => {
+    db.prepare('DELETE FROM Categories WHERE id = ?').run(id)
+    db.prepare('DELETE FROM Budgets WHERE categoryId = ?').run(id)
+    db.prepare('UPDATE Transactions SET category = NULL WHERE category = ?').run(id)
+    db.prepare('UPDATE Transactions SET splitCategory2 = NULL WHERE splitCategory2 = ?').run(id)
+    db.prepare("DELETE FROM RuleActions WHERE type = 'category' AND value = ?").run(id)
+  })()
+}
+
+function getBudgets() {
+  return db.prepare('SELECT * FROM Budgets').all()
+}
+
+function upsertBudget(categoryId, amount, month) {
+  return db
+    .prepare(
+      `
+    INSERT INTO Budgets (categoryId, month, amount)
+    VALUES (@categoryId, @month, @amount)
+    ON CONFLICT(categoryId, month) DO UPDATE SET
+      amount = excluded.amount,
+      updatedAt = CURRENT_TIMESTAMP
+  `
+    )
+    .run({ categoryId, month, amount: Number(amount) || 0 }).changes
+}
+
+function getCategoryTypes() {
+  return db
+    .prepare('SELECT DISTINCT type FROM Categories ORDER BY type ASC')
+    .all()
+    .map((r) => r.type)
+}
+
+// ── Rule Engine (Relational) ───────────────────────────────────────────────────
 
 db.exec(`
-  CREATE TABLE IF NOT EXISTS CategoryRules (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    field     TEXT NOT NULL,
-    operator  TEXT NOT NULL,
-    value     TEXT NOT NULL,
-    category  TEXT NOT NULL,
-    type      TEXT,
-    priority  INTEGER DEFAULT 0,
-    createdAt TEXT DEFAULT CURRENT_TIMESTAMP
-  )
+  DROP TABLE IF EXISTS CategoryRules;
+  DROP TABLE IF EXISTS CustomRecurring;
+
+  CREATE TABLE IF NOT EXISTS Rules (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    name         TEXT NOT NULL,
+    priority     INTEGER DEFAULT 0,
+    createdAt    TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS RuleConditions (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    ruleId       INTEGER NOT NULL,
+    field        TEXT NOT NULL,
+    operator     TEXT NOT NULL,
+    value        TEXT NOT NULL,
+    FOREIGN KEY(ruleId) REFERENCES Rules(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS RuleActions (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    ruleId       INTEGER NOT NULL,
+    type         TEXT NOT NULL,
+    value        TEXT,
+    FOREIGN KEY(ruleId) REFERENCES Rules(id) ON DELETE CASCADE
+  );
+
+  DELETE FROM RuleActions WHERE type = 'category' AND value NOT IN (SELECT id FROM Categories);
 `)
 
 function getRules() {
-  return db.prepare('SELECT * FROM CategoryRules ORDER BY priority DESC, id ASC').all()
+  const rules = db.prepare('SELECT * FROM Rules ORDER BY priority DESC, id ASC').all()
+  const conditions = db.prepare('SELECT * FROM RuleConditions').all()
+  const actions = db.prepare('SELECT * FROM RuleActions').all()
+
+  // Map them together
+  const condMap = {}
+  const actMap = {}
+  for (const c of conditions) {
+    if (!condMap[c.ruleId]) condMap[c.ruleId] = []
+    condMap[c.ruleId].push(c)
+  }
+  for (const a of actions) {
+    if (!actMap[a.ruleId]) actMap[a.ruleId] = []
+    actMap[a.ruleId].push(a)
+  }
+
+  return rules.map((r) => ({
+    ...r,
+    conditions: condMap[r.id] || [],
+    actions: actMap[r.id] || []
+  }))
 }
 
 function createRule(rule) {
-  const stmt = db.prepare(`
-    INSERT INTO CategoryRules (field, operator, value, category, type, priority)
-    VALUES (@field, @operator, @value, @category, @type, @priority)
-  `)
-  const info = stmt.run({
-    field: rule.field,
-    operator: rule.operator,
-    value: rule.value,
-    category: rule.category,
-    type: rule.type ?? null,
-    priority: rule.priority ?? 0
-  })
-  return db.prepare('SELECT * FROM CategoryRules WHERE id = ?').get(info.lastInsertRowid)
+  return db.transaction(() => {
+    const info = db.prepare('INSERT INTO Rules (name, priority) VALUES (@name, @priority)').run({
+      name: rule.name || 'Untitled Rule',
+      priority: rule.priority ?? 0
+    })
+    const ruleId = info.lastInsertRowid
+
+    if (rule.conditions && rule.conditions.length > 0) {
+      const stmt = db.prepare(
+        'INSERT INTO RuleConditions (ruleId, field, operator, value) VALUES (?, ?, ?, ?)'
+      )
+      for (const c of rule.conditions) {
+        stmt.run(ruleId, c.field, c.operator, c.value)
+      }
+    }
+
+    if (rule.actions && rule.actions.length > 0) {
+      const stmt = db.prepare('INSERT INTO RuleActions (ruleId, type, value) VALUES (?, ?, ?)')
+      for (const a of rule.actions) {
+        stmt.run(ruleId, a.type, a.value)
+      }
+    }
+
+    // Return the inserted rule by re-fetching
+    const r = db.prepare('SELECT * FROM Rules WHERE id = ?').get(ruleId)
+    r.conditions = db.prepare('SELECT * FROM RuleConditions WHERE ruleId = ?').all(ruleId)
+    r.actions = db.prepare('SELECT * FROM RuleActions WHERE ruleId = ?').all(ruleId)
+    return r
+  })()
 }
 
 function updateRule(id, updates) {
-  const ALLOWED = new Set(['field', 'operator', 'value', 'category', 'type', 'priority'])
-  const entries = Object.entries(updates).filter(([col]) => ALLOWED.has(col))
-  if (entries.length === 0) return 0
-  const setClause = entries.map(([col]) => `${col} = ?`).join(', ')
-  const values = entries.map(([, val]) => val)
-  return db.prepare(`UPDATE CategoryRules SET ${setClause} WHERE id = ?`).run(...values, id).changes
+  return db.transaction(() => {
+    // Update main table if fields exist
+    if (updates.name !== undefined || updates.priority !== undefined) {
+      const sets = []
+      const vals = []
+      if (updates.name !== undefined) {
+        sets.push('name = ?')
+        vals.push(updates.name)
+      }
+      if (updates.priority !== undefined) {
+        sets.push('priority = ?')
+        vals.push(updates.priority)
+      }
+      if (sets.length > 0) {
+        db.prepare(`UPDATE Rules SET ${sets.join(', ')} WHERE id = ?`).run(...vals, id)
+      }
+    }
+
+    // Replace conditions if provided
+    if (updates.conditions) {
+      db.prepare('DELETE FROM RuleConditions WHERE ruleId = ?').run(id)
+      const stmt = db.prepare(
+        'INSERT INTO RuleConditions (ruleId, field, operator, value) VALUES (?, ?, ?, ?)'
+      )
+      for (const c of updates.conditions) {
+        stmt.run(id, c.field, c.operator, c.value)
+      }
+    }
+
+    // Replace actions if provided
+    if (updates.actions) {
+      db.prepare('DELETE FROM RuleActions WHERE ruleId = ?').run(id)
+      const stmt = db.prepare('INSERT INTO RuleActions (ruleId, type, value) VALUES (?, ?, ?)')
+      for (const a of updates.actions) {
+        stmt.run(id, a.type, a.value)
+      }
+    }
+    return 1
+  })()
 }
 
 function deleteRule(id) {
-  return db.prepare('DELETE FROM CategoryRules WHERE id = ?').run(id).changes
+  return db.prepare('DELETE FROM Rules WHERE id = ?').run(id).changes
+}
+
+const normalizeBankText = (value) =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/['']/g, '')
+    .replace(/[*#:/\\|_()[\]{}-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+function matchesOneCondition(tx, { field, operator, value }) {
+  const raw = tx[field]
+  const fieldStr = String(raw ?? '')
+  switch (operator) {
+    case 'contains':
+      return normalizeBankText(fieldStr).includes(normalizeBankText(value))
+    case 'notContains':
+      return !normalizeBankText(fieldStr).includes(normalizeBankText(value))
+    case 'equals':
+      return normalizeBankText(fieldStr) === normalizeBankText(value)
+    case 'startsWith':
+      return normalizeBankText(fieldStr).startsWith(normalizeBankText(value))
+    case 'gt':
+      return Number(raw) > Number(value)
+    case 'lt':
+      return Number(raw) < Number(value)
+    case 'wildcard': {
+      const pattern = value.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
+      return new RegExp(`^${pattern}$`, 'i').test(fieldStr)
+    }
+    case 'wholeWord': {
+      const hasStar = value.includes('*')
+      const escaped = value.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+      const pattern = hasStar ? escaped.replace(/\*/g, '\\S*') : escaped.replace(/\*/g, '\\*')
+      return new RegExp(`\\b${pattern}\\b`, 'i').test(fieldStr)
+    }
+    default:
+      return false
+  }
 }
 
 /**
- * Evaluate all rules (highest priority first) against each transaction.
- * First matching rule wins per transaction.
- * @param {Object[]} transactions
- * @returns {{ FITID: string, category: string, transactionType?: string }[]}
+ * Evaluates rules (highest priority first). Returns patch actions for matched rules.
  */
 function applyRules(transactions) {
   const rules = getRules()
@@ -470,43 +716,33 @@ function applyRules(transactions) {
   const patches = []
   for (const txn of transactions) {
     for (const rule of rules) {
-      const raw = txn[rule.field]
-      const fieldStr = String(raw ?? '')
-      const ruleVal = rule.value
-      let matches = false
+      if (!rule.conditions || rule.conditions.length === 0) continue
 
-      switch (rule.operator) {
-        case 'contains':
-          matches = fieldStr.toLowerCase().includes(ruleVal.toLowerCase())
-          break
-        case 'equals':
-          matches = fieldStr.toLowerCase() === ruleVal.toLowerCase()
-          break
-        case 'startsWith':
-          matches = fieldStr.toLowerCase().startsWith(ruleVal.toLowerCase())
-          break
-        case 'gt':
-          matches = Number(raw) > Number(ruleVal)
-          break
-        case 'lt':
-          matches = Number(raw) < Number(ruleVal)
-          break
-        case 'wildcard': {
-          const pattern = ruleVal.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
-          matches = new RegExp(`^${pattern}$`, 'i').test(fieldStr)
-          break
-        }
-        case 'wholeWord': {
-          const pattern = ruleVal.replace(/[.*+^${}()|[\]\\]/g, '\\$&')
-          matches = new RegExp(`\\b${pattern}\\b`, 'i').test(fieldStr)
+      // All conditions must pass (AND logic)
+      let matches = true
+      for (const cond of rule.conditions) {
+        if (!matchesOneCondition(txn, cond)) {
+          matches = false
           break
         }
       }
 
       if (matches) {
-        const patch = { FITID: txn.FITID, category: rule.category }
-        if (rule.type) patch.transactionType = rule.type
-        patches.push(patch)
+        const patch = { FITID: txn.FITID }
+        for (const action of rule.actions || []) {
+          // Flatten action array into object keys for the updater
+          if (action.type === 'category') patch.category = action.value
+          if (action.type === 'transactionType') patch.transactionType = action.value
+          if (action.type === 'rename') patch.rename = action.value
+          if (action.type === 'subscription') patch.subscription = Number(action.value)
+          if (action.type === 'bill') patch.bill = Number(action.value)
+          if (action.type === 'linkAccount') patch.linkAccount = action.value
+        }
+        // Always push a patch if there's a match, even if actions are empty,
+        // though normally actions aren't empty.
+        if (Object.keys(patch).length > 1) {
+          patches.push(patch)
+        }
         break
       }
     }
@@ -514,59 +750,21 @@ function applyRules(transactions) {
   return patches
 }
 
-// ── Custom Recurring ─────────────────────────────────────────────────────────
+function previewRule({ conditions }) {
+  if (!conditions || !conditions.length) return { count: 0, samples: [] }
+  const txs = db
+    .prepare(
+      'SELECT FITID, NAME, MEMO, TRNAMT, DTPOSTED, category FROM Transactions ORDER BY DTPOSTED DESC'
+    )
+    .all()
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS CustomRecurring (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    name        TEXT NOT NULL,
-    operator    TEXT NOT NULL DEFAULT 'contains',
-    createdAt   TEXT DEFAULT CURRENT_TIMESTAMP
-  )
-`)
-try {
-  db.exec(`ALTER TABLE CustomRecurring ADD COLUMN operator TEXT NOT NULL DEFAULT 'contains'`)
-} catch {
-  /* column already exists */
-}
-
-function matchesCustomEntry(memo, entry) {
-  const haystack = (memo || '').toLowerCase()
-  const needle = (entry.name || '').toLowerCase()
-  switch (entry.operator) {
-    case 'equals':
-      return haystack === needle
-    case 'startsWith':
-      return haystack.startsWith(needle)
-    case 'wholeWord':
-      return new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(haystack)
-    default:
-      return haystack.includes(needle) // contains
-  }
-}
-
-function getCustomRecurring() {
-  return db.prepare('SELECT * FROM CustomRecurring ORDER BY name ASC').all()
-}
-
-function createCustomRecurring(entry) {
-  const stmt = db.prepare(`INSERT INTO CustomRecurring (name, operator) VALUES (@name, @operator)`)
-  const info = stmt.run({ name: entry.name, operator: entry.operator ?? 'contains' })
-  return db.prepare('SELECT * FROM CustomRecurring WHERE id = ?').get(info.lastInsertRowid)
-}
-
-function updateCustomRecurring(id, updates) {
-  const ALLOWED = new Set(['name', 'operator'])
-  const entries = Object.entries(updates).filter(([col]) => ALLOWED.has(col))
-  if (entries.length === 0) return 0
-  const setClause = entries.map(([col]) => `${col} = ?`).join(', ')
-  const values = entries.map(([, val]) => val)
-  return db.prepare(`UPDATE CustomRecurring SET ${setClause} WHERE id = ?`).run(...values, id)
-    .changes
-}
-
-function deleteCustomRecurring(id) {
-  return db.prepare('DELETE FROM CustomRecurring WHERE id = ?').run(id).changes
+  const matches = txs.filter((tx) => {
+    for (const cond of conditions) {
+      if (!matchesOneCondition(tx, cond)) return false
+    }
+    return true
+  })
+  return { count: matches.length, samples: matches }
 }
 
 // ── Reporting ────────────────────────────────────────────────────────────────
@@ -582,24 +780,25 @@ function getMonthlySummary(yyyymm) {
   return db
     .prepare(
       `
-    SELECT transactionType, SUM(amount) AS total FROM (
-      SELECT transactionType, TRNAMT AS amount
+    SELECT COALESCE(c.type, sub.transactionType) as transactionType, SUM(sub.amount) AS total FROM (
+      SELECT transactionType, category, TRNAMT AS amount
       FROM Transactions
-      WHERE DTPOSTED LIKE ? AND splitCategory1 IS NULL
+      WHERE DTPOSTED LIKE ? AND splitAmount1 IS NULL
 
       UNION ALL
 
-      SELECT transactionType, splitAmount1 AS amount
+      SELECT transactionType, category, splitAmount1 AS amount
       FROM Transactions
-      WHERE DTPOSTED LIKE ? AND splitCategory1 IS NOT NULL
+      WHERE DTPOSTED LIKE ? AND splitAmount1 IS NOT NULL
 
       UNION ALL
 
-      SELECT transactionType, splitAmount2 AS amount
+      SELECT transactionType, splitCategory2 AS category, splitAmount2 AS amount
       FROM Transactions
       WHERE DTPOSTED LIKE ? AND splitCategory2 IS NOT NULL
-    )
-    GROUP BY transactionType
+    ) sub
+    LEFT JOIN Categories c ON sub.category = c.id
+    GROUP BY COALESCE(c.type, sub.transactionType)
   `
     )
     .all(month, month, month)
@@ -607,31 +806,32 @@ function getMonthlySummary(yyyymm) {
 
 /**
  * @param {string} yyyymm - e.g. '202605'
- * @returns {{ category: string, total: number }[]}
+ * @returns {{ category: string, categoryName: string, categoryType: string, total: number }[]}
  */
 function getCategoryTotals(yyyymm) {
   const month = `${yyyymm}%`
   return db
     .prepare(
       `
-    SELECT category, SUM(amount) AS total FROM (
+    SELECT sub.category, c.name as categoryName, c.type as categoryType, SUM(sub.amount) AS total FROM (
       SELECT category, TRNAMT AS amount
       FROM Transactions
-      WHERE DTPOSTED LIKE ? AND splitCategory1 IS NULL AND category IS NOT NULL
+      WHERE DTPOSTED LIKE ? AND splitAmount1 IS NULL AND category IS NOT NULL
 
       UNION ALL
 
-      SELECT splitCategory1 AS category, splitAmount1 AS amount
+      SELECT category, splitAmount1 AS amount
       FROM Transactions
-      WHERE DTPOSTED LIKE ? AND splitCategory1 IS NOT NULL
+      WHERE DTPOSTED LIKE ? AND splitAmount1 IS NOT NULL
 
       UNION ALL
 
       SELECT splitCategory2 AS category, splitAmount2 AS amount
       FROM Transactions
       WHERE DTPOSTED LIKE ? AND splitCategory2 IS NOT NULL
-    )
-    GROUP BY category
+    ) sub
+    LEFT JOIN Categories c ON sub.category = c.id
+    GROUP BY sub.category
   `
     )
     .all(month, month, month)
@@ -662,10 +862,11 @@ function getMonthlyTotals() {
       `
     SELECT
       SUBSTR(DTPOSTED, 1, 6) AS month,
-      SUM(CASE WHEN TRNAMT > 0 THEN TRNAMT ELSE 0 END) AS income,
-      SUM(CASE WHEN TRNAMT < 0 THEN ABS(TRNAMT) ELSE 0 END) AS spending
+      SUM(CASE WHEN transactionType = 'income'  THEN TRNAMT       ELSE 0 END) AS income,
+      SUM(CASE WHEN transactionType = 'expense' THEN ABS(TRNAMT)  ELSE 0 END) AS spending
     FROM Transactions
     WHERE DTPOSTED IS NOT NULL
+      AND COALESCE(transactionType, '') <> 'transfer'
     GROUP BY month
     ORDER BY month
   `
@@ -766,12 +967,77 @@ function getMonthsWithData() {
     .map((r) => r.month)
 }
 
+function checkDuplicateFitids(fitids) {
+  if (!fitids.length) return []
+  const placeholders = fitids.map(() => '?').join(',')
+  return db
+    .prepare(`SELECT FITID FROM Transactions WHERE FITID IN (${placeholders})`)
+    .all(...fitids)
+    .map((r) => r.FITID)
+}
+
+function getDebtPayments() {
+  return db
+    .prepare(
+      'SELECT linkedAccount, SUM(TRNAMT) as total FROM Transactions WHERE linkedAccount IS NOT NULL GROUP BY linkedAccount'
+    )
+    .all()
+}
+
+function checkFuzzyDuplicates(transactions) {
+  if (!transactions || !transactions.length) return []
+
+  const fuzzyDuplicates = []
+  const stmt = db.prepare('SELECT * FROM Transactions WHERE ACCTID = ? AND TRNAMT = ?')
+
+  for (const txn of transactions) {
+    if (!txn.ACCTID || !txn.TRNAMT || !txn.DTPOSTED) continue
+
+    const candidates = stmt.all(txn.ACCTID, txn.TRNAMT)
+    if (!candidates.length) continue
+
+    const tYear = parseInt(txn.DTPOSTED.substring(0, 4), 10)
+    const tMonth = parseInt(txn.DTPOSTED.substring(4, 6), 10) - 1
+    const tDay = parseInt(txn.DTPOSTED.substring(6, 8), 10)
+    const tDate = new Date(tYear, tMonth, tDay).getTime()
+
+    for (const cand of candidates) {
+      if (cand.FITID === txn.FITID) continue
+      if (!cand.DTPOSTED) continue
+
+      const cYear = parseInt(cand.DTPOSTED.substring(0, 4), 10)
+      const cMonth = parseInt(cand.DTPOSTED.substring(4, 6), 10) - 1
+      const cDay = parseInt(cand.DTPOSTED.substring(6, 8), 10)
+      const cDate = new Date(cYear, cMonth, cDay).getTime()
+
+      const diffDays = Math.abs(tDate - cDate) / (1000 * 60 * 60 * 24)
+      if (diffDays <= 3) {
+        fuzzyDuplicates.push({ imported: txn, existing: cand })
+        break
+      }
+    }
+  }
+  return fuzzyDuplicates
+}
+
+function getAccountBalance(acctid) {
+  const account = getAccount(acctid)
+  if (!account) return null
+
+  const row = db
+    .prepare('SELECT SUM(TRNAMT) as total FROM Transactions WHERE ACCTID = ?')
+    .get(acctid)
+  const sumTransactions = row.total || 0
+  const startingBalance = account.startingBalance || 0
+
+  return startingBalance + sumTransactions
+}
+
 export default db
 export {
   // Transactions
   getTransactions,
   getAllTransactions,
-  createTransaction,
   createTransactions,
   updateTransaction,
   deleteTransaction,
@@ -797,27 +1063,17 @@ export {
   updateRule,
   deleteRule,
   applyRules,
-  runRescanRecurring,
-  // Custom Recurring
-  getCustomRecurring,
-  createCustomRecurring,
-  updateCustomRecurring,
-  deleteCustomRecurring,
-  matchesCustomEntry
-}
-
-function runRescanRecurring() {
-  const customEntries = getCustomRecurring()
-  const customFitids = new Set()
-
-  if (customEntries.length) {
-    const rows = db.prepare(`SELECT FITID, MEMO FROM Transactions WHERE TRNAMT < 0`).all()
-    for (const row of rows) {
-      if (customEntries.some((e) => matchesCustomEntry(row.MEMO, e))) {
-        customFitids.add(row.FITID)
-      }
-    }
-  }
-
-  return rescanRecurring(db, customFitids)
+  previewRule,
+  checkDuplicateFitids,
+  // Categories & Budgets
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  getBudgets,
+  upsertBudget,
+  getCategoryTypes,
+  getDebtPayments,
+  checkFuzzyDuplicates,
+  getAccountBalance
 }
