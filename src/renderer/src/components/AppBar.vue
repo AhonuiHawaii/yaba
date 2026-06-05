@@ -55,10 +55,9 @@ const handleClose = () => window.api.window.close()
   /* Base color matches the app */
   /* Base color matches your theme's primary container */
   background-color: rgba(var(--v-theme-primary-container), 1) !important;
-  /* Overlay creates the OSX highlight/shadow effect on top of the color */
   background: linear-gradient(
     to bottom,
-    rgba(var(--v-theme-primary-darken-1), 0.3) 0%,
+    rgba(var(--v-theme-primary-darken-1), 1) 0%,
     rgba(var(--v-theme-primary-container), 1) 100%
   ) !important;
 
