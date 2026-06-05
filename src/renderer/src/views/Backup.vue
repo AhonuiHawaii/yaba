@@ -146,6 +146,16 @@
             >
               Export now
             </v-btn>
+            <v-btn
+              color="primary"
+              variant="flat"
+              rounded="lg"
+              prepend-icon="mdi-file-delimited-outline"
+              :loading="isCsvExporting"
+              @click="handleExportAllCsv"
+            >
+              Export all to CSV
+            </v-btn>
           </div>
         </v-card>
       </v-col>
@@ -225,6 +235,7 @@ const transactionsStore = useUserTransactionsStore()
 
 const passphrase = ref('')
 const isExporting = ref(false)
+const isCsvExporting = ref(false)
 const isImporting = ref(false)
 const showConfirmDialog = ref(false)
 const error = ref('')
@@ -300,6 +311,24 @@ async function handleExport() {
     error.value = err.message || 'An unexpected error occurred.'
   } finally {
     isExporting.value = false
+  }
+}
+
+async function handleExportAllCsv() {
+  error.value = ''
+  success.value = ''
+  isCsvExporting.value = true
+  try {
+    const res = await window.electron.ipcRenderer.invoke('csv:exportAll')
+    if (res?.success) {
+      success.value = `Exported ${res.data.files.length} CSV files to ${res.data.path}`
+    } else if (res?.error && res.error !== 'Cancelled') {
+      error.value = res.error || 'Failed to export CSV.'
+    }
+  } catch (err) {
+    error.value = err.message || 'An unexpected error occurred.'
+  } finally {
+    isCsvExporting.value = false
   }
 }
 

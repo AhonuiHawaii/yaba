@@ -15,7 +15,8 @@
           color="primary"
           rounded="lg"
           prepend-icon="mdi-export"
-          @click="emit('navigate', 'Backup')"
+          :loading="exportLoading"
+          @click="handleExport"
           >Export</v-btn
         >
         <v-btn
@@ -899,6 +900,15 @@
         <RulesView />
       </v-tabs-window-item>
     </v-tabs-window>
+
+    <!-- Export result snackbar -->
+    <v-snackbar
+      v-model="exportSnackbar"
+      :color="exportError ? 'error' : 'success'"
+      :timeout="3000"
+    >
+      {{ exportSnackbarText }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -1012,6 +1022,39 @@ async function saveBulkPayee() {
   await Promise.all(selectedRows.value.map((item) => store.editTransaction(item.FITID, { NAME })))
   bulkPayeeDialog.value = false
   selectedRows.value = []
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+const exportLoading = ref(false)
+const exportSnackbar = ref(false)
+const exportSnackbarText = ref('')
+const exportError = ref(false)
+
+async function handleExport() {
+  exportLoading.value = true
+  try {
+    const options =
+      periodMonths.value.length
+        ? { startDate: periodMonths.value[0] + '01', endDate: periodMonths.value.at(-1) + '99' }
+        : {}
+    const result = await window.electron.ipcRenderer.invoke('csv:export', 'transactions', options)
+    if (result?.success) {
+      exportSnackbarText.value = 'Transactions exported successfully'
+      exportError.value = false
+      exportSnackbar.value = true
+      exportDialog.value = false
+    } else if (result?.error !== 'Cancelled') {
+      exportSnackbarText.value = result?.error || 'Export failed'
+      exportError.value = true
+      exportSnackbar.value = true
+    }
+  } catch (e) {
+    exportSnackbarText.value = e?.message || 'Export failed'
+    exportError.value = true
+    exportSnackbar.value = true
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 // ── Import dialog ────────────────────────────────────────────────────────────

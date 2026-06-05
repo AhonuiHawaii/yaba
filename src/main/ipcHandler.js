@@ -1,4 +1,4 @@
-import { app, ipcMain, BrowserWindow } from 'electron'
+import { app, dialog, ipcMain, BrowserWindow } from 'electron'
 import fs from 'fs'
 import path from 'path'
 import { setupBackupHandlers } from './backup.js'
@@ -40,7 +40,9 @@ import {
   fetchBudgets,
   upsertBudget,
   fetchCategoryTypes,
-  fetchDebtPayments
+  fetchDebtPayments,
+  generateCsv,
+  generateAllCsv
 } from './main.js'
 
 const isNonEmptyString = (v) => typeof v === 'string' && v.trim().length > 0
@@ -187,6 +189,40 @@ export const setupIpcHandlers = () => {
     return upsertBudget(categoryId, amount, month)
   })
   ipcMain.handle('budgets:fetchTypes', () => fetchCategoryTypes())
+
+  ipcMain.handle('csv:export', async (event, type, options = {}) => {
+    if (typeof type !== 'string') throw new Error('Invalid export type')
+    const result = generateCsv(type, options)
+    if (!result.success) return result
+
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const { canceled, filePath } = await dialog.showSaveDialog(win, {
+      defaultPath: result.data.filename,
+      filters: [{ name: 'CSV', extensions: ['csv'] }]
+    })
+    if (canceled || !filePath) return { success: false, error: 'Cancelled' }
+
+    fs.writeFileSync(filePath, result.data.csv, 'utf8')
+    return { success: true, data: { path: filePath } }
+  })
+
+  ipcMain.handle('csv:exportAll', async (event, txOptions = {}) => {
+    const result = generateAllCsv(txOptions)
+    if (!result.success) return result
+
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+      title: 'Choose export folder',
+      properties: ['openDirectory', 'createDirectory']
+    })
+    if (canceled || !filePaths?.[0]) return { success: false, error: 'Cancelled' }
+
+    const dir = filePaths[0]
+    for (const [filename, csv] of Object.entries(result.data)) {
+      fs.writeFileSync(path.join(dir, filename), csv, 'utf8')
+    }
+    return { success: true, data: { path: dir, files: Object.keys(result.data) } }
+  })
 
   ipcMain.handle('backup:dbSize', () => {
     try {

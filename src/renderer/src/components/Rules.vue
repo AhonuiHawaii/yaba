@@ -7,32 +7,18 @@
           Applied top-to-bottom as transactions are imported
         </div>
       </div>
-      <div class="d-flex align-center gap-2">
-        <v-btn
-          variant="tonal"
-          color="primary"
-          rounded="lg"
-          prepend-icon="mdi-play-outline"
-          @click="applyRules(false)"
-          >Apply to this month</v-btn
-        >
-        <v-btn
-          variant="tonal"
-          color="primary"
-          rounded="lg"
-          prepend-icon="mdi-play-circle-outline"
-          @click="applyRules(true)"
-          >Apply to all</v-btn
-        >
-        <v-btn
-          variant="flat"
-          color="primary"
-          rounded="lg"
-          prepend-icon="mdi-plus"
-          @click="openAddDialog"
-          >Add rule</v-btn
-        >
-      </div>
+      <v-btn-group color="primary" variant="flat" rounded="lg" divided>
+        <v-btn prepend-icon="mdi-export" :loading="exportLoading" @click="handleExport">
+          Export
+        </v-btn>
+        <v-btn prepend-icon="mdi-play-outline" @click="applyRules(false)">
+          Apply to this month
+        </v-btn>
+        <v-btn prepend-icon="mdi-play-circle-outline" @click="applyRules(true)">
+          Apply to all
+        </v-btn>
+        <v-btn prepend-icon="mdi-plus" @click="openAddDialog">Add rule</v-btn>
+      </v-btn-group>
     </div>
 
     <!-- Apply result banner -->
@@ -672,6 +658,17 @@ watch(
 )
 
 const applyResult = ref(null)
+
+const exportLoading = ref(false)
+
+async function handleExport() {
+  exportLoading.value = true
+  try {
+    await window.electron.ipcRenderer.invoke('csv:export', 'rule-conditions')
+  } finally {
+    exportLoading.value = false
+  }
+}
 
 async function applyRules(applyAll = false) {
   applyResult.value = null

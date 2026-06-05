@@ -8,16 +8,15 @@
       </v-col>
       <v-col cols="auto" class="pa-0 d-flex align-center ga-3 flex-wrap">
         <FilterComponent />
-        <v-btn
-          color="primary"
-          variant="flat"
-          prepend-icon="mdi-content-copy"
-          :loading="copying"
-          @click="copyLastPeriod"
-        >
-          Copy last month
-        </v-btn>
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddTypeDialog"> Add type </v-btn>
+        <v-btn-group color="primary" variant="flat" rounded="lg" divided>
+          <v-btn prepend-icon="mdi-export" :loading="exportLoading" @click="handleExport">
+            Export
+          </v-btn>
+          <v-btn prepend-icon="mdi-content-copy" :loading="copying" @click="copyLastPeriod">
+            Transfer Budgets
+          </v-btn>
+          <v-btn prepend-icon="mdi-plus" @click="openAddTypeDialog">Add type</v-btn>
+        </v-btn-group>
       </v-col>
     </v-row>
 
@@ -615,6 +614,28 @@ async function updateBudget(categoryId, value) {
   await Promise.all(
     periodMonths.value.map((m) => budgetsStore.upsertBudget(categoryId, perMonth, m))
   )
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+const exportLoading = ref(false)
+
+async function handleExport() {
+  exportLoading.value = true
+  try {
+    const result = await window.electron.ipcRenderer.invoke('csv:export', 'budgets')
+    if (result?.success) {
+      snackbarText.value = 'Budgets exported successfully'
+      snackbar.value = true
+    } else if (result?.error !== 'Cancelled') {
+      snackbarText.value = result?.error || 'Export failed'
+      snackbar.value = true
+    }
+  } catch (e) {
+    snackbarText.value = e?.message || 'Export failed'
+    snackbar.value = true
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 // ── Copy last period ──────────────────────────────────────────────────────────

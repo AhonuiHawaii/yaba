@@ -1,6 +1,17 @@
 import { randomUUID } from 'node:crypto'
 import { extractAccountData, extractTransactionData } from './ofx.js'
 import {
+  exportTransactionsToCSV,
+  exportAccountsToCSV,
+  exportCategoriesToCSV,
+  exportBudgetsToCSV,
+  exportRulesToCSV,
+  exportRuleConditionsToCSV,
+  exportRuleActionsToCSV,
+  exportAllToCSV,
+  getSuggestedFilename
+} from './csvExport.js'
+import {
   createTransactions,
   getTransactions,
   getAllTransactions,
@@ -577,6 +588,36 @@ export const previewImportBatch = async (items) => {
     }
 
     return ok(results)
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+// ─── CSV Export ─────────────────────────────────────────────────────────────
+
+const CSV_EXPORTERS = {
+  transactions: (options) => exportTransactionsToCSV(options),
+  accounts: () => exportAccountsToCSV(),
+  categories: () => exportCategoriesToCSV(),
+  budgets: () => exportBudgetsToCSV(),
+  rules: () => exportRulesToCSV(),
+  'rule-conditions': () => exportRuleConditionsToCSV(),
+  'rule-actions': () => exportRuleActionsToCSV()
+}
+
+export const generateCsv = (type, options = {}) => {
+  try {
+    const fn = CSV_EXPORTERS[type]
+    if (!fn) return fail(new Error(`Unknown export type: ${type}`))
+    return ok({ csv: fn(options), filename: getSuggestedFilename(type, options.month) })
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const generateAllCsv = (txOptions = {}) => {
+  try {
+    return ok(exportAllToCSV(txOptions))
   } catch (e) {
     return fail(e)
   }
