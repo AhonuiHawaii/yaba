@@ -22,7 +22,7 @@ export const TARGET_COLUMNS = [
   { key: 'DTPOSTED', label: 'Posted Date (+ Time)', required: true, multi: true, join: ' ' },
   { key: 'TRNAMT', label: 'Amount', required: true, multi: false },
   { key: 'NAME', label: 'Description / Payee', required: true, multi: true, join: ' ' },
-  { key: 'TRNTYPE', label: 'Transaction Type', required: false, multi: false },
+  { key: 'TRNTYPE', label: 'Transaction Type', required: true, multi: false },
   { key: 'MEMO', label: 'Memo / Notes', required: false, multi: true, join: ' — ' },
   { key: 'CHECKNUM', label: 'Check Number', required: false, multi: false },
   { key: 'REFNUM', label: 'Reference #', required: false, multi: false }
@@ -99,14 +99,8 @@ export function extractCsvTransactions(csvText, mapping, options = {}) {
       txn[target.key] = transformField(target.key, raw, { invert })
     }
 
-    // Cross-populate NAME ↔ MEMO so neither is ever blank
+    // Fall back to MEMO for NAME if NAME wasn't mapped
     if (!txn.NAME && txn.MEMO) txn.NAME = txn.MEMO
-    if (!txn.MEMO && txn.NAME) txn.MEMO = txn.NAME
-
-    // Derive TRNTYPE from the sign of TRNAMT if not mapped
-    if (!txn.TRNTYPE) {
-      txn.TRNTYPE = Number(txn.TRNAMT) >= 0 ? 'CREDIT' : 'DEBIT'
-    }
 
     return txn
   })
@@ -132,7 +126,7 @@ function joinColumns(row, columns, join) {
 }
 
 function transformField(key, raw, { invert }) {
-  if (key === 'DTPOSTED' || key === 'DTUSER') return parseDateToOfx(raw)
+  if (key === 'DTPOSTED') return parseDateToOfx(raw)
   if (key === 'TRNAMT') return parseAmount(raw, invert)
   return raw
 }

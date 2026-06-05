@@ -353,16 +353,16 @@ function doParseHeaders() {
 
         // Auto-guess columns
         const dateMatches = csvHeaders.value.filter((h) => /date|time/i.test(h))
-        const memoMatch = csvHeaders.value.find((h) => /description|payee|name|title|memo|notes/i.test(h))
+        const memoMatch = csvHeaders.value.find((h) =>
+          /description|payee|name|title|memo|notes/i.test(h)
+        )
         const amountMatch = csvHeaders.value.find((h) => /amount|value/i.test(h))
-        const typeMatch = csvHeaders.value.find((h) => /type/i.test(h))
 
         dateMatches.forEach((dm) => {
           headerMapping.value[dm] = 'DTPOSTED'
         })
         if (memoMatch) headerMapping.value[memoMatch] = 'MEMO'
         if (amountMatch) headerMapping.value[amountMatch] = 'TRNAMT'
-        if (typeMatch) headerMapping.value[typeMatch] = 'TRNTYPE'
 
         step.value = 2
       } else {
@@ -390,6 +390,18 @@ function getBatchPayload() {
       if (!mapping[targetKey]) mapping[targetKey] = { columns: [] }
       mapping[targetKey].columns.push(csvHeader)
     }
+  }
+
+  // To prevent SQLite Missing Named Parameter errors for mapped fields:
+  TARGET_COLUMNS.forEach((t) => {
+    if (!mapping[t.key]) {
+      mapping[t.key] = { columns: ['__EMPTY__'] }
+    }
+  })
+
+  // NAME is required by backend but missing in our TARGET_COLUMNS
+  if (!mapping['NAME']) {
+    mapping['NAME'] = { columns: ['__EMPTY__'] }
   }
 
   return [
