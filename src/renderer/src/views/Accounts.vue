@@ -43,7 +43,7 @@
             prepend-icon="mdi-pencil-plus-outline"
             @click="manualDialog = true"
           >
-            Add Manual
+            Add Manual Debt
           </v-btn>
         </div>
       </v-card-text>
