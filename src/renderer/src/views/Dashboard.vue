@@ -539,7 +539,7 @@ const topCategories = computed(() => {
 // ── Needs review ──────────────────────────────────────────────────────────────
 const needsReview = computed(() =>
   [...currentTransactions.value]
-    .filter((t) => !t.category && !t.splitCategory1)
+    .filter((t) => !t.category)
     .sort((a, b) => String(b.DTPOSTED || '').localeCompare(String(a.DTPOSTED || '')))
     .slice(0, 5)
 )

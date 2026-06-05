@@ -1143,7 +1143,7 @@ const filteredTransactions = computed(() => {
   }
 
   if (filterKind.value === 'uncategorized') {
-    rows = rows.filter((t) => !t.category && !t.splitCategory1)
+    rows = rows.filter((t) => !t.category)
   } else if (filterKind.value === 'income') {
     rows = rows.filter((t) => Number(t.TRNAMT) >= 0)
   } else if (filterKind.value === 'expenses') {

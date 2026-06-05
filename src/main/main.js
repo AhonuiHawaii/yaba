@@ -47,18 +47,6 @@ import {
 const ok = (data) => ({ success: true, data })
 const fail = (error) => ({ success: false, error: error?.message ?? String(error) })
 
-const maskAcctid = (id) => String(id || '').slice(-4)
-
-// Accepts either the real ACCTID or a masked (last-4) value and returns the real stored ACCTID.
-// Needed because the renderer only holds the masked value.
-function resolveAcctid(maskedOrReal) {
-  const all = getAccounts()
-  return (
-    all.find((a) => a.ACCTID === maskedOrReal || maskAcctid(a.ACCTID) === maskedOrReal)?.ACCTID ??
-    null
-  )
-}
-
 // ─── OFX Import ─────────────────────────────────────────────────────────────
 
 export const importAccount = async (ofxData) => {
@@ -66,7 +54,7 @@ export const importAccount = async (ofxData) => {
     const data = await extractAccountData(ofxData)
     if (!data) return fail(new Error('No account data found in the file.'))
     upsertAccount(data)
-    return ok({ ...data, ACCTID: maskAcctid(data.ACCTID) })
+    return ok(data)
   } catch (e) {
     return fail(e)
   }
@@ -115,7 +103,7 @@ export const importTransactions = async (ofxData) => {
 export const fetchTransactions = (filters) => {
   try {
     const txs = getTransactions(filters)
-    return ok(txs.map((t) => ({ ...t, ACCTID: maskAcctid(t.ACCTID) })))
+    return ok(txs)
   } catch (e) {
     return fail(e)
   }
@@ -124,7 +112,7 @@ export const fetchTransactions = (filters) => {
 export const fetchAllTransactions = () => {
   try {
     const txs = getAllTransactions()
-    return ok(txs.map((t) => ({ ...t, ACCTID: maskAcctid(t.ACCTID) })))
+    return ok(txs)
   } catch (e) {
     return fail(e)
   }
@@ -162,7 +150,7 @@ export const removeAccountTransactions = (acctid) => {
 
 export const fetchAccounts = () => {
   try {
-    return ok(getAccounts().map((a) => ({ ...a, ACCTID: maskAcctid(a.ACCTID) })))
+    return ok(getAccounts())
   } catch (e) {
     return fail(e)
   }
@@ -170,11 +158,9 @@ export const fetchAccounts = () => {
 
 export const fetchAccount = (acctid) => {
   try {
-    const realAcctid = resolveAcctid(acctid)
-    if (!realAcctid) return fail(new Error(`No account found with ACCTID: ${acctid}`))
-    const account = getAccount(realAcctid)
+    const account = getAccount(acctid)
     if (!account) return fail(new Error(`No account found with ACCTID: ${acctid}`))
-    return ok({ ...account, ACCTID: maskAcctid(account.ACCTID) })
+    return ok(account)
   } catch (e) {
     return fail(e)
   }
@@ -185,7 +171,7 @@ export const addManualAccount = (data) => {
     const ACCTID = `manual-${randomUUID()}`
     createManualAccount({ ...data, ACCTID })
     const created = getAccount(ACCTID)
-    return ok({ ...created, ACCTID: maskAcctid(ACCTID) })
+    return ok(created)
   } catch (e) {
     return fail(e)
   }
@@ -193,9 +179,7 @@ export const addManualAccount = (data) => {
 
 export const editAccount = (acctid, updates) => {
   try {
-    const realAcctid = resolveAcctid(acctid)
-    if (!realAcctid) return fail(new Error(`No account found with ACCTID: ${acctid}`))
-    const changes = updateAccount(realAcctid, updates)
+    const changes = updateAccount(acctid, updates)
     return ok({ acctid, changes })
   } catch (e) {
     return fail(e)
@@ -204,9 +188,7 @@ export const editAccount = (acctid, updates) => {
 
 export const removeAccount = (acctid) => {
   try {
-    const realAcctid = resolveAcctid(acctid)
-    if (!realAcctid) return fail(new Error(`No account found with ACCTID: ${acctid}`))
-    const changes = deleteAccount(realAcctid)
+    const changes = deleteAccount(acctid)
     if (!changes) return fail(new Error(`No account found with ACCTID: ${acctid}`))
     return ok({ acctid, changes })
   } catch (e) {
@@ -242,7 +224,7 @@ export const fetchUncategorized = (yyyymm) => {
 
 export const fetchAccountSummary = () => {
   try {
-    return ok(getAccountSummary().map((s) => ({ ...s, ACCTID: maskAcctid(s.ACCTID) })))
+    return ok(getAccountSummary())
   } catch (e) {
     return fail(e)
   }
@@ -419,7 +401,7 @@ export const parseOfxFile = async (ofxText) => {
     const account = await extractAccountData(ofxText)
     const transactions = await extractTransactionData(ofxText)
     return ok({
-      account: account ? { ...account, ACCTID: maskAcctid(account.ACCTID) } : null,
+      account,
       txCount: transactions.length,
       fitids: transactions.map((t) => t.FITID)
     })
@@ -450,8 +432,7 @@ export const importBatch = async (items) => {
       let realAcctid = null
 
       if (targetAcctId) {
-        realAcctid = resolveAcctid(targetAcctId)
-        if (!realAcctid) throw new Error(`Account not found: ${targetAcctId}`)
+        realAcctid = targetAcctId
       } else {
         const accountData = (await extractAccountData(ofxText)) || {
           ACCTID: transactions[0].ACCTID,
@@ -503,7 +484,7 @@ export const importBatch = async (items) => {
         }
       }
 
-      results.push({ ...result, accountId: maskAcctid(realAcctid) })
+      results.push({ ...result, accountId: realAcctid })
     }
     return ok(results)
   } catch (e) {
@@ -541,7 +522,7 @@ export const previewImportBatch = async (items) => {
         continue
       }
 
-      const realAcctid = targetAcctId ? resolveAcctid(targetAcctId) : null
+      const realAcctid = targetAcctId || null
       const accountData = (await extractAccountData(ofxText)) || transactions[0]
 
       const ledgerBalance = {
@@ -587,7 +568,7 @@ export const previewImportBatch = async (items) => {
       const dbBalance = realAcctid ? getAccountBalance(realAcctid) : 0
 
       results.push({
-        accountId: maskAcctid(realAcctid),
+        accountId: realAcctid,
         txCount: transactions.length,
         exactDuplicates: exactDupList,
         fuzzyDuplicates: fuzzyMatches,
