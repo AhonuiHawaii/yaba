@@ -42,14 +42,24 @@
       <!-- STEP 2: MAP COLUMNS -->
       <template #item.2>
         <v-card-text class="pa-6">
-          <div class="text-subtitle-1 font-weight-medium mb-4">
+          <div class="text-subtitle-1 font-weight-medium mb-1">
             Map your CSV columns to the database fields
+          </div>
+          <div class="text-caption text-medium-emphasis mb-4">
+            Every column must be mapped — choose <strong>Ignore</strong> for columns you don't need.
           </div>
           <v-divider class="mb-6" />
 
           <div v-for="header in csvHeaders" :key="header" class="d-flex align-center mb-3">
-            <div class="text-subtitle-1 font-weight-bold" style="width: 40%">
-              {{ header }}
+            <div class="d-flex align-center" style="width: 40%">
+              <v-icon
+                size="10"
+                class="mr-2"
+                :color="header in headerMapping && headerMapping[header] !== undefined ? 'success' : 'warning'"
+              >
+                mdi-circle
+              </v-icon>
+              <span class="text-subtitle-1 font-weight-bold">{{ header }}</span>
             </div>
             <v-icon color="medium-emphasis" class="mx-4">mdi-arrow-right</v-icon>
             <v-select
@@ -62,8 +72,20 @@
               hide-details
               color="primary"
               style="width: 50%"
+              :error="headerMapping[header] === undefined"
             />
           </div>
+
+          <v-alert
+            v-if="unmappedCount > 0"
+            type="warning"
+            variant="tonal"
+            density="compact"
+            rounded="lg"
+            class="mt-4"
+          >
+            {{ unmappedCount }} column{{ unmappedCount > 1 ? 's' : '' }} still need{{ unmappedCount === 1 ? 's' : '' }} to be mapped.
+          </v-alert>
 
           <v-checkbox
             v-model="invertAmount"
@@ -74,6 +96,7 @@
           />
         </v-card-text>
       </template>
+
 
       <!-- STEP 3: MATCH ACCOUNTS -->
       <template #item.3>
@@ -308,9 +331,23 @@ const currentDbBalance = computed(() => {
 })
 
 const isMappingValid = computed(() => {
+  // Every CSV header must have an explicit selection (a target key or null for "Ignore")
+  const allHeadersMapped = csvHeaders.value.every(
+    (h) => h in headerMapping.value && headerMapping.value[h] !== undefined
+  )
+  // All required target columns must be assigned
   const mappedTargets = Object.values(headerMapping.value)
-  return TARGET_COLUMNS.filter((t) => t.required).every((t) => mappedTargets.includes(t.key))
+  const allRequiredMapped = TARGET_COLUMNS.filter((t) => t.required).every((t) =>
+    mappedTargets.includes(t.key)
+  )
+  return allHeadersMapped && allRequiredMapped
 })
+
+const unmappedCount = computed(() =>
+  csvHeaders.value.filter(
+    (h) => !(h in headerMapping.value) || headerMapping.value[h] === undefined
+  ).length
+)
 
 function handleDrop(e) {
   isDragging.value = false

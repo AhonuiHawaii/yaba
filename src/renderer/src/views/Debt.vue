@@ -770,7 +770,6 @@ async function saveRule() {
 onMounted(async () => {
   await Promise.all([
     accountsStore.fetchAccounts(),
-    txStore.fetchAccountSummary(),
     txStore.fetchDebtPayments()
   ])
 })

@@ -831,17 +831,9 @@ async function doImport() {
     const batchData = mappings.value.map((m) => {
       // Find the corresponding preview result by exact matched account ID
       // If it's a new account, targetAcctId is null, so we try to match by the parsed ACCTID
-      const p =
-        previewResults.value.find(
-          (pr) =>
-            (m.targetAcctId &&
-              pr.accountId &&
-              pr.accountId.endsWith(m.targetAcctId.replace(/[^a-zA-Z0-9]/g, '').slice(-4))) ||
-            (!m.targetAcctId &&
-              pr.accountId &&
-              pr.accountId.replace(/[^a-zA-Z0-9]/g, '') ===
-                (m.parsedAccount.ACCTID || '').replace(/[^a-zA-Z0-9]/g, ''))
-        ) || previewResults.value[0] // fallback to first just in case
+      const p = previewResults.value.find((pr) =>
+        m.targetAcctId ? pr.accountId === m.targetAcctId : pr.accountId === m.parsedAccount.ACCTID
+      )
 
       return {
         ofxText: rawOfxData.value[m.filename],

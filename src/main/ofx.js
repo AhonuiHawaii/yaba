@@ -156,4 +156,4 @@ async function extractTransactionData(ofxData) {
   })
 }
 
-export { readOfxData, extractAccountData, extractTransactionData }
+export { extractAccountData, extractTransactionData }

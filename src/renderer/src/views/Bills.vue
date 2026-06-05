@@ -310,7 +310,7 @@ const billGroups = computed(() => {
     .map((g) => {
       const typicalAmount = median(g.amounts)
       const typicalDay = g.days.length ? median(g.days) : null
-      const isPaid = g.months.has(currentMonthStr) && typicalDay !== null && typicalDay < todayDay
+      const isPaid = g.months.has(currentMonthStr)
 
       const override = dueDateOverrides.value[g.name]
       let nextCharge = null

@@ -53,11 +53,11 @@ const selectTheme = (baseValue) => {
 
 const toggleTheme = () => {
   const current = theme.global.name.value
-  if (current.includes('Dark')) {
-    theme.global.name.value = current.replace('Dark', 'Light')
-  } else {
-    theme.global.name.value = current.replace('Light', 'Dark')
-  }
+  const newTheme = current.includes('Dark')
+    ? current.replace('Dark', 'Light')
+    : current.replace('Light', 'Dark')
+  theme.global.name.value = newTheme
+  userSettings.setTheme(newTheme)
 }
 </script>
 

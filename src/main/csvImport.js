@@ -149,23 +149,24 @@ function transformField(key, raw, { invert }) {
  * Defaults to noon (120000) if no time component is supplied.
  */
 function parseDateToOfx(value) {
-  const fallback = '20000101120000.000[-5:EST]'
-  if (!value) return fallback
-
-  const d = new Date(value)
-  if (isNaN(d.getTime())) return fallback
+  const d = value ? new Date(value) : new Date('2000-01-01T12:00:00')
+  if (isNaN(d.getTime())) d.setTime(new Date('2000-01-01T12:00:00').getTime())
 
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
 
-  // If the original string contained no time information, anchor at noon
-  const hadTime = /\d:\d/.test(value) || /\d{2}:\d{2}/.test(value)
+  const hadTime = /\d:\d/.test(value || '') || /\d{2}:\d{2}/.test(value || '')
   const hh = hadTime ? String(d.getHours()).padStart(2, '0') : '12'
   const mm = hadTime ? String(d.getMinutes()).padStart(2, '0') : '00'
   const ss = hadTime ? String(d.getSeconds()).padStart(2, '0') : '00'
 
-  return `${y}${m}${day}${hh}${mm}${ss}.000[-5:EST]`
+  const offsetMinutes = d.getTimezoneOffset()
+  const offsetHours = -(offsetMinutes / 60)
+  const sign = offsetHours >= 0 ? '+' : ''
+  const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+  return `${y}${m}${day}${hh}${mm}${ss}.000[${sign}${offsetHours}:${tzName}]`
 }
 
 function parseAmount(value, invert) {

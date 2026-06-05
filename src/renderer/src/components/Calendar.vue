@@ -240,8 +240,7 @@ function getGroupedItems(txList, typeStr) {
     .map((g) => {
       const typicalAmount = median(g.amounts)
       const typicalDay = g.days.length ? median(g.days) : null
-      const isPaid =
-        g.months.has(currentMonthStr) && typicalDay !== null && typicalDay < today.getDate()
+      const isPaid = g.months.has(currentMonthStr)
       const prev = g.amounts.slice(0, -1)
       const histMedian = prev.length >= 2 ? median(prev) : median(g.amounts)
       const currentAmount = g.amounts[g.amounts.length - 1] || 0

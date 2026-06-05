@@ -341,8 +341,18 @@ function buildActualsMap(catList) {
   const actuals = new Map()
   for (const t of currentTransactions.value) {
     const trnAmt = Number(t.TRNAMT)
-    if (t.category)
-      actuals.set(t.category, (actuals.get(t.category) || 0) + (trnAmt < 0 ? Math.abs(trnAmt) : 0))
+    if (trnAmt < 0) {
+      const entries = t.splitCategory2
+        ? [
+            { id: t.category, amt: Math.abs(Number(t.splitAmount1)) || 0 },
+            { id: t.splitCategory2, amt: Math.abs(Number(t.splitAmount2)) || 0 }
+          ]
+        : [{ id: t.category, amt: Math.abs(trnAmt) }]
+
+      for (const { id, amt } of entries) {
+        if (id) actuals.set(id, (actuals.get(id) || 0) + amt)
+      }
+    }
   }
   return catList.map((cat) => ({
     ...cat,

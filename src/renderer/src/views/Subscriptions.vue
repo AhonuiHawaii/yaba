@@ -206,7 +206,6 @@ function buildSub(name, txs, ruleId = null) {
     const d = new Date(+lastDate.slice(0, 4), +lastDate.slice(4, 6) - 1, +lastDate.slice(6, 8))
     daysSinceCharge = Math.floor((Date.now() - d.getTime()) / 86400000)
   }
-  const unused = daysSinceCharge !== null && daysSinceCharge > 35
   const sortedMonths = [...months].sort()
   let billing = 'Monthly'
   if (sortedMonths.length >= 2) {
@@ -217,6 +216,8 @@ function buildSub(name, txs, ruleId = null) {
       1
     if (months.size <= 2 && span >= 10) billing = 'Yearly'
   }
+  const unusedThreshold = billing === 'Yearly' ? 395 : 35
+  const unused = daysSinceCharge !== null && daysSinceCharge > unusedThreshold
   const storedDueDate = sorted[sorted.length - 1]?.dueDate
   let nextCharge = null
   if (storedDueDate) {

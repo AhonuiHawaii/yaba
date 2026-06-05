@@ -88,9 +88,15 @@ db.exec(`
     dueDate         INTEGER,
     frequency       TEXT,
     subscription       INTEGER NOT NULL DEFAULT 0,
-    bill               INTEGER NOT NULL DEFAULT 0
+    bill               INTEGER NOT NULL DEFAULT 0,
+    linkedAccount      TEXT
   )
 `)
+
+// Migrate: add linkedAccount if it doesn't exist yet (idempotent)
+try {
+  db.exec(`ALTER TABLE Transactions ADD COLUMN linkedAccount TEXT`)
+} catch { /* column already exists */ }
 
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_dtposted ON Transactions(DTPOSTED)`)
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_acctid   ON Transactions(ACCTID)`)
@@ -171,7 +177,8 @@ const VALID_COLUMNS = new Set([
   'dueDate',
   'frequency',
   'subscription',
-  'bill'
+  'bill',
+  'linkedAccount'
 ])
 
 // OFX date columns — use LIKE prefix matching so partial dates work

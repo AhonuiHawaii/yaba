@@ -197,6 +197,14 @@ const props = defineProps({
 })
 const emit = defineEmits(['save-due-date'])
 
+const settingsStore = useUserSettingsStore()
+const { formatCurrency } = settingsStore
+const categoriesStore = useUserCategoriesStore()
+
+function categoryName(id) {
+  return categoriesStore.categoryById[id]?.name ?? id ?? null
+}
+
 const editingKey = ref(null)
 const editingDate = ref(null)
 const pickerOpen = ref(false)
@@ -222,13 +230,7 @@ function commitDueDate(sub) {
   pickerOpen.value = false
 }
 
-const settingsStore = useUserSettingsStore()
-const { formatCurrency } = settingsStore
-const categoriesStore = useUserCategoriesStore()
 
-function categoryName(id) {
-  return categoriesStore.categoryById[id]?.name ?? id ?? null
-}
 
 const activeCount = computed(() => props.subscriptions.filter((s) => s.status === 'active').length)
 

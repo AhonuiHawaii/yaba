@@ -387,18 +387,17 @@ export const applyRulesToMonth = (yyyymm, categoryNames = {}) => {
     const transactions = getTransactions({ DTPOSTED: yyyymm })
     const patches = applyRules(transactions)
     for (const patch of patches) {
-      const updates = {
-        category: patch.category,
-        subscription: patch.subscription,
-        bill: patch.bill
-      }
-      if (patch.transactionType) updates.transactionType = patch.transactionType
-      if (patch.rename) updates.NAME = patch.rename
-      else {
+      const updates = {}
+      if ('category' in patch) updates.category = patch.category
+      if ('transactionType' in patch) updates.transactionType = patch.transactionType
+      if ('rename' in patch) updates.NAME = patch.rename
+      else if ('category' in patch) {
         const name = categoryNames[patch.category]
         if (name) updates.NAME = name
       }
-      updateTransaction(patch.FITID, updates)
+      if ('subscription' in patch) updates.subscription = patch.subscription
+      if ('bill' in patch) updates.bill = patch.bill
+      if (Object.keys(updates).length > 0) updateTransaction(patch.FITID, updates)
     }
     return ok({ applied: patches.length })
   } catch (e) {
@@ -706,18 +705,17 @@ export const applyRulesToAll = (categoryNames = {}) => {
     const transactions = getAllTransactions()
     const patches = applyRules(transactions)
     for (const patch of patches) {
-      const updates = {
-        category: patch.category,
-        subscription: patch.subscription,
-        bill: patch.bill
-      }
-      if (patch.transactionType) updates.transactionType = patch.transactionType
-      if (patch.rename) updates.NAME = patch.rename
-      else {
+      const updates = {}
+      if ('category' in patch) updates.category = patch.category
+      if ('transactionType' in patch) updates.transactionType = patch.transactionType
+      if ('rename' in patch) updates.NAME = patch.rename
+      else if ('category' in patch) {
         const name = categoryNames[patch.category]
         if (name) updates.NAME = name
       }
-      updateTransaction(patch.FITID, updates)
+      if ('subscription' in patch) updates.subscription = patch.subscription
+      if ('bill' in patch) updates.bill = patch.bill
+      if (Object.keys(updates).length > 0) updateTransaction(patch.FITID, updates)
     }
     return ok({ applied: patches.length })
   } catch (e) {
