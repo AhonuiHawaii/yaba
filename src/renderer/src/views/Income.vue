@@ -3,8 +3,8 @@
     <!-- ── Header ─────────────────────────────────────────────────────────── -->
     <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
       <v-col cols="auto" class="pa-0">
-        <p class="text-h5 font-weight-bold mb-1">Income</p>
-        <p class="text-body-2 text-medium-emphasis mb-0">What you earn · {{ periodLabel }}</p>
+        <div class="text-h5 font-weight-bold mb-1">Income</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">What you earn · {{ periodLabel }}</div>
       </v-col>
       <v-col cols="auto" class="pa-0 d-flex align-center ga-3 flex-wrap">
         <FilterComponent />
@@ -23,17 +23,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[1]"
@@ -45,7 +35,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Total Income</span
@@ -72,17 +62,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[2]"
@@ -94,7 +74,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Avg / Month</span
@@ -119,17 +99,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[3]"
@@ -141,7 +111,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Largest Source</span
@@ -170,17 +140,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[1]"
@@ -192,7 +152,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Savings Rate</span
@@ -219,7 +179,7 @@
               <v-chip size="x-small" variant="flat">{{ trendChipLabel }}</v-chip>
             </template>
           </v-card-item>
-          <div style="height: 240px; padding: 8px 16px 16px">
+          <div class="pa-4 chart-area">
             <Bar v-if="trendMonths.length" :data="incomeTrendData" :options="incomeTrendOptions" />
             <div
               v-else
@@ -251,10 +211,7 @@
                   <span class="text-body-2 font-weight-medium">{{
                     formatCurrency(src.amount)
                   }}</span>
-                  <span
-                    class="text-caption text-medium-emphasis"
-                    style="min-width: 30px; text-align: right"
-                  >
+                  <span class="text-caption text-medium-emphasis text-right">
                     {{ formatPercent(src.amount, totalIncome) }}
                   </span>
                 </div>
@@ -284,7 +241,9 @@
             <th class="text-caption font-weight-bold text-uppercase">Date</th>
             <th class="text-caption font-weight-bold text-uppercase">Source</th>
             <th class="text-caption font-weight-bold text-uppercase">Type</th>
-            <th class="text-caption font-weight-bold text-uppercase text-right text-success">
+            <th
+              class="text-caption font-weight-bold text-uppercase text-right text-medium-emphasis"
+            >
               Amount
             </th>
           </tr>
@@ -296,7 +255,7 @@
             </td>
           </tr>
           <tr v-for="t in displayedIncome" :key="t.FITID">
-            <td class="text-body-2 text-medium-emphasis py-3" style="min-width: 80px">
+            <td class="text-body-2 text-medium-emphasis py-3 text-no-wrap">
               {{ t.dateLabel }}
             </td>
             <td class="text-body-2 font-weight-medium py-3">{{ t.name }}</td>

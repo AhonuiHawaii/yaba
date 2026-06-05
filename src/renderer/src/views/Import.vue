@@ -9,7 +9,7 @@
     </div>
 
     <!-- Stepper -->
-    <v-card rounded="lg">
+    <v-card rounded="lg" elevation="0" border>
       <v-stepper v-model="step" :items="STEPS" rounded="xl" elevation="0">
         <!-- STEP 1: UPLOAD -->
         <template #item.1>
@@ -88,7 +88,8 @@
                   v-model="m.targetAcctId"
                   :items="accountOptions"
                   label="Map to Account"
-                  variant="flat"
+                  variant="solo-filled"
+                  rounded="lg"
                   density="compact"
                   hide-details
                   color="primary"
@@ -295,10 +296,11 @@
                             item-title="title"
                             item-value="value"
                             label="Assign Category"
-                            variant="flat"
+                            variant="solo-filled"
+                            rounded="lg"
                             density="compact"
                             hide-details
-                            class="rounded-lg flex-1"
+                            class="flex-1"
                             color="primary"
                             autofocus
                           />
@@ -404,7 +406,8 @@
                           v-model="p.targetBalance"
                           label="True Balance"
                           density="compact"
-                          variant="flat"
+                          variant="solo-filled"
+                          rounded="lg"
                           hide-details
                           prefix="$"
                           type="number"
@@ -446,7 +449,8 @@
                           v-model="p.targetBalance"
                           label="Manually Fix Balance"
                           density="compact"
-                          variant="flat"
+                          variant="solo-filled"
+                          rounded="lg"
                           hide-details
                           prefix="$"
                           type="number"

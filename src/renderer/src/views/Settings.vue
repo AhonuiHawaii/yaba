@@ -1,9 +1,9 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-6">
     <v-row>
       <v-col cols="12">
-        <v-card rounded="sm" elevation="2" class="mb-3">
-          <v-card-item class="pa-4 pb-0">
+        <v-card rounded="lg" elevation="0" variant="flat" border class="mb-3">
+          <v-card-item class="pa-5 pb-0">
             <template #prepend>
               <v-icon color="primary" size="20" :opacity="0.7">mdi-palette-outline</v-icon>
             </template>
@@ -22,13 +22,13 @@
             </div>
           </v-card-item>
 
-          <v-card-text class="pt-4 pb-4">
+          <v-card-text class="pa-5">
             <div class="d-flex flex-wrap justify-center">
               <div
                 v-for="(accent, index) in accentColors"
                 :key="accent.value"
                 v-ripple
-                class="accent-swatch-circle"
+                class="accent-swatch"
                 :class="{
                   active: selectedBaseTheme === accent.value,
                   'mr-4': index !== accentColors.length - 1
@@ -49,15 +49,15 @@
 
     <v-row>
       <v-col cols="12">
-        <v-card rounded="sm" elevation="2" class="mb-3">
-          <v-card-item class="pa-4 pb-0">
+        <v-card rounded="lg" elevation="0" variant="flat" border class="mb-3">
+          <v-card-item class="pa-5 pb-0">
             <template #prepend>
               <v-icon color="primary" size="20" :opacity="0.7">mdi-cog-outline</v-icon>
             </template>
             <v-card-title class="text-h6 font-weight-bold pl-2">Settings</v-card-title>
           </v-card-item>
 
-          <v-card-text class="pt-4">
+          <v-card-text class="pa-5">
             <v-row align="center">
               <v-col cols="12">
                 <div class="d-flex align-center">
@@ -69,8 +69,9 @@
                     :items="currencies"
                     item-title="label"
                     item-value="code"
-                    variant="flat"
-                    density="compact"
+                    variant="solo-filled"
+                    density="comfortable"
+                    rounded="lg"
                     color="primary"
                     hide-details
                     @update:model-value="updateCurrency"
@@ -488,35 +489,3 @@ const updateDecimalPlaces = (places) => {
   userSettings.setDecimalPlaces(places)
 }
 </script>
-
-<style scoped>
-.setting-label {
-  width: 130px;
-  flex-shrink: 0;
-}
-
-.accent-swatch-circle {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  border: 2px solid transparent;
-}
-
-.accent-swatch-circle:hover {
-  transform: scale(1.1);
-}
-
-.accent-swatch-circle.active {
-  box-shadow:
-    0 0 0 3px rgb(var(--v-theme-surface)),
-    0 0 0 5px rgb(var(--v-theme-primary));
-  transform: scale(1.05);
-}
-</style>

@@ -35,7 +35,7 @@
     <!-- Stats -->
     <v-row class="mb-2">
       <v-col cols="12" md="4">
-        <v-card elevation="0" border rounded="lg" class="pa-5 h-100">
+        <v-card elevation="0" variant="flat" border rounded="lg" class="pa-5 h-100">
           <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
             Database Size
           </div>
@@ -54,7 +54,7 @@
       </v-col>
 
       <v-col cols="12" md="4">
-        <v-card elevation="0" border rounded="lg" class="pa-5 h-100">
+        <v-card elevation="0" variant="flat" border rounded="lg" class="pa-5 h-100">
           <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
             Accounts
           </div>
@@ -66,7 +66,7 @@
       </v-col>
 
       <v-col cols="12" md="4">
-        <v-card elevation="0" border rounded="lg" class="pa-5 h-100">
+        <v-card elevation="0" variant="flat" border rounded="lg" class="pa-5 h-100">
           <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis mb-2">
             Encryption
           </div>
@@ -80,7 +80,13 @@
     <v-row>
       <!-- Export -->
       <v-col cols="12" md="6">
-        <v-card elevation="0" border rounded="lg" class="pa-6 d-flex flex-column h-100">
+        <v-card
+          elevation="0"
+          variant="flat"
+          border
+          rounded="lg"
+          class="pa-6 d-flex flex-column h-100"
+        >
           <div class="d-flex align-center ga-3 mb-3">
             <v-avatar color="primary" variant="flat" size="34" rounded="lg">
               <v-icon size="18">mdi-export</v-icon>
@@ -118,7 +124,7 @@
               type="password"
               label="Encryption passphrase"
               placeholder="Enter passphrase (minimum 8 characters)"
-              variant="flat"
+              variant="solo-filled"
               density="compact"
               rounded="lg"
               hint="Must be at least 8 characters. Do not lose this passphrase."
@@ -146,7 +152,13 @@
 
       <!-- Restore -->
       <v-col cols="12" md="6">
-        <v-card elevation="0" border rounded="lg" class="pa-6 d-flex flex-column h-100">
+        <v-card
+          elevation="0"
+          variant="flat"
+          border
+          rounded="lg"
+          class="pa-6 d-flex flex-column h-100"
+        >
           <div class="d-flex align-center ga-3 mb-3">
             <v-avatar color="primary" variant="flat" size="34" rounded="lg">
               <v-icon size="18">mdi-import</v-icon>

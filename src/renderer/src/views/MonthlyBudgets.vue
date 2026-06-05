@@ -41,17 +41,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[1]"
@@ -63,7 +53,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Budgeted</span
@@ -85,17 +75,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[0]"
@@ -107,7 +87,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Actual</span
@@ -129,17 +109,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[2]"
@@ -151,7 +121,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Remaining</span
@@ -228,7 +198,8 @@
                     :model-value="row.periodBudget > 0 ? row.periodBudget : ''"
                     type="number"
                     :prefix="userSettings.currencySymbol"
-                    variant="flat"
+                    variant="solo-filled"
+                    rounded="lg"
                     density="compact"
                     hide-details
                     @update:model-value="(v) => updateBudget(row.id, v)"
@@ -277,26 +248,43 @@
     </div>
 
     <!-- Add type dialog -->
-    <v-dialog v-model="addTypeDialog" max-width="360">
+    <v-dialog v-model="addTypeDialog" max-width="400">
       <v-card rounded="lg">
-        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">Add type</v-card-title>
-        <v-card-text class="pa-5 pt-0">
+        <v-card-title class="pa-6 pb-4">
+          <div class="d-flex align-center justify-space-between">
+            <div class="d-flex align-center ga-3">
+              <v-icon color="primary" size="20">mdi-shape-plus-outline</v-icon>
+              <span class="text-h6 font-weight-bold">Add type</span>
+            </div>
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              density="compact"
+              @click="addTypeDialog = false"
+            />
+          </div>
+        </v-card-title>
+        <v-divider />
+        <v-card-text class="pa-6">
           <v-text-field
             v-model="newTypeName"
             label="Name"
-            variant="flat"
-            density="compact"
+            variant="solo-filled"
+            density="comfortable"
+            rounded="lg"
+            color="primary"
             hide-details
             autofocus
             @keyup.enter="saveNewType"
           />
         </v-card-text>
-        <v-card-actions class="px-5 pb-5 pt-0">
+        <v-card-actions class="pa-6 pt-0">
           <v-spacer />
           <v-btn variant="text" @click="addTypeDialog = false">Cancel</v-btn>
           <v-btn
             color="primary"
             variant="flat"
+            rounded="lg"
             :disabled="!newTypeName?.trim()"
             @click="saveNewType"
             >Add</v-btn
@@ -306,28 +294,43 @@
     </v-dialog>
 
     <!-- Category dialog (add & edit) -->
-    <v-dialog v-model="categoryDialog" max-width="360">
+    <v-dialog v-model="categoryDialog" max-width="400">
       <v-card rounded="lg">
-        <v-card-title class="pa-5 pb-3 text-body-1">
-          {{ categoryDialogTitle }}
+        <v-card-title class="pa-6 pb-4">
+          <div class="d-flex align-center justify-space-between">
+            <div class="d-flex align-center ga-3">
+              <v-icon color="primary" size="20">mdi-tag-outline</v-icon>
+              <span class="text-h6 font-weight-bold">{{ categoryDialogTitle }}</span>
+            </div>
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              density="compact"
+              @click="categoryDialog = false"
+            />
+          </div>
         </v-card-title>
-        <v-card-text class="pa-5 pt-0">
+        <v-divider />
+        <v-card-text class="pa-6">
           <v-text-field
             v-model="categoryDialogName"
             label="Name"
-            variant="flat"
-            density="compact"
+            variant="solo-filled"
+            density="comfortable"
+            rounded="lg"
+            color="primary"
             hide-details
             autofocus
             @keyup.enter="saveCategoryDialog"
           />
         </v-card-text>
-        <v-card-actions class="px-5 pb-5 pt-0">
+        <v-card-actions class="pa-6 pt-0">
           <v-spacer />
           <v-btn variant="text" @click="categoryDialog = false">Cancel</v-btn>
           <v-btn
             color="primary"
             variant="flat"
+            rounded="lg"
             :disabled="!categoryDialogName?.trim()"
             @click="saveCategoryDialog"
             >{{ categoryDialogMode === 'edit' ? 'Save' : 'Add' }}</v-btn
@@ -362,9 +365,8 @@ const ipc = window.electron?.ipcRenderer
 
 // ── Period filter ─────────────────────────────────────────────────────────────
 const _pf = usePeriodFilter()
-const { period, periodStart, periodLength, periodMonths, periodLabel, isNextPeriodFuture } =
-  storeToRefs(_pf)
-const { prevPeriod, nextPeriod, offsetMonth } = _pf
+const { periodStart, periodLength, periodMonths, periodLabel } = storeToRefs(_pf)
+const { offsetMonth } = _pf
 
 // ── Transaction loading ───────────────────────────────────────────────────────
 const transactions = ref([])

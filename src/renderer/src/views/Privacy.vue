@@ -1,8 +1,8 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-6">
     <v-row>
       <v-col cols="12">
-        <v-card rounded="sm" elevation="2" class="mb-3">
+        <v-card rounded="lg" elevation="0" variant="flat" border class="mb-3">
           <v-card-item class="pa-4 pb-0">
             <template #prepend>
               <v-icon color="primary" size="20" :opacity="0.7">mdi-shield-lock-outline</v-icon>

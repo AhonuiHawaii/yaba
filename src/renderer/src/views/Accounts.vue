@@ -1,24 +1,26 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Header -->
-    <div class="d-flex align-start justify-space-between mb-6">
-      <div>
-        <div class="text-h5 font-weight-bold">Accounts</div>
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <div class="text-h5 font-weight-bold mb-1">Accounts</div>
         <div class="text-body-2 text-medium-emphasis mt-1">Balances from your last import</div>
-      </div>
-      <v-btn
-        color="primary"
-        variant="flat"
-        rounded="lg"
-        prepend-icon="mdi-upload"
-        @click="emit('navigate', 'Import')"
-      >
-        Update via OFX
-      </v-btn>
-    </div>
+      </v-col>
+      <v-col cols="auto" class="pa-0 d-flex align-center ga-3 flex-wrap">
+        <v-btn
+          color="primary"
+          variant="flat"
+          rounded="lg"
+          prepend-icon="mdi-upload"
+          @click="emit('navigate', 'Import')"
+        >
+          Update via OFX
+        </v-btn>
+      </v-col>
+    </v-row>
 
     <!-- Empty state -->
-    <v-card variant="flat" v-if="store.accounts.length === 0" rounded="lg" elevation="1">
+    <v-card v-if="store.accounts.length === 0" variant="flat" rounded="lg" elevation="0" border>
       <v-card-text class="pa-12 text-center">
         <v-icon size="60" class="mb-4 text-disabled">mdi-bank-off-outline</v-icon>
         <div class="text-h6 font-weight-medium mb-2">No accounts yet</div>
@@ -50,7 +52,7 @@
     <!-- Account cards grid -->
     <v-row v-else>
       <v-col v-for="account in store.accounts" :key="account.ACCTID" cols="12" sm="6" md="4">
-        <v-card rounded="lg" elevation="1" class="h-100">
+        <v-card rounded="lg" elevation="0" variant="flat" border class="h-100">
           <v-card-text class="pa-4">
             <!-- Top row: icon + chip + menu -->
             <div class="d-flex justify-space-between align-center mb-4">
@@ -122,8 +124,7 @@
               <template v-else>
                 manual ·
                 <span
-                  class="text-primary"
-                  style="cursor: pointer; text-decoration: underline"
+                  class="text-primary text-decoration-underline cursor-pointer"
                   @click.stop="openEditName(account)"
                 >
                   edit value
@@ -136,16 +137,7 @@
 
       <!-- Add account slot -->
       <v-col cols="12" sm="6" md="4">
-        <div
-          class="d-flex align-center justify-center rounded"
-          style="
-            height: 100%;
-            min-height: 176px;
-            border: 2px dashed rgba(0, 0, 0, 0.12);
-            cursor: pointer;
-          "
-          @click="manualDialog = true"
-        >
+        <div class="add-account-slot" @click="manualDialog = true">
           <v-icon size="36" color="medium-emphasis">mdi-plus-circle-outline</v-icon>
         </div>
       </v-col>

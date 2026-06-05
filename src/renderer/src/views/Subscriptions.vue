@@ -1,19 +1,20 @@
 <template>
   <div class="d-flex flex-column h-100">
     <!-- Page header -->
-    <div class="d-flex align-center px-5 pt-5 pb-3">
+    <div class="d-flex align-center justify-space-between pa-6 pb-4">
       <div>
-        <div class="text-h6 font-weight-bold">Subscriptions</div>
-        <div class="text-caption text-medium-emphasis">Recurring charges tracked by your rules</div>
+        <div class="text-h5 font-weight-bold">Subscriptions</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          Recurring charges tracked by your rules
+        </div>
       </div>
-      <v-spacer />
-      <v-btn color="primary" rounded="lg" prepend-icon="mdi-plus" @click="openAdd">
+      <v-btn color="primary" variant="flat" rounded="lg" prepend-icon="mdi-plus" @click="openAdd">
         Add manually
       </v-btn>
     </div>
 
     <!-- Tabs -->
-    <v-tabs v-model="activeTab" class="px-5 mb-4" color="primary">
+    <v-tabs v-model="activeTab" class="px-6 mb-4" color="primary">
       <v-tab value="list" prepend-icon="mdi-format-list-bulleted">Main</v-tab>
       <v-tab value="calendar" prepend-icon="mdi-calendar-month-outline">Calendar</v-tab>
     </v-tabs>
@@ -30,20 +31,35 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="calendar">
-        <Calendar displayType="subscriptions" />
+        <Calendar display-type="subscriptions" />
       </v-tabs-window-item>
     </v-tabs-window>
 
     <!-- Add manually dialog -->
     <v-dialog v-model="addDialog" max-width="440" :persistent="addLoading">
       <v-card rounded="lg">
-        <v-card-title class="pa-5 pb-3 text-body-1 font-weight-bold">Add subscription</v-card-title>
+        <v-card-title class="pa-6 pb-4">
+          <div class="d-flex align-center justify-space-between">
+            <div class="d-flex align-center ga-3">
+              <v-icon color="primary" size="20">mdi-card-plus-outline</v-icon>
+              <span class="text-h6 font-weight-bold">Add subscription</span>
+            </div>
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              density="compact"
+              :disabled="addLoading"
+              @click="addDialog = false"
+            />
+          </div>
+        </v-card-title>
         <v-divider />
-        <v-card-text class="pa-5">
+        <v-card-text class="pa-6">
           <v-text-field
             v-model="addForm.name"
             label="Payee / service name"
-            variant="solo"
+            variant="solo-filled"
+            density="comfortable"
             rounded="lg"
             autofocus
             class="mb-4"
@@ -55,13 +71,14 @@
             v-model="addForm.operator"
             :items="operatorOptions"
             label="Match type"
-            variant="solo"
+            variant="solo-filled"
+            density="comfortable"
             rounded="lg"
             class="mb-4"
             color="primary"
           />
         </v-card-text>
-        <v-card-actions class="pa-5 pt-0">
+        <v-card-actions class="pa-6 pt-0">
           <v-spacer />
           <v-btn variant="text" rounded="lg" :disabled="addLoading" @click="addDialog = false"
             >Cancel</v-btn

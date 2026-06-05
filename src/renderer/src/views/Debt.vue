@@ -1,29 +1,30 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Header -->
-    <div class="d-flex align-start justify-space-between mb-6">
-      <div>
-        <div class="text-h4 font-weight-bold mb-2">Debt Payoff Planner</div>
-        <div class="text-body-1 text-medium-emphasis">
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <div class="text-h5 font-weight-bold">Debt Payoff Planner</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
           Get out of debt faster. See how extra payments can save you time and money!
         </div>
-      </div>
-      <div class="d-flex gap-4">
+      </v-col>
+      <v-col cols="auto" class="pa-0">
         <v-select
           :model-value="debtsStore.strategy"
           :items="strategyOptions"
           item-title="title"
           item-value="value"
           label="Strategy"
-          variant="flat"
+          variant="solo-filled"
           density="comfortable"
+          rounded="lg"
           color="primary"
           hide-details
-          style="min-width: 180px"
+          style="min-width: 260px"
           @update:model-value="debtsStore.setStrategy"
         />
-      </div>
-    </div>
+      </v-col>
+    </v-row>
 
     <!-- Tabs -->
     <v-tabs v-model="activeTab" class="mb-6" color="primary">
@@ -83,7 +84,13 @@
       <!-- Summary Cards -->
       <v-row class="mb-8">
         <v-col cols="12" sm="6" md="3">
-          <v-card rounded="lg" variant="flat" class="pa-6 d-flex flex-column h-100 bg-surface">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-6 d-flex flex-column h-100"
+          >
             <div class="d-flex align-center mb-4">
               <v-avatar color="error" variant="flat" size="48" class="mr-4">
                 <v-icon>mdi-credit-card-remove-outline</v-icon>
@@ -92,7 +99,7 @@
                 <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
                   Total Debt
                 </div>
-                <div class="text-h4 font-weight-bold text-error">
+                <div class="text-h4 font-weight-black text-error">
                   {{ formatCurrency(totalDebt) }}
                 </div>
               </div>
@@ -101,7 +108,13 @@
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
-          <v-card rounded="lg" variant="flat" class="pa-6 d-flex flex-column h-100 bg-surface">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-6 d-flex flex-column h-100"
+          >
             <div class="d-flex align-center mb-4">
               <v-avatar color="success" variant="flat" size="48" class="mr-4">
                 <v-icon>mdi-check-decagram-outline</v-icon>
@@ -110,7 +123,7 @@
                 <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
                   Total Paid Off
                 </div>
-                <div class="text-h4 font-weight-bold text-success">
+                <div class="text-h4 font-weight-black text-success">
                   {{ formatCurrency(paidOff) }}
                 </div>
               </div>
@@ -131,7 +144,13 @@
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
-          <v-card rounded="lg" variant="flat" class="pa-6 d-flex flex-column h-100 bg-surface">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-6 d-flex flex-column h-100"
+          >
             <div class="d-flex align-center mb-4">
               <v-avatar color="primary" variant="flat" size="48" class="mr-4">
                 <v-icon>mdi-calendar-month-outline</v-icon>
@@ -140,7 +159,7 @@
                 <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
                   Min. Payment
                 </div>
-                <div class="text-h4 font-weight-bold">
+                <div class="text-h4 font-weight-black">
                   {{ formatCurrency(monthlyPayment) }}
                 </div>
               </div>
@@ -152,7 +171,13 @@
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
-          <v-card rounded="lg" class="pa-6 d-flex flex-column h-100 bg-surface">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-6 d-flex flex-column h-100"
+          >
             <div class="d-flex align-center mb-4">
               <v-avatar color="warning" variant="flat" size="48" class="mr-4">
                 <v-icon>mdi-cash-remove</v-icon>
@@ -161,7 +186,7 @@
                 <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">
                   Total Est. Interest
                 </div>
-                <div class="text-h4 font-weight-bold text-warning">
+                <div class="text-h4 font-weight-black text-warning">
                   {{ formatCurrency(activeSimulation.totalInterest) }}
                 </div>
               </div>
@@ -178,7 +203,13 @@
       <!-- Per-debt Cards -->
       <v-row v-if="debtCardRows.length > 0">
         <v-col v-for="debt in debtCardRows" :key="debt.id" cols="12" md="6" lg="4">
-          <v-card rounded="lg" class="pa-5 d-flex flex-column h-100 hover-card bg-surface">
+          <v-card
+            rounded="lg"
+            elevation="0"
+            variant="flat"
+            border
+            class="pa-5 d-flex flex-column h-100 debt-card"
+          >
             <div class="d-flex justify-space-between align-start mb-4">
               <div>
                 <div class="text-h6 font-weight-bold line-clamp-1">{{ debt.name }}</div>
@@ -273,7 +304,7 @@
 
     <!-- ── CALENDAR VIEW ── -->
     <div v-if="activeTab === 'calendar'">
-      <Calendar displayType="debt" />
+      <Calendar display-type="debt" />
     </div>
 
     <!-- Edit Debt Dialog -->
@@ -281,7 +312,10 @@
       <v-card rounded="lg">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
-            <span class="text-h5 font-weight-bold">Edit Debt Details</span>
+            <div class="d-flex align-center ga-3">
+              <v-icon color="primary" size="20">mdi-pencil-outline</v-icon>
+              <span class="text-h6 font-weight-bold">Edit Debt Details</span>
+            </div>
             <v-btn icon="mdi-close" variant="text" density="compact" @click="editDialog = false" />
           </div>
           <div class="text-body-2 text-medium-emphasis mt-1">{{ editForm.displayName }}</div>
@@ -294,7 +328,7 @@
                 v-model.number="editForm.startingBalance"
                 label="Starting Balance"
                 prefix="$"
-                variant="flat"
+                variant="solo-filled"
                 density="comfortable"
                 rounded="lg"
                 type="number"
@@ -308,7 +342,7 @@
                 v-model.number="editForm.minimumPayment"
                 label="Min. Payment"
                 prefix="$"
-                variant="flat"
+                variant="solo-filled"
                 density="comfortable"
                 rounded="lg"
                 type="number"
@@ -322,7 +356,7 @@
                 v-model.number="editForm.interestRate"
                 label="Interest Rate (APR)"
                 suffix="%"
-                variant="flat"
+                variant="solo-filled"
                 density="comfortable"
                 rounded="lg"
                 type="number"
@@ -336,7 +370,7 @@
                 v-model.number="editForm.creditLimit"
                 label="Credit Limit (Optional)"
                 prefix="$"
-                variant="flat"
+                variant="solo-filled"
                 density="comfortable"
                 rounded="lg"
                 type="number"
@@ -390,7 +424,10 @@
       <v-card rounded="lg">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
-            <span class="text-h5 font-weight-bold">Create Payment Rule</span>
+            <div class="d-flex align-center ga-3">
+              <v-icon color="primary" size="20">mdi-link-plus</v-icon>
+              <span class="text-h6 font-weight-bold">Create Payment Rule</span>
+            </div>
             <v-btn icon="mdi-close" variant="text" density="compact" @click="ruleDialog = false" />
           </div>
           <div class="text-body-2 text-medium-emphasis mt-1">
@@ -406,7 +443,7 @@
           <v-text-field
             v-model="ruleForm.keyword"
             label="Transaction name contains"
-            variant="flat"
+            variant="solo-filled"
             density="comfortable"
             rounded="lg"
             color="primary"
@@ -738,25 +775,3 @@ onMounted(async () => {
   ])
 })
 </script>
-
-<style scoped>
-.hover-card {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-.hover-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
-}
-.border-dashed {
-  border-style: dashed !important;
-  border-width: 2px !important;
-}
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>

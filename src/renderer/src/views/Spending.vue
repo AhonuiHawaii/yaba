@@ -25,17 +25,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[0]"
@@ -47,7 +37,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Total Spent</span
@@ -72,17 +62,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[1]"
@@ -94,7 +74,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Avg / Month</span
@@ -119,17 +99,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[3]"
@@ -141,7 +111,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Top Category</span
@@ -170,17 +140,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[2]"
@@ -192,7 +152,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Transactions</span
@@ -221,7 +181,7 @@
               <v-chip size="x-small" variant="flat">{{ trendChipLabel }}</v-chip>
             </template>
           </v-card-item>
-          <div style="height: 240px; padding: 8px 16px 16px">
+          <div class="pa-4 chart-area">
             <Bar
               v-if="trendMonths.length"
               :data="spendingTrendData"
@@ -257,10 +217,7 @@
                   <span class="text-body-2 font-weight-medium">{{
                     formatCurrency(cat.actual)
                   }}</span>
-                  <span
-                    class="text-caption text-medium-emphasis"
-                    style="min-width: 30px; text-align: right"
-                  >
+                  <span class="text-caption text-medium-emphasis text-right">
                     {{ formatPercent(cat.actual, totalActual) }}
                   </span>
                 </div>
@@ -287,7 +244,9 @@
       <v-table density="comfortable" class="bg-transparent">
         <thead>
           <tr>
-            <th class="text-caption font-weight-bold text-uppercase text-primary">Merchant</th>
+            <th class="text-caption font-weight-bold text-uppercase text-medium-emphasis">
+              Merchant
+            </th>
             <th class="text-caption font-weight-bold text-uppercase">Category</th>
             <th class="text-caption font-weight-bold text-uppercase text-right">Visits</th>
             <th class="text-caption font-weight-bold text-uppercase text-right">Total</th>

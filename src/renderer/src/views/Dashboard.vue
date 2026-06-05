@@ -3,10 +3,10 @@
     <!-- Header -->
     <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
       <v-col cols="auto" class="pa-0">
-        <p class="text-h5 font-weight-bold mb-1">Overview</p>
-        <p class="text-body-2 text-medium-emphasis mb-0">
+        <div class="text-h5 font-weight-bold mb-1">Overview</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
           Where your money went · {{ periodLabel }}
-        </p>
+        </div>
       </v-col>
       <v-col cols="auto" class="pa-0">
         <FilterComponent />
@@ -28,17 +28,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[1]"
@@ -50,7 +40,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Income</span
@@ -59,13 +49,13 @@
                 <v-icon size="20">mdi-arrow-down-thin</v-icon>
               </v-avatar>
             </v-row>
-            <p class="text-h4 font-weight-black text-success mb-1">
+            <div class="text-h4 font-weight-black text-success mb-1">
               {{ formatCurrency(totalIncome) }}
-            </p>
-            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
               <v-icon size="14" color="success">mdi-check-circle-outline</v-icon>
               <span>of {{ formatCurrency(incomeBudget) }} planned</span>
-            </p>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -79,17 +69,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[0]"
@@ -101,7 +81,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Spent</span
@@ -110,10 +90,10 @@
                 <v-icon size="20">mdi-arrow-up-thin</v-icon>
               </v-avatar>
             </v-row>
-            <p class="text-h4 font-weight-black mb-1">
+            <div class="text-h4 font-weight-black mb-1">
               {{ formatCurrency(totalSpending) }}
-            </p>
-            <p class="text-caption text-medium-emphasis mb-0 mt-2">{{ spendPct }}% of income</p>
+            </div>
+            <div class="text-caption text-medium-emphasis mb-0 mt-2">{{ spendPct }}% of income</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -127,17 +107,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[3]"
@@ -151,7 +121,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Left to budget</span
@@ -160,13 +130,13 @@
                 <v-icon size="20">mdi-view-grid-outline</v-icon>
               </v-avatar>
             </v-row>
-            <p class="text-h4 font-weight-black mb-1">
+            <div class="text-h4 font-weight-black mb-1">
               {{ formatCurrency(leftToBudget) }}
-            </p>
-            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
               <v-icon size="14">mdi-information-outline</v-icon>
               <span>assign every dollar</span>
-            </p>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -180,17 +150,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[1]"
@@ -202,7 +162,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Net Worth</span
@@ -211,10 +171,10 @@
                 <v-icon size="20">mdi-chart-line</v-icon>
               </v-avatar>
             </v-row>
-            <p class="text-h4 font-weight-black mb-1">
+            <div class="text-h4 font-weight-black mb-1">
               {{ formatCurrency(netCash) }}
-            </p>
-            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
               <v-icon size="16" :color="netPeriodChange >= 0 ? 'success' : 'error'">
                 {{ netPeriodChange >= 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}
               </v-icon>
@@ -222,7 +182,7 @@
                 {{ formatCurrency(Math.abs(netPeriodChange)) }}
               </span>
               <span>this period</span>
-            </p>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -258,7 +218,7 @@
             <p v-if="topCategories.length === 0" class="text-body-2 text-medium-emphasis">
               No spending this period.
             </p>
-            <v-table v-else theme="light" hover density="compact" class="mt-n2">
+            <v-table v-else hover density="compact" class="mt-n2">
               <tbody>
                 <tr v-for="cat in topCategories" :key="cat.id">
                   <td class="py-3">
@@ -547,17 +507,6 @@ const needsReview = computed(() =>
 // ── Spending vs budget chart (last 6 monthly totals) ─────────────────────────
 const last6MonthlyTotals = ref([])
 
-const hexToRgba = (hex, alpha) => {
-  if (!hex) return `rgba(0, 0, 0, ${alpha})`
-  if (hex.startsWith('rgb')) return hex
-  let h = hex.slice(1)
-  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]
-  const r = parseInt(h.slice(0, 2), 16) || 0
-  const g = parseInt(h.slice(2, 4), 16) || 0
-  const b = parseInt(h.slice(4, 6), 16) || 0
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
 const gradient = [
   [theme.current.value.colors.primary, theme.current.value.colors['primary-container']],
   [theme.current.value.colors.success, theme.current.value.colors['success-container']],
@@ -705,7 +654,6 @@ const chartJsOptions = computed(() => {
   }
 })
 
-const sparklineViewType = computed(() => (periodMonths.value.length > 1 ? 'Monthly' : 'Daily'))
 const sparklineSpending = computed(() => chartData.value.map((d) => d.spending))
 const sparklineIncome = computed(() => chartData.value.map((d) => d.income))
 const sparklineNetWorth = computed(() => {
@@ -716,7 +664,6 @@ const sparklineNetWorth = computed(() => {
   })
 })
 const sparklineLeftToBudget = computed(() => chartData.value.map(() => 1))
-const sparklineBudget = computed(() => last6MonthlyTotals.value.map((m) => m.budget))
 
 // ── Accounts ──────────────────────────────────────────────────────────────────
 const txSummaryMap = computed(() => {

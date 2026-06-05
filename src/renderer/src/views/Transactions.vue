@@ -1,20 +1,19 @@
 <template>
   <v-container fluid class="pa-6">
     <!-- Header -->
-    <div class="d-flex align-center justify-space-between mb-4">
-      <div>
-        <div class="text-h6 font-weight-bold">Transactions</div>
-        <div class="text-body-2 text-medium-emphasis">
+    <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
+      <v-col cols="auto" class="pa-0">
+        <div class="text-h5 font-weight-bold">Transactions</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
           {{ periodLabel }} · {{ uncategorizedCount }} need a category
         </div>
-      </div>
-
-      <div class="d-flex align-center ga-2">
+      </v-col>
+      <v-col cols="auto" class="pa-0 d-flex align-center ga-3 flex-wrap">
         <FilterComponent />
-
         <v-btn
           variant="flat"
           color="primary"
+          rounded="lg"
           prepend-icon="mdi-export"
           @click="emit('navigate', 'Backup')"
           >Export</v-btn
@@ -22,12 +21,13 @@
         <v-btn
           variant="flat"
           color="primary"
+          rounded="lg"
           prepend-icon="mdi-upload"
           @click="emit('navigate', 'Import')"
           >Import</v-btn
         >
-      </div>
-    </div>
+      </v-col>
+    </v-row>
 
     <!-- Tabs -->
     <v-tabs v-model="activeTab" class="mb-4" color="primary">
@@ -198,7 +198,6 @@
             show-select
             show-expand
             return-object
-            @click:row="toggleRow"
             item-value="FITID"
             :headers="headers"
             :items="filteredTransactions"
@@ -272,7 +271,7 @@
                       @click.stop
                     />
                   </template>
-                  <v-list density="compact">
+                  <v-list density="compact" rounded="lg">
                     <v-list-item
                       prepend-icon="mdi-account-edit-outline"
                       title="Edit payee"
@@ -704,8 +703,9 @@
                 v-model="newTagInput"
                 label="Add a tag..."
                 placeholder="Type and press Enter"
-                variant="outlined"
+                variant="solo-filled"
                 density="comfortable"
+                rounded="lg"
                 hide-details
                 color="primary"
                 autofocus

@@ -3,8 +3,10 @@
     <!-- Header -->
     <v-row align="start" justify="space-between" class="mb-6 mx-0 ga-4">
       <v-col cols="auto" class="pa-0">
-        <p class="text-h5 font-weight-bold mb-1">Net worth</p>
-        <p class="text-body-2 text-medium-emphasis mb-0">Assets minus debts · {{ periodLabel }}</p>
+        <div class="text-h5 font-weight-bold mb-1">Net worth</div>
+        <div class="text-body-2 text-medium-emphasis mb-0">
+          Assets minus debts · {{ periodLabel }}
+        </div>
       </v-col>
       <v-col cols="auto" class="pa-0">
         <FilterComponent />
@@ -26,17 +28,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[1]"
@@ -48,7 +40,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Assets</span
@@ -57,13 +49,13 @@
                 <v-icon size="20">mdi-bank</v-icon>
               </v-avatar>
             </v-row>
-            <p class="text-h4 font-weight-black text-success mb-1">
+            <div class="text-h4 font-weight-black text-success mb-1">
               {{ formatCurrency(displayAssets) }}
-            </p>
-            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
               <v-icon size="14">mdi-information-outline</v-icon>
               <span>Total owned</span>
-            </p>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -77,17 +69,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[0]"
@@ -99,7 +81,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Debts</span
@@ -108,13 +90,13 @@
                 <v-icon size="20">mdi-credit-card-outline</v-icon>
               </v-avatar>
             </v-row>
-            <p class="text-h4 font-weight-black text-error mb-1">
+            <div class="text-h4 font-weight-black text-error mb-1">
               {{ formatCurrency(displayLiabilities) }}
-            </p>
-            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
               <v-icon size="14">mdi-information-outline</v-icon>
               <span>Total owed</span>
-            </p>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -128,17 +110,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[2]"
@@ -150,7 +122,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Net Worth</span
@@ -159,13 +131,13 @@
                 <v-icon size="20">mdi-scale-balance</v-icon>
               </v-avatar>
             </v-row>
-            <p class="text-h4 font-weight-black mb-1">
+            <div class="text-h4 font-weight-black mb-1">
               {{ formatCurrency(displayNetWorth) }}
-            </p>
-            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
               <v-icon size="14">mdi-information-outline</v-icon>
               <span>Assets minus debts</span>
-            </p>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -179,17 +151,7 @@
           hover
           class="position-relative overflow-hidden"
         >
-          <div
-            style="
-              position: absolute;
-              bottom: -5px;
-              left: 0;
-              width: 100%;
-              z-index: 0;
-              pointer-events: none;
-              opacity: 0.6;
-            "
-          >
+          <div class="sparkline-bg">
             <v-sparkline
               :fill="true"
               :gradient="gradient[3]"
@@ -201,7 +163,7 @@
               auto-draw
             ></v-sparkline>
           </div>
-          <v-card-text class="pa-5 position-relative" style="z-index: 1">
+          <v-card-text class="pa-5 stat-card-content">
             <v-row no-gutters align="center" justify="space-between" class="mb-4">
               <span class="text-caption font-weight-bold text-uppercase text-medium-emphasis"
                 >Period Change</span
@@ -210,17 +172,17 @@
                 <v-icon size="20">mdi-trending-up</v-icon>
               </v-avatar>
             </v-row>
-            <p class="text-h4 font-weight-black mb-1">
+            <div class="text-h4 font-weight-black mb-1">
               <span :class="periodChange >= 0 ? 'text-success' : 'text-error'">
                 {{ periodChange >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(periodChange)) }}
               </span>
-            </p>
-            <p class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
+            </div>
+            <div class="text-caption text-medium-emphasis d-flex align-center ga-1 mb-0 mt-2">
               <v-icon size="16" :color="periodChange >= 0 ? 'success' : 'error'">
                 {{ periodChange >= 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}
               </v-icon>
               <span>during {{ periodLabel }}</span>
-            </p>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -246,7 +208,7 @@
               }}</v-chip>
             </template>
           </v-card-item>
-          <div class="pa-5 flex-grow-1" style="min-height: 280px; position: relative">
+          <div class="pa-5 flex-grow-1 chart-area">
             <Line
               v-if="filteredChartData.labels.length > 0"
               :data="filteredChartData"
@@ -278,10 +240,7 @@
           <v-card-item class="pa-5 pb-0">
             <v-card-title class="text-body-1 font-weight-bold">Asset Allocation</v-card-title>
           </v-card-item>
-          <div
-            class="pa-5 flex-grow-1"
-            style="min-height: 280px; position: relative; display: flex; justify-content: center"
-          >
+          <div class="pa-5 flex-grow-1 chart-area" style="display: flex; justify-content: center">
             <Doughnut
               v-if="assetAllocationData.labels.length > 0"
               :data="assetAllocationData"
@@ -310,10 +269,7 @@
           <v-card-item class="pa-5 pb-0">
             <v-card-title class="text-body-1 font-weight-bold">Debt Allocation</v-card-title>
           </v-card-item>
-          <div
-            class="pa-5 flex-grow-1"
-            style="min-height: 280px; position: relative; display: flex; justify-content: center"
-          >
+          <div class="pa-5 flex-grow-1 chart-area" style="display: flex; justify-content: center">
             <Doughnut
               v-if="debtAllocationData.labels.length > 0"
               :data="debtAllocationData"

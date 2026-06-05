@@ -441,9 +441,6 @@ export const importBatch = async (items) => {
           INTU_BID: transactions[0].INTU_BID
         }
         if (accountData.ACCTID) {
-          // Check if account already exists before upserting
-          const existingAccount = getAccount(accountData.ACCTID)
-
           upsertAccount(accountData)
           realAcctid = accountData.ACCTID
         }
