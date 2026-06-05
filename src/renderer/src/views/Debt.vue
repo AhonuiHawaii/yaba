@@ -768,9 +768,6 @@ async function saveRule() {
 }
 
 onMounted(async () => {
-  await Promise.all([
-    accountsStore.fetchAccounts(),
-    txStore.fetchDebtPayments()
-  ])
+  await Promise.all([accountsStore.fetchAccounts(), txStore.fetchDebtPayments()])
 })
 </script>

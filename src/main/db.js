@@ -96,7 +96,9 @@ db.exec(`
 // Migrate: add linkedAccount if it doesn't exist yet (idempotent)
 try {
   db.exec(`ALTER TABLE Transactions ADD COLUMN linkedAccount TEXT`)
-} catch { /* column already exists */ }
+} catch {
+  /* column already exists */
+}
 
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_dtposted ON Transactions(DTPOSTED)`)
 db.exec(`CREATE INDEX IF NOT EXISTS idx_transactions_acctid   ON Transactions(ACCTID)`)

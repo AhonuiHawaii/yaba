@@ -10,27 +10,42 @@ import { randomUUID } from 'node:crypto'
       DTPOSTED: { columns: ['Date', 'Time'], join: ' ' },
       TRNAMT:   { columns: ['Amount'] },
       NAME:     'Description',                     // shorthand -> { columns: ['Description'] }
-      MEMO:     { columns: ['Memo'] },             // optional
-      TRNTYPE:  { columns: ['Type'] }              // optional
+      MEMO:     { columns: ['Memo'] },
+      TRNTYPE:  { columns: ['Type'] }
     }
 
   FITID is always generated here (CSV-<uuid>), never user-mapped.
+  Any key present in the mapping that matches a known DB field is processed —
+  not limited to a hardcoded subset.
 */
 
-// Columns the user can map CSV headers into. The UI renders one row per entry.
-export const TARGET_COLUMNS = [
-  { key: 'DTPOSTED', label: 'Posted Date (+ Time)', required: true, multi: true, join: ' ' },
-  { key: 'TRNAMT', label: 'Amount', required: true, multi: false },
-  { key: 'NAME', label: 'Description / Payee', required: true, multi: true, join: ' ' },
-  { key: 'TRNTYPE', label: 'Transaction Type', required: true, multi: false },
-  { key: 'MEMO', label: 'Memo / Notes', required: false, multi: true, join: ' — ' },
-  { key: 'CHECKNUM', label: 'Check Number', required: false, multi: false },
-  { key: 'REFNUM', label: 'Reference #', required: false, multi: false }
-]
+// All user-mappable DB fields. Keys absent from this set are ignored even if in the mapping.
+const TXN_FIELDS = new Set([
+  'TRNTYPE',
+  'DTPOSTED',
+  'DTUSER',
+  'TRNAMT',
+  'NAME',
+  'MEMO',
+  'CHECKNUM',
+  'REFNUM',
+  'DTAVAIL',
+  'SRVRTID',
+  'PAYEEID',
+  'EXTDNAME',
+  'SIC',
+  'ORG'
+])
+
+// Fields that should be parsed into OFX date format
+const DATE_FIELDS = new Set(['DTPOSTED', 'DTUSER', 'DTAVAIL'])
+
+// Default join separator when multiple CSV columns are combined for a field
+const FIELD_JOIN = { DTPOSTED: ' ', DTUSER: ' ', DTAVAIL: ' ', NAME: ' ', EXTDNAME: ' ', MEMO: ' ' }
 
 /**
  * Read the first few rows of a CSV file so the renderer can show the header
- * list and a small sample preview. No auto-guessing — the user maps manually.
+ * list and a small sample preview.
  *
  * @param {string} csvText - Full CSV file contents.
  * @returns {{ headers: string[], sampleRows: object[], rowCount: number }}
@@ -38,23 +53,17 @@ export const TARGET_COLUMNS = [
 export function extractHeaders(csvText) {
   const result = Papa.parse(csvText, {
     header: true,
-    skipEmptyLines: true,
-    preview: 5
+    skipEmptyLines: true
   })
 
   if (result.errors?.length && result.errors[0].type !== 'Delimiter') {
     throw new Error(result.errors[0].message || 'Failed to parse CSV')
   }
 
-  const fullCount = Papa.parse(csvText, {
-    header: true,
-    skipEmptyLines: true
-  })
-
   return {
     headers: result.meta.fields || [],
-    sampleRows: result.data || [],
-    rowCount: (fullCount.data || []).length
+    sampleRows: result.data.slice(0, 5),
+    rowCount: result.data.length
   }
 }
 
@@ -103,12 +112,13 @@ export function extractCsvTransactions(csvText, mapping, options = {}) {
       ORG: null
     }
 
-    for (const target of TARGET_COLUMNS) {
-      const descriptor = normalizeDescriptor(mapping[target.key])
+    for (const [key, value] of Object.entries(mapping)) {
+      if (!TXN_FIELDS.has(key)) continue
+      const descriptor = normalizeDescriptor(value)
       if (!descriptor || !descriptor.columns.length) continue
-
-      const raw = joinColumns(row, descriptor.columns, descriptor.join ?? target.join ?? ' ')
-      txn[target.key] = transformField(target.key, raw, { invert })
+      const join = descriptor.join ?? FIELD_JOIN[key] ?? ' '
+      const raw = joinColumns(row, descriptor.columns, join)
+      txn[key] = transformField(key, raw, { invert })
     }
 
     // Fall back to MEMO for NAME if NAME wasn't mapped
@@ -138,7 +148,7 @@ function joinColumns(row, columns, join) {
 }
 
 function transformField(key, raw, { invert }) {
-  if (key === 'DTPOSTED') return parseDateToOfx(raw)
+  if (DATE_FIELDS.has(key)) return parseDateToOfx(raw)
   if (key === 'TRNAMT') return parseAmount(raw, invert)
   return raw
 }

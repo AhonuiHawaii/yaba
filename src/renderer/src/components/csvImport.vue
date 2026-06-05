@@ -55,7 +55,11 @@
               <v-icon
                 size="10"
                 class="mr-2"
-                :color="header in headerMapping && headerMapping[header] !== undefined ? 'success' : 'warning'"
+                :color="
+                  header in headerMapping && headerMapping[header] !== undefined
+                    ? 'success'
+                    : 'warning'
+                "
               >
                 mdi-circle
               </v-icon>
@@ -84,7 +88,10 @@
             rounded="lg"
             class="mt-4"
           >
-            {{ unmappedCount }} column{{ unmappedCount > 1 ? 's' : '' }} still need{{ unmappedCount === 1 ? 's' : '' }} to be mapped.
+            {{ unmappedCount }} column{{ unmappedCount > 1 ? 's' : '' }} still need{{
+              unmappedCount === 1 ? 's' : ''
+            }}
+            to be mapped.
           </v-alert>
 
           <v-checkbox
@@ -96,7 +103,6 @@
           />
         </v-card-text>
       </template>
-
 
       <!-- STEP 3: MATCH ACCOUNTS -->
       <template #item.3>
@@ -271,15 +277,31 @@ const parsing = ref(false)
 const importing = ref(false)
 const fileInput = ref(null)
 
+/* -- TARGET_COLUMNS defines the possible database fields that CSV columns can be mapped to.
+    Each has:
+    - key: the internal identifier used in the code
+    - label: the user-friendly name shown in the UI
+    - required: whether this field is required for import
+    - multi: whether multiple CSV columns can be mapped to this field (e.g. multiple date columns like posted date, user date, etc.)
+    - core: whether this is a core field that should always be shown in the mapping options, even if not auto-mapped
+    MEMO is not the same as NOTE. MEMO is a specific field in the database, while "Note" is a more generic term that users will use to add notes to Transactions in Transactions.vue
+    *s
+
 const TARGET_COLUMNS = [
-  { key: 'DTPOSTED', label: 'Posted Date (+ Time)', required: true, multi: true },
-  { key: 'TRNAMT', label: 'Amount', required: true, multi: false },
-  { key: 'TRNTYPE', label: 'Transaction Type', required: true, multi: false },
-  { key: 'MEMO', label: 'Memo/Description', required: true, multi: true },
-  { key: 'CHECKNUM', label: 'Check Number', required: false, multi: false },
-  { key: 'REFNUM', label: 'Reference #', required: false, multi: false },
-  { key: 'DTUSER', label: 'User Date', required: false, multi: true },
-  { key: 'EXTDNAME', label: 'Extended Name', required: false, multi: false }
+  { key: 'DTPOSTED', label: 'Posted Date (+ Time)', required: true, multi: true, core: true },
+  { key: 'TRNAMT', label: 'Amount', required: true, multi: false, core: true },
+  { key: 'TRNTYPE', label: 'Transaction Type', required: true, multi: false, core: true },
+  { key: 'NAME', label: 'Payee', required: false, multi: true, core: true },
+  { key: 'MEMO', label: 'Memo / Description', required: false, multi: true, core: true },
+  { key: 'CHECKNUM', label: 'Check Number', required: false, multi: false, core: true },
+  { key: 'REFNUM', label: 'Reference #', required: false, multi: false, core: true },
+  { key: 'DTUSER', label: 'User Date', required: false, multi: true, core: false },
+  { key: 'DTAVAIL', label: 'Available Date', required: false, multi: true, core: false },
+  { key: 'EXTDNAME', label: 'Extended Name', required: false, multi: true, core: false },
+  { key: 'PAYEEID', label: 'Payee ID', required: false, multi: false, core: false },
+  { key: 'SRVRTID', label: 'Server Transaction ID', required: false, multi: false, core: false },
+  { key: 'SIC', label: 'SIC Code', required: false, multi: false, core: false },
+  { key: 'ORG', label: 'Organization', required: false, multi: false, core: false }
 ]
 
 // CSV specifics
@@ -299,14 +321,13 @@ onMounted(async () => {
 
 const targetOptions = computed(() => {
   const mappedTargets = Object.values(headerMapping.value).filter((v) => v)
+  const matchedKeys = new Set(mappedTargets)
 
   return [
     { title: '-- Ignore --', value: null },
-    ...TARGET_COLUMNS.map((t) => {
-      // If a target is NOT multi, disable it if it's already selected by a column
+    ...TARGET_COLUMNS.filter((t) => t.core || matchedKeys.has(t.key)).map((t) => {
       const isMapped = mappedTargets.includes(t.key)
       const disabled = !t.multi && isMapped
-
       return {
         title: t.label + (t.required ? ' *' : ''),
         value: t.key,
@@ -343,10 +364,11 @@ const isMappingValid = computed(() => {
   return allHeadersMapped && allRequiredMapped
 })
 
-const unmappedCount = computed(() =>
-  csvHeaders.value.filter(
-    (h) => !(h in headerMapping.value) || headerMapping.value[h] === undefined
-  ).length
+const unmappedCount = computed(
+  () =>
+    csvHeaders.value.filter(
+      (h) => !(h in headerMapping.value) || headerMapping.value[h] === undefined
+    ).length
 )
 
 function handleDrop(e) {
@@ -388,18 +410,70 @@ function doParseHeaders() {
           headerMapping.value[h] = null
         })
 
-        // Auto-guess columns
-        const dateMatches = csvHeaders.value.filter((h) => /date|time/i.test(h))
-        const memoMatch = csvHeaders.value.find((h) =>
-          /description|payee|name|title|memo|notes/i.test(h)
-        )
-        const amountMatch = csvHeaders.value.find((h) => /amount|value/i.test(h))
-
-        dateMatches.forEach((dm) => {
-          headerMapping.value[dm] = 'DTPOSTED'
-        })
-        if (memoMatch) headerMapping.value[memoMatch] = 'MEMO'
-        if (amountMatch) headerMapping.value[amountMatch] = 'TRNAMT'
+        // Auto-guess: patterns ordered specific → general per target key
+        const GUESS_PATTERNS = {
+          DTPOSTED: [
+            /^dtposted$/i,
+            /post.*date|date.*post|settle.*date/i,
+            /^(trans|tran|trx).*date$/i,
+            /date|time/i
+          ],
+          TRNAMT: [
+            /^trnamt$/i,
+            /^(transaction\s*)?amount$/i,
+            /(trans|tran|trx).*amount/i,
+            /\bamount\b|\bvalue\b|\bsum\b/i
+          ],
+          TRNTYPE: [/^trntype$/i, /(trans|tran|trx).*type/i, /^type$/i],
+          NAME: [
+            /^name$/i,
+            /\bdescription\b|\bpayee\b|\bmerchant\b|\bbeneficiary\b/i,
+            /^(payee|desc)$/i
+          ],
+          MEMO: [/^memo$/i, /\bnarrative\b|\bnotes?\b|\bdetails?\b/i, /\bmemo\b|\bnote\b/i],
+          CHECKNUM: [/^checknum$/i, /check.*(num|no|#)|cheque/i, /^check$/i],
+          REFNUM: [
+            /^refnum$/i,
+            /ref.*(num|no|#)|reference\s*(num|no|#)/i,
+            /^ref(erence)?$|confirm/i
+          ],
+          DTUSER: [/^dtuser$/i, /user.*date|entry.*date|input.*date/i],
+          DTAVAIL: [/^dtavail$/i, /avail.*date|date.*avail/i],
+          EXTDNAME: [/^extdname$/i, /ext(ended)?.*(name|desc)/i],
+          PAYEEID: [/^payeeid$/i, /payee.*(id|num|no)/i],
+          SRVRTID: [/^srvrtid$/i, /server.*(ref|id|trans)|srv.*id/i],
+          SIC: [/^sic$/i, /\bsic\b/i],
+          ORG: [/^org$/i, /\borg\b|organization|institution/i]
+        }
+        const assigned = new Set()
+        for (const col of TARGET_COLUMNS) {
+          const patterns = GUESS_PATTERNS[col.key]
+          if (!patterns) continue
+          if (col.multi) {
+            const matches = []
+            for (const pat of patterns) {
+              csvHeaders.value
+                .filter((h) => !assigned.has(h) && pat.test(h))
+                .forEach((h) => {
+                  if (!matches.includes(h)) matches.push(h)
+                })
+            }
+            matches.forEach((h) => {
+              headerMapping.value[h] = col.key
+              assigned.add(h)
+            })
+          } else {
+            let found = null
+            for (const pat of patterns) {
+              found = csvHeaders.value.find((h) => !assigned.has(h) && pat.test(h))
+              if (found) break
+            }
+            if (found) {
+              headerMapping.value[found] = col.key
+              assigned.add(found)
+            }
+          }
+        }
 
         step.value = 2
       } else {
@@ -427,18 +501,6 @@ function getBatchPayload() {
       if (!mapping[targetKey]) mapping[targetKey] = { columns: [] }
       mapping[targetKey].columns.push(csvHeader)
     }
-  }
-
-  // To prevent SQLite Missing Named Parameter errors for mapped fields:
-  TARGET_COLUMNS.forEach((t) => {
-    if (!mapping[t.key]) {
-      mapping[t.key] = { columns: ['__EMPTY__'] }
-    }
-  })
-
-  // NAME is required by backend but missing in our TARGET_COLUMNS
-  if (!mapping['NAME']) {
-    mapping['NAME'] = { columns: ['__EMPTY__'] }
   }
 
   return [

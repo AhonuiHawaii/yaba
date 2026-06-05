@@ -230,8 +230,6 @@ function commitDueDate(sub) {
   pickerOpen.value = false
 }
 
-
-
 const activeCount = computed(() => props.subscriptions.filter((s) => s.status === 'active').length)
 
 const monthlyTotal = computed(() =>
