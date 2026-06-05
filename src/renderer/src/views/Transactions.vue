@@ -10,42 +10,7 @@
       </div>
 
       <div class="d-flex align-center ga-2">
-        <v-btn icon="mdi-chevron-left" variant="text" density="compact" @click="prevPeriod" />
-        <span class="text-body-1 font-weight-medium">{{ periodLabel }}</span>
-        <v-btn
-          icon="mdi-chevron-right"
-          variant="text"
-          density="compact"
-          :disabled="isNextPeriodFuture"
-          @click="nextPeriod"
-        />
-
-        <v-btn-group variant="flat" rounded="lg" color="primary" density="comfortable" class="ml-2">
-          <v-btn
-            :variant="period === 'month' ? 'flat' : 'outlined'"
-            :color="period === 'month' ? 'primary' : undefined"
-            @click="period = 'month'"
-            >Month</v-btn
-          >
-          <v-btn
-            :variant="period === 'quarter' ? 'flat' : 'outlined'"
-            :color="period === 'quarter' ? 'primary' : undefined"
-            @click="period = 'quarter'"
-            >Quarter</v-btn
-          >
-          <v-btn
-            :variant="period === 'semi' ? 'flat' : 'outlined'"
-            :color="period === 'semi' ? 'primary' : undefined"
-            @click="period = 'semi'"
-            >Semi</v-btn
-          >
-          <v-btn
-            :variant="period === 'annual' ? 'flat' : 'outlined'"
-            :color="period === 'annual' ? 'primary' : undefined"
-            @click="period = 'annual'"
-            >Annual</v-btn
-          >
-        </v-btn-group>
+        <FilterComponent />
 
         <v-btn
           variant="flat"
@@ -229,6 +194,7 @@
         <v-card v-else rounded="lg" elevation="0" border>
           <v-data-table
             v-model="selectedRows"
+            v-model:expanded="expanded"
             show-select
             return-object
             item-value="FITID"
@@ -239,6 +205,7 @@
             :items-per-page="25"
             :items-per-page-options="[10, 25, 50, 100]"
             hover
+            @click:row="toggleRow"
           >
             <template #item.DTPOSTED="{ item }">
               <span class="text-body-2">{{ formatDate(item.DTPOSTED) }}</span>
@@ -300,6 +267,7 @@
                       variant="text"
                       density="comfortable"
                       size="small"
+                      @click.stop
                     />
                   </template>
                   <v-list density="compact">
@@ -313,13 +281,17 @@
                       title="Edit notes"
                       @click="openNotesDialog(item)"
                     />
-                    <v-list-item
-                      prepend-icon="mdi-call-split"
-                      title="Split transaction"
-                      @click="openSplitDialog(item)"
-                    />
                   </v-list>
                 </v-menu>
+                <v-btn
+                  icon="mdi-call-split"
+                  variant="text"
+                  color="info"
+                  density="comfortable"
+                  size="small"
+                  class="ml-1"
+                  @click.stop="openSplitDialog(item)"
+                />
                 <v-btn
                   icon="mdi-delete-outline"
                   variant="text"
@@ -327,13 +299,23 @@
                   density="comfortable"
                   size="small"
                   class="ml-1"
-                  @click="confirmDelete(item)"
+                  @click.stop="confirmDelete(item)"
                 />
               </div>
             </template>
 
             <template #loading>
               <v-skeleton-loader type="table-row@8" />
+            </template>
+
+            <template #expanded-row="{ columns, item }">
+              <tr>
+                <td :colspan="columns.length" class="text-center pa-4">
+                  <div class="text-medium-emphasis" style="font-family: monospace;">
+                    {{ item?.raw?.MEMO || item?.MEMO || 'No memo' }}
+                  </div>
+                </td>
+              </tr>
             </template>
           </v-data-table>
           <div class="px-4 py-2 text-caption text-medium-emphasis text-center">
@@ -791,6 +773,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 
 const emit = defineEmits(['navigate'])
+import FilterComponent from '../components/filterComponent.vue'
 import { useUserTransactionsStore } from '../stores/userTransactions'
 import { useUserAccountsStore } from '../stores/userAccounts'
 import { useUserCategoriesStore } from '../stores/userCategories'
@@ -811,8 +794,7 @@ const { formatCurrency, formatDate } = userSettings
 const activeTab = ref('transactions')
 
 const _pf = usePeriodFilter()
-const { period, periodLabel, periodMonths, isNextPeriodFuture } = storeToRefs(_pf)
-const { prevPeriod, nextPeriod } = _pf
+const { periodLabel, periodMonths } = storeToRefs(_pf)
 
 const uncategorizedCount = computed(() => store.transactions.filter((t) => !t.category).length)
 
@@ -982,7 +964,9 @@ const filteredTransactions = computed(() => {
 
   const q = (search.value || '').trim().toLowerCase()
   if (q) {
-    rows = rows.filter((t) => `${t.MEMO || ''} ${t.NAME || ''}`.toLowerCase().includes(q))
+    rows = rows.filter((t) =>
+      `${t.MEMO || ''} ${t.NAME || ''} ${t.notes || ''}`.toLowerCase().includes(q)
+    )
   }
 
   if (filterAccount.value) {
@@ -1001,6 +985,31 @@ const filteredTransactions = computed(() => {
 })
 
 // ── Formatters ────────────────────────────────────────────────────────────────
+
+// ── Row Expansion ─────────────────────────────────────────────────────────────
+const expanded = ref([])
+
+function toggleRow(event, row) {
+  if (row && typeof row.toggleExpand === 'function') {
+    row.toggleExpand(row.internalItem || row.item)
+    return
+  }
+
+  const targetItem = row.item ? row.item.raw || row.item : row
+  const targetId = targetItem.FITID
+  const val = row.item ? row.item.value : targetItem
+
+  const idx = expanded.value.findIndex((e) => {
+    if (!e) return false
+    return (e.FITID || e) === targetId
+  })
+
+  if (idx === -1) {
+    expanded.value.push(val)
+  } else {
+    expanded.value.splice(idx, 1)
+  }
+}
 
 // ── Edit Category ─────────────────────────────────────────────────────────────
 const editCategoryDialog = ref(false)
