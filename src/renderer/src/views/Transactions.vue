@@ -1037,7 +1037,6 @@ async function handleExport() {
       exportSnackbarText.value = 'Transactions exported successfully'
       exportError.value = false
       exportSnackbar.value = true
-      exportDialog.value = false
     } else if (result?.error !== 'Cancelled') {
       exportSnackbarText.value = result?.error || 'Export failed'
       exportError.value = true

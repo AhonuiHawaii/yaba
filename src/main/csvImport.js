@@ -28,8 +28,6 @@ export const TARGET_COLUMNS = [
   { key: 'REFNUM', label: 'Reference #', required: false, multi: false }
 ]
 
-const TARGET_BY_KEY = Object.fromEntries(TARGET_COLUMNS.map((c) => [c.key, c]))
-
 /**
  * Read the first few rows of a CSV file so the renderer can show the header
  * list and a small sample preview. No auto-guessing — the user maps manually.
@@ -172,7 +170,7 @@ function parseDateToOfx(value) {
 
 function parseAmount(value, invert) {
   if (value == null || value === '') return 0
-  const cleaned = String(value).replace(/[^0-9.\-]+/g, '')
+  const cleaned = String(value).replace(/[^0-9.-]+/g, '')
   let n = parseFloat(cleaned)
   if (isNaN(n)) n = 0
   if (invert) n = -n

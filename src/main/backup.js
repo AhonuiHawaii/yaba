@@ -6,7 +6,7 @@ import dpapi from 'node-dpapi-prebuilt'
 import Database from 'better-sqlite3-multiple-ciphers'
 
 export function setupBackupHandlers() {
-  ipcMain.handle('backup:export', async (event, passphrase) => {
+  ipcMain.handle('backup:export', async () => {
     let tempDbPath = null
     try {
       const { canceled, filePath } = await dialog.showSaveDialog({
@@ -53,12 +53,16 @@ export function setupBackupHandlers() {
       return { success: false, error: err.message }
     } finally {
       if (tempDbPath && fs.existsSync(tempDbPath)) {
-        try { fs.unlinkSync(tempDbPath) } catch { /* ignore */ }
+        try {
+          fs.unlinkSync(tempDbPath)
+        } catch {
+          /* ignore */
+        }
       }
     }
   })
 
-  ipcMain.handle('backup:import', async (event, passphrase) => {
+  ipcMain.handle('backup:import', async () => {
     let tempDbPath = null
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
@@ -115,7 +119,11 @@ export function setupBackupHandlers() {
       return { success: false, error: err.message }
     } finally {
       if (tempDbPath && fs.existsSync(tempDbPath)) {
-        try { fs.unlinkSync(tempDbPath) } catch { /* ignore */ }
+        try {
+          fs.unlinkSync(tempDbPath)
+        } catch {
+          /* ignore */
+        }
       }
     }
   })

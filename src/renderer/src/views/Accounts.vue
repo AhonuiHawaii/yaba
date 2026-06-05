@@ -127,7 +127,8 @@
             <!-- Footer -->
             <div class="text-caption text-medium-emphasis">
               <template v-if="account.lastImport">
-                ••{{ String(account.ACCTID).slice(-4) }} · synced {{ formatSyncDate(account.lastImport) }}
+                ••{{ String(account.ACCTID).slice(-4) }} · synced
+                {{ formatSyncDate(account.lastImport) }}
               </template>
               <template v-else>
                 manual ·
