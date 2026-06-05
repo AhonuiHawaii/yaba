@@ -64,7 +64,7 @@
               style="width: 50%"
             />
           </div>
-          
+
           <v-checkbox
             v-model="invertAmount"
             label="Invert Amounts (Check this if expenses show up as positive numbers)"
@@ -106,10 +106,7 @@
                 hide-details
                 color="primary"
               />
-              <div
-                v-if="!targetAcctId"
-                class="text-caption text-success mt-1 d-flex align-center"
-              >
+              <div v-if="!targetAcctId" class="text-caption text-success mt-1 d-flex align-center">
                 <v-icon size="14" start>mdi-plus-circle-outline</v-icon>
                 Will create new account
               </div>
@@ -123,7 +120,9 @@
         <v-card-text class="pa-6">
           <div class="text-center mb-8">
             <div class="text-h5 font-weight-bold">Ready to Import</div>
-            <div class="text-body-2 text-medium-emphasis">Review your final account balance before saving.</div>
+            <div class="text-body-2 text-medium-emphasis">
+              Review your final account balance before saving.
+            </div>
           </div>
 
           <v-row justify="center">
@@ -137,7 +136,9 @@
                 <div class="bg-surface-variant rounded-lg pa-4">
                   <div class="d-flex justify-space-between align-center mb-4">
                     <span class="text-body-2 text-medium-emphasis">Current App Balance:</span>
-                    <span class="font-weight-bold text-h6">{{ formatCurrency(currentDbBalance) }}</span>
+                    <span class="font-weight-bold text-h6">{{
+                      formatCurrency(currentDbBalance)
+                    }}</span>
                   </div>
 
                   <v-alert type="info" variant="flat" class="rounded-lg mb-0">
@@ -180,7 +181,7 @@
           >
             Map Columns <v-icon end>mdi-arrow-right</v-icon>
           </v-btn>
-          
+
           <v-btn
             v-else-if="step === 2"
             color="primary"
@@ -248,14 +249,13 @@ const importing = ref(false)
 const fileInput = ref(null)
 
 const TARGET_COLUMNS = [
-  { key: 'DTPOSTED', label: 'Date', required: true, multi: true },
+  { key: 'DTPOSTED', label: 'Posted Date (+ Time)', required: true, multi: true },
   { key: 'TRNAMT', label: 'Amount', required: true, multi: false },
-  { key: 'NAME', label: 'Payee', required: true, multi: true },
-  { key: 'MEMO', label: 'Bank Memo', required: false, multi: true },
-  { key: 'TRNTYPE', label: 'Transaction Type', required: false, multi: false },
+  { key: 'TRNTYPE', label: 'Transaction Type', required: true, multi: false },
+  { key: 'MEMO', label: 'Memo / Notes', required: true, multi: true },
+  { key: 'NAME', label: 'Description / Payee', required: false, multi: true },
   { key: 'CHECKNUM', label: 'Check Number', required: false, multi: false },
-  { key: 'REFNUM', label: 'Reference Number', required: false, multi: false },
-  { key: 'DTUSER', label: 'User Initiated Date', required: false, multi: true }
+  { key: 'REFNUM', label: 'Reference #', required: false, multi: false }
 ]
 
 // CSV specifics
@@ -274,15 +274,15 @@ onMounted(async () => {
 })
 
 const targetOptions = computed(() => {
-  const mappedTargets = Object.values(headerMapping.value).filter(v => v)
-  
+  const mappedTargets = Object.values(headerMapping.value).filter((v) => v)
+
   return [
     { title: '-- Ignore --', value: null },
-    ...TARGET_COLUMNS.map(t => {
+    ...TARGET_COLUMNS.map((t) => {
       // If a target is NOT multi, disable it if it's already selected by a column
       const isMapped = mappedTargets.includes(t.key)
       const disabled = !t.multi && isMapped
-      
+
       return {
         title: t.label + (t.required ? ' *' : ''),
         value: t.key,
@@ -302,18 +302,20 @@ const accountOptions = computed(() => [
 
 const currentDbBalance = computed(() => {
   if (!targetAcctId.value) return 0
-  const acc = accountsStore.accounts.find(a => a.ACCTID === targetAcctId.value)
+  const acc = accountsStore.accounts.find((a) => a.ACCTID === targetAcctId.value)
   return acc ? acc.BALAMT : 0
 })
 
 const isMappingValid = computed(() => {
   const mappedTargets = Object.values(headerMapping.value)
-  return TARGET_COLUMNS.filter(t => t.required).every(t => mappedTargets.includes(t.key))
+  return TARGET_COLUMNS.filter((t) => t.required).every((t) => mappedTargets.includes(t.key))
 })
 
 function handleDrop(e) {
   isDragging.value = false
-  const dropped = Array.from(e.dataTransfer.files).filter(f => f.name.toLowerCase().endsWith('.csv'))
+  const dropped = Array.from(e.dataTransfer.files).filter((f) =>
+    f.name.toLowerCase().endsWith('.csv')
+  )
   if (dropped.length) {
     selectedFiles.value = [dropped[0]]
     parseError.value = null
@@ -332,7 +334,7 @@ function doParseHeaders() {
   if (!selectedFiles.value.length) return
   parsing.value = true
   parseError.value = null
-  
+
   const file = selectedFiles.value[0]
   const reader = new FileReader()
   reader.onload = async (e) => {
@@ -343,24 +345,24 @@ function doParseHeaders() {
         csvHeaders.value = res.data.headers
         sampleRows.value = res.data.sampleRows
         rowCount.value = res.data.rowCount
-        
-        csvHeaders.value.forEach(h => {
+
+        csvHeaders.value.forEach((h) => {
           headerMapping.value[h] = null
         })
-        
-        // Auto-guess columns
-        const dateMatches = csvHeaders.value.filter(h => /date|time/i.test(h))
-        const nameMatch = csvHeaders.value.find(h => /description|payee|name|title/i.test(h))
-        const amountMatch = csvHeaders.value.find(h => /amount|value/i.test(h))
-        const memoMatch = csvHeaders.value.find(h => /memo|notes/i.test(h))
 
-        dateMatches.forEach(dm => {
+        // Auto-guess columns
+        const dateMatches = csvHeaders.value.filter((h) => /date|time/i.test(h))
+        const nameMatch = csvHeaders.value.find((h) => /description|payee|name|title/i.test(h))
+        const amountMatch = csvHeaders.value.find((h) => /amount|value/i.test(h))
+        const memoMatch = csvHeaders.value.find((h) => /memo|notes/i.test(h))
+
+        dateMatches.forEach((dm) => {
           headerMapping.value[dm] = 'DTPOSTED'
         })
         if (nameMatch) headerMapping.value[nameMatch] = 'NAME'
         if (amountMatch) headerMapping.value[amountMatch] = 'TRNAMT'
         if (memoMatch) headerMapping.value[memoMatch] = 'MEMO'
-        
+
         step.value = 2
       } else {
         throw new Error(res.error)
@@ -381,7 +383,7 @@ function doParseHeaders() {
 function getBatchPayload() {
   // Clean up the mapping
   const mapping = {}
-  
+
   for (const [csvHeader, targetKey] of Object.entries(headerMapping.value)) {
     if (targetKey) {
       if (!mapping[targetKey]) mapping[targetKey] = { columns: [] }
@@ -389,14 +391,16 @@ function getBatchPayload() {
     }
   }
 
-  return [{
-    csvText: csvText.value,
-    mapping: mapping,
-    options: { invertAmount: invertAmount.value },
-    targetAcctId: targetAcctId.value,
-    accountStub: { ACCTTYPE: 'Checking', ORG: 'CSV Import' },
-    targetBalance: targetBalance.value ? Number(targetBalance.value) : null
-  }]
+  return [
+    {
+      csvText: csvText.value,
+      mapping: mapping,
+      options: { invertAmount: invertAmount.value },
+      targetAcctId: targetAcctId.value,
+      accountStub: { ACCTTYPE: 'Checking', ORG: 'CSV Import' },
+      targetBalance: targetBalance.value ? Number(targetBalance.value) : null
+    }
+  ]
 }
 
 function accountLabel(id) {

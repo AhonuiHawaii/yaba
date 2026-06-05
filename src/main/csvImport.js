@@ -25,12 +25,9 @@ export const TARGET_COLUMNS = [
   { key: 'TRNTYPE', label: 'Transaction Type', required: false, multi: false },
   { key: 'MEMO', label: 'Memo / Notes', required: false, multi: true, join: ' — ' },
   { key: 'CHECKNUM', label: 'Check Number', required: false, multi: false },
-  { key: 'REFNUM', label: 'Reference #', required: false, multi: false },
-  { key: 'DTUSER', label: 'User Date', required: false, multi: true, join: ' ' },
-  { key: 'EXTDNAME', label: 'Extended Name', required: false, multi: false }
+  { key: 'REFNUM', label: 'Reference #', required: false, multi: false }
 ]
 
-const REQUIRED_KEYS = TARGET_COLUMNS.filter((c) => c.required).map((c) => c.key)
 const TARGET_BY_KEY = Object.fromEntries(TARGET_COLUMNS.map((c) => [c.key, c]))
 
 /**
@@ -76,14 +73,6 @@ export function extractCsvTransactions(csvText, mapping, options = {}) {
     throw new Error('mapping is required')
   }
 
-  // Validate required fields are mapped
-  for (const key of REQUIRED_KEYS) {
-    const descriptor = normalizeDescriptor(mapping[key])
-    if (!descriptor || !descriptor.columns.length) {
-      throw new Error(`Required field "${key}" is not mapped to any CSV column.`)
-    }
-  }
-
   const parsed = Papa.parse(csvText, {
     header: true,
     skipEmptyLines: true
@@ -109,6 +98,10 @@ export function extractCsvTransactions(csvText, mapping, options = {}) {
       const raw = joinColumns(row, descriptor.columns, descriptor.join ?? target.join ?? ' ')
       txn[target.key] = transformField(target.key, raw, { invert })
     }
+
+    // Cross-populate NAME ↔ MEMO so neither is ever blank
+    if (!txn.NAME && txn.MEMO) txn.NAME = txn.MEMO
+    if (!txn.MEMO && txn.NAME) txn.MEMO = txn.NAME
 
     // Derive TRNTYPE from the sign of TRNAMT if not mapped
     if (!txn.TRNTYPE) {

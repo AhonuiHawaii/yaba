@@ -15,7 +15,7 @@
         <ofxImport @navigate="handleNavigate" />
       </v-window-item>
       <v-window-item value="csv">
-        <cvsImport @navigate="handleNavigate" />
+        <csvImport @navigate="handleNavigate" />
       </v-window-item>
     </v-window>
   </v-container>
@@ -24,7 +24,7 @@
 <script setup>
 import { ref } from 'vue'
 import ofxImport from '../components/ofxImport.vue'
-import cvsImport from '../components/cvsImport.vue'
+import csvImport from '../components/csvImport.vue'
 
 const emit = defineEmits(['navigate'])
 const tab = ref('ofx')

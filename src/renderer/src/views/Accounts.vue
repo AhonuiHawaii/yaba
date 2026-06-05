@@ -41,6 +41,14 @@
             variant="flat"
             rounded="lg"
             prepend-icon="mdi-pencil-plus-outline"
+            @click="manualAssetDialog = true"
+          >
+            Add Manual Account
+          </v-btn>
+          <v-btn
+            variant="flat"
+            rounded="lg"
+            prepend-icon="mdi-pencil-plus-outline"
             @click="manualDialog = true"
           >
             Add Manual Debt
@@ -137,20 +145,123 @@
 
       <!-- Add account slot -->
       <v-col cols="12" sm="6" md="4">
-        <div class="add-account-slot" @click="manualDialog = true">
-          <v-icon size="36" color="medium-emphasis">mdi-plus-circle-outline</v-icon>
-        </div>
+        <v-menu location="center">
+          <template #activator="{ props }">
+            <div class="add-account-slot" v-bind="props">
+              <v-icon size="36" color="medium-emphasis">mdi-plus-circle-outline</v-icon>
+            </div>
+          </template>
+          <v-list density="compact" rounded="lg">
+            <v-list-item title="Add Manual Account" @click="manualAssetDialog = true" />
+            <v-list-item title="Add Manual Debt" @click="manualDialog = true" />
+          </v-list>
+        </v-menu>
       </v-col>
     </v-row>
 
-    <!-- Add Manual Account Modal -->
-    <v-dialog v-model="manualDialog" max-width="500">
+    <!-- Add Manual Asset Modal -->
+    <v-dialog v-model="manualAssetDialog" max-width="500">
       <v-card rounded="lg">
         <v-card-title class="pa-6 pb-4">
           <div class="d-flex align-center justify-space-between">
             <div class="d-flex align-center gap-3">
               <v-icon color="primary" size="22">mdi-pencil-plus-outline</v-icon>
               <span class="text-h6 font-weight-bold">Add Manual Account</span>
+            </div>
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              density="compact"
+              @click="manualAssetDialog = false"
+            />
+          </div>
+        </v-card-title>
+        <v-divider />
+        <v-card-text class="pa-6">
+          <v-text-field
+            v-model="manualAssetForm.displayName"
+            label="Account name"
+            placeholder="e.g. Chase Checking"
+            variant="solo-filled"
+            density="comfortable"
+            rounded="lg"
+            hide-details="auto"
+            class="mb-4"
+            autofocus
+            color="primary"
+          />
+          <v-text-field
+            v-model="manualAssetForm.ORG"
+            label="Institution"
+            placeholder="e.g. Chase"
+            variant="solo-filled"
+            density="comfortable"
+            rounded="lg"
+            hide-details="auto"
+            class="mb-4"
+            color="primary"
+          />
+          <v-select
+            v-model="manualAssetForm.ACCTTYPE"
+            :items="manualAssetTypes"
+            label="Type"
+            variant="solo-filled"
+            density="comfortable"
+            rounded="lg"
+            hide-details="auto"
+            class="mb-4"
+            color="primary"
+          />
+          <v-text-field
+            v-model="manualAssetForm.startingBalance"
+            label="Current Balance"
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            variant="solo-filled"
+            density="comfortable"
+            rounded="lg"
+            hide-details="auto"
+            class="mb-4"
+            :prefix="userSettings.currencySymbol"
+            color="primary"
+          />
+        </v-card-text>
+        <v-card-actions class="pa-6 pt-0 flex-column align-end">
+          <v-alert
+            v-if="store.error"
+            type="error"
+            density="compact"
+            class="mb-2 text-caption w-100"
+            rounded="lg"
+          >
+            {{ store.error }}
+          </v-alert>
+          <div class="d-flex gap-2">
+            <v-spacer />
+            <v-btn variant="text" @click="manualAssetDialog = false">Cancel</v-btn>
+            <v-btn
+              variant="flat"
+              rounded="lg"
+              :loading="store.loading"
+              :disabled="!manualAssetForm.displayName"
+              @click="saveManualAsset"
+            >
+              Add
+            </v-btn>
+          </div>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Add Manual Debt Modal -->
+    <v-dialog v-model="manualDialog" max-width="500">
+      <v-card rounded="lg">
+        <v-card-title class="pa-6 pb-4">
+          <div class="d-flex align-center justify-space-between">
+            <div class="d-flex align-center gap-3">
+              <v-icon color="primary" size="22">mdi-pencil-plus-outline</v-icon>
+              <span class="text-h6 font-weight-bold">Add Manual Debt</span>
             </div>
             <v-btn
               icon="mdi-close"
@@ -815,7 +926,38 @@ async function saveEditName() {
   editNameTarget.value = null
 }
 
-// Add manual account
+// Add manual asset
+const manualAssetDialog = ref(false)
+const manualAssetTypes = ['Checking', 'Savings']
+const emptyManualAssetForm = () => ({
+  displayName: '',
+  ORG: '',
+  ACCTTYPE: 'Checking',
+  startingBalance: ''
+})
+const manualAssetForm = ref(emptyManualAssetForm())
+
+async function saveManualAsset() {
+  const balVal = parseFloat(manualAssetForm.value.startingBalance)
+  const payload = {
+    displayName: manualAssetForm.value.displayName.trim(),
+    ORG: manualAssetForm.value.ORG.trim() || null,
+    ACCTTYPE: manualAssetForm.value.ACCTTYPE,
+    interestRate: 0,
+    startingBalance: isNaN(balVal) ? null : balVal,
+    paymentFrequency: null,
+    dueDate: null,
+    paymentStartDate: null,
+    paymentCount: null
+  }
+  const created = await store.createManualAccount(payload)
+  if (created) {
+    manualAssetDialog.value = false
+    manualAssetForm.value = emptyManualAssetForm()
+  }
+}
+
+// Add manual debt
 const manualDialog = ref(false)
 const manualAccountTypes = [
   'Buy Now Pay Later',
