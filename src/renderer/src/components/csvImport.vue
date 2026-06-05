@@ -252,11 +252,11 @@ const TARGET_COLUMNS = [
   { key: 'DTPOSTED', label: 'Posted Date (+ Time)', required: true, multi: true },
   { key: 'TRNAMT', label: 'Amount', required: true, multi: false },
   { key: 'TRNTYPE', label: 'Transaction Type', required: true, multi: false },
-  { key: 'MEMO', label: 'Memo / Notes', required: true, multi: true },
-  { key: 'NAME', label: 'Description / Payee', required: false, multi: true },
+  { key: 'MEMO', label: 'Memo/Description', required: true, multi: true },
   { key: 'CHECKNUM', label: 'Check Number', required: false, multi: false },
-  { key: 'REFNUM', label: 'Reference #', required: false, multi: false }
-]
+  { key: 'REFNUM', label: 'Reference #', required: false, multi: false },
+  { key: 'DTUSER', label: 'User Date', required: false, multi: true },
+  { key: 'EXTDNAME', label: 'Extended Name', required: false, multi: false }
 
 // CSV specifics
 const csvText = ref('')
