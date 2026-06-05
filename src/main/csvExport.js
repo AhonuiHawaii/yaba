@@ -3,12 +3,7 @@ import { getAllTransactions, getAccounts, getCategories, getBudgets, getRules } 
 
 // Columns excluded from transaction export (raw binary blob + redundant FK fields
 // that are already represented by their joined name equivalents).
-const EXCLUDED_TX_KEYS = new Set([
-  'rawTransaction',
-  'ACCTID',
-  'category',
-  'splitCategory2'
-])
+const EXCLUDED_TX_KEYS = new Set(['rawTransaction', 'ACCTID', 'category', 'splitCategory2'])
 
 /**
  * @param {Object[]} rows - Raw transaction rows from getAllTransactions()

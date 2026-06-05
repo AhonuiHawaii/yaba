@@ -42,7 +42,9 @@ import {
   fetchCategoryTypes,
   fetchDebtPayments,
   generateCsv,
-  generateAllCsv
+  generateAllCsv,
+  extractCsvHeaders,
+  importCsvBatch
 } from './main.js'
 
 const isNonEmptyString = (v) => typeof v === 'string' && v.trim().length > 0
@@ -189,6 +191,16 @@ export const setupIpcHandlers = () => {
     return upsertBudget(categoryId, amount, month)
   })
   ipcMain.handle('budgets:fetchTypes', () => fetchCategoryTypes())
+
+  ipcMain.handle('csv:extractHeaders', (_, csvText) => {
+    if (!isNonEmptyString(csvText)) throw new Error('Invalid CSV text')
+    return extractCsvHeaders(csvText)
+  })
+
+  ipcMain.handle('csv:importBatch', (_, items) => {
+    if (!Array.isArray(items)) throw new Error('items must be an array')
+    return importCsvBatch(items)
+  })
 
   ipcMain.handle('csv:export', async (event, type, options = {}) => {
     if (typeof type !== 'string') throw new Error('Invalid export type')

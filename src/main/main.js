@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { extractAccountData, extractTransactionData } from './ofx.js'
+import { extractHeaders as csvExtractHeaders, extractCsvTransactions } from './csvImport.js'
 import {
   exportTransactionsToCSV,
   exportAccountsToCSV,
@@ -585,6 +586,83 @@ export const previewImportBatch = async (items) => {
         ledgerBalance,
         dbBalance
       })
+    }
+
+    return ok(results)
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+// ─── CSV Import ─────────────────────────────────────────────────────────────
+
+export const extractCsvHeaders = (csvText) => {
+  try {
+    return ok(csvExtractHeaders(csvText))
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+export const importCsvBatch = (items) => {
+  try {
+    const results = []
+
+    for (const item of items) {
+      const {
+        csvText,
+        mapping,
+        options = {},
+        accountStub = {},
+        targetAcctId = null,
+        targetBalance = null
+      } = item
+
+      const transactions = extractCsvTransactions(csvText, mapping, options)
+      if (!transactions.length) {
+        results.push({ total: 0, inserted: 0, skipped: 0, accountId: null, rulesApplied: 0 })
+        continue
+      }
+
+      let realAcctid = targetAcctId
+      if (!realAcctid) {
+        realAcctid = `csv-${randomUUID()}`
+        upsertAccount({
+          ACCTID: realAcctid,
+          ACCTTYPE: accountStub.ACCTTYPE || 'Checking',
+          ORG: accountStub.ORG || 'CSV Import',
+          INTU_BID: null
+        })
+      }
+
+      const stamped = transactions.map((t) => ({ ...t, ACCTID: realAcctid }))
+      const result = createTransactions(stamped)
+
+      const patches = applyRules(stamped)
+      for (const patch of patches) {
+        const upd = {}
+        if ('category' in patch) upd.category = patch.category
+        if ('transactionType' in patch) upd.transactionType = patch.transactionType
+        if ('rename' in patch) upd.NAME = patch.rename
+        if ('subscription' in patch) upd.subscription = patch.subscription
+        if ('bill' in patch) upd.bill = patch.bill
+        if ('linkAccount' in patch) upd.linkedAccount = patch.linkAccount
+        if (Object.keys(upd).length > 0) updateTransaction(patch.FITID, upd)
+      }
+
+      if (targetBalance !== null && targetBalance !== '' && targetBalance !== undefined) {
+        const currentDbBalance = getAccountBalance(realAcctid)
+        const diff = Number(targetBalance) - currentDbBalance
+        if (Math.abs(diff) > 0.01) {
+          const acc = getAccount(realAcctid)
+          if (acc) {
+            acc.startingBalance = (acc.startingBalance || 0) + diff
+            upsertAccount(acc)
+          }
+        }
+      }
+
+      results.push({ ...result, accountId: realAcctid, rulesApplied: patches.length })
     }
 
     return ok(results)

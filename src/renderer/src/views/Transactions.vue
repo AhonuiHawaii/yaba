@@ -902,11 +902,7 @@
     </v-tabs-window>
 
     <!-- Export result snackbar -->
-    <v-snackbar
-      v-model="exportSnackbar"
-      :color="exportError ? 'error' : 'success'"
-      :timeout="3000"
-    >
+    <v-snackbar v-model="exportSnackbar" :color="exportError ? 'error' : 'success'" :timeout="3000">
       {{ exportSnackbarText }}
     </v-snackbar>
   </v-container>
@@ -1033,10 +1029,9 @@ const exportError = ref(false)
 async function handleExport() {
   exportLoading.value = true
   try {
-    const options =
-      periodMonths.value.length
-        ? { startDate: periodMonths.value[0] + '01', endDate: periodMonths.value.at(-1) + '99' }
-        : {}
+    const options = periodMonths.value.length
+      ? { startDate: periodMonths.value[0] + '01', endDate: periodMonths.value.at(-1) + '99' }
+      : {}
     const result = await window.electron.ipcRenderer.invoke('csv:export', 'transactions', options)
     if (result?.success) {
       exportSnackbarText.value = 'Transactions exported successfully'
