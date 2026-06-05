@@ -229,8 +229,11 @@
         <v-card v-else rounded="lg" elevation="0" border>
           <v-data-table
             v-model="selectedRows"
+            v-model:expanded="expanded"
             show-select
+            show-expand
             return-object
+            @click:row="toggleRow"
             item-value="FITID"
             :headers="headers"
             :items="filteredTransactions"
@@ -300,6 +303,7 @@
                       variant="text"
                       density="comfortable"
                       size="small"
+                      @click.stop
                     />
                   </template>
                   <v-list density="compact">
@@ -313,13 +317,26 @@
                       title="Edit notes"
                       @click="openNotesDialog(item)"
                     />
-                    <v-list-item
-                      prepend-icon="mdi-call-split"
-                      title="Split transaction"
-                      @click="openSplitDialog(item)"
-                    />
                   </v-list>
                 </v-menu>
+                <v-btn
+                  icon="mdi-tag-outline"
+                  variant="text"
+                  color="secondary"
+                  density="comfortable"
+                  size="small"
+                  class="ml-1"
+                  @click.stop="openTagsDialog(item)"
+                />
+                <v-btn
+                  icon="mdi-call-split"
+                  variant="text"
+                  color="info"
+                  density="comfortable"
+                  size="small"
+                  class="ml-1"
+                  @click.stop="openSplitDialog(item)"
+                />
                 <v-btn
                   icon="mdi-delete-outline"
                   variant="text"
@@ -327,13 +344,46 @@
                   density="comfortable"
                   size="small"
                   class="ml-1"
-                  @click="confirmDelete(item)"
+                  @click.stop="confirmDelete(item)"
                 />
               </div>
             </template>
 
             <template #loading>
               <v-skeleton-loader type="table-row@8" />
+            </template>
+
+            <template #expanded-row="{ columns, item }">
+              <tr>
+                <td :colspan="columns.length" class="text-center pa-4 bg-surface-light">
+                  <div class="d-flex flex-column align-center justify-center ga-3">
+                    <div class="text-medium-emphasis" style="font-family: monospace">
+                      {{ item?.raw?.MEMO || item?.MEMO || 'No bank memo' }}
+                    </div>
+
+                    <div v-if="item.notes" class="text-body-2 text-warning d-flex align-start">
+                      <v-icon size="small" class="mr-1">mdi-note-text-outline</v-icon>
+                      <span style="white-space: pre-wrap; text-align: left">{{ item.notes }}</span>
+                    </div>
+
+                    <div
+                      v-if="item.tags && parseTags(item.tags).length"
+                      class="d-flex ga-2 flex-wrap justify-center"
+                    >
+                      <v-chip
+                        v-for="tag in parseTags(item.tags)"
+                        :key="tag"
+                        size="small"
+                        variant="tonal"
+                        color="secondary"
+                      >
+                        <v-icon start size="small">mdi-tag-outline</v-icon>
+                        {{ tag }}
+                      </v-chip>
+                    </div>
+                  </div>
+                </td>
+              </tr>
             </template>
           </v-data-table>
           <div class="px-4 py-2 text-caption text-medium-emphasis text-center">
@@ -634,6 +684,108 @@
               <v-spacer />
               <v-btn variant="text" @click="notesDialog = false">Cancel</v-btn>
               <v-btn color="primary" variant="flat" :loading="store.loading" @click="saveNotes">
+                Save
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- Tags Dialog -->
+        <v-dialog v-model="tagsDialog" max-width="460">
+          <v-card rounded="lg">
+            <v-card-title class="pa-6 pb-4">
+              <div class="d-flex align-center justify-space-between">
+                <div class="d-flex align-center ga-3">
+                  <v-icon color="secondary" size="20">mdi-tag-outline</v-icon>
+                  <span class="text-h6 font-weight-bold">Tags</span>
+                </div>
+                <v-btn
+                  icon="mdi-close"
+                  variant="text"
+                  density="compact"
+                  @click="tagsDialog = false"
+                />
+              </div>
+            </v-card-title>
+
+            <v-divider />
+
+            <v-card-text class="pa-6">
+              <div class="text-body-2 text-medium-emphasis mb-4 text-truncate">
+                {{ tagsTarget?.MEMO || tagsTarget?.NAME || tagsTarget?.FITID }}
+              </div>
+
+              <!-- Selected Tags -->
+              <div class="d-flex flex-wrap ga-2 mb-4" style="min-height: 32px">
+                <div v-if="tagsValue.length === 0" class="text-caption text-disabled mt-1">
+                  No tags added yet
+                </div>
+                <v-chip
+                  v-for="tag in tagsValue"
+                  :key="tag"
+                  closable
+                  color="primary"
+                  variant="flat"
+                  size="small"
+                  @click:close="removeTag(tag)"
+                >
+                  {{ tag }}
+                </v-chip>
+              </div>
+
+              <!-- Input -->
+              <v-text-field
+                v-model="newTagInput"
+                label="Add a tag..."
+                placeholder="Type and press Enter"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+                color="primary"
+                autofocus
+                @keydown.enter.prevent="addTag"
+              >
+                <template #append-inner>
+                  <v-btn
+                    icon="mdi-plus"
+                    variant="text"
+                    density="compact"
+                    color="primary"
+                    :disabled="!newTagInput.trim()"
+                    @click="addTag"
+                  />
+                </template>
+              </v-text-field>
+
+              <!-- Suggestions -->
+              <div v-if="suggestedTags.length > 0" class="mt-6">
+                <div
+                  class="text-caption text-medium-emphasis mb-2 text-uppercase font-weight-bold"
+                  style="font-size: 0.7rem !important; letter-spacing: 0.05em"
+                >
+                  Existing Tags
+                </div>
+                <div class="d-flex flex-wrap ga-2">
+                  <v-chip
+                    v-for="tag in suggestedTags"
+                    :key="tag"
+                    variant="tonal"
+                    size="small"
+                    color="secondary"
+                    class="cursor-pointer"
+                    @click="addSuggestedTag(tag)"
+                  >
+                    <v-icon start size="small">mdi-plus</v-icon>
+                    {{ tag }}
+                  </v-chip>
+                </div>
+              </div>
+            </v-card-text>
+
+            <v-card-actions class="pa-6 pt-0 ga-2">
+              <v-spacer />
+              <v-btn variant="text" @click="tagsDialog = false">Cancel</v-btn>
+              <v-btn color="primary" variant="flat" :loading="store.loading" @click="saveTags">
                 Save
               </v-btn>
             </v-card-actions>
@@ -959,7 +1111,7 @@ const accountOptions = computed(() =>
 const headers = [
   { title: 'Date', key: 'DTPOSTED', width: '120px', sortable: true },
   { title: 'Payee', key: 'NAME', sortable: false },
-  { title: 'Account', key: 'ACCTID', width: '160px', sortable: true },
+  { title: 'Account', key: 'ACCTID', width: '200px', sortable: true },
   { title: 'Category', key: 'category', width: '180px', sortable: false },
   { title: 'Amount', key: 'TRNAMT', width: '130px', sortable: true, align: 'end' },
   { title: '', key: 'actions', width: '96px', sortable: false, align: 'end' }
@@ -979,7 +1131,11 @@ const filteredTransactions = computed(() => {
 
   const q = (search.value || '').trim().toLowerCase()
   if (q) {
-    rows = rows.filter((t) => `${t.MEMO || ''} ${t.NAME || ''}`.toLowerCase().includes(q))
+    rows = rows.filter((t) =>
+      `${t.MEMO || ''} ${t.NAME || ''} ${t.notes || ''} ${parseTags(t.tags).join(' ')}`
+        .toLowerCase()
+        .includes(q)
+    )
   }
 
   if (filterAccount.value) {
@@ -998,6 +1154,15 @@ const filteredTransactions = computed(() => {
 })
 
 // ── Formatters ────────────────────────────────────────────────────────────────
+
+// ── Row Expansion ─────────────────────────────────────────────────────────────
+const expanded = ref([])
+
+function toggleRow(event, row) {
+  if (row && typeof row.toggleExpand === 'function') {
+    row.toggleExpand(row.internalItem || row.item)
+  }
+}
 
 // ── Edit Category ─────────────────────────────────────────────────────────────
 const editCategoryDialog = ref(false)
@@ -1073,6 +1238,69 @@ async function saveNotes() {
   })
   notesDialog.value = false
   notesTarget.value = null
+}
+
+// ── Tags ──────────────────────────────────────────────────────────────────────
+const tagsDialog = ref(false)
+const tagsTarget = ref(null)
+const tagsValue = ref([])
+const newTagInput = ref('')
+
+const allExistingTags = computed(() => {
+  const tagsSet = new Set()
+  store.transactions.forEach((t) => {
+    const parsed = parseTags(t.tags)
+    parsed.forEach((tag) => tagsSet.add(tag))
+  })
+  return Array.from(tagsSet).sort()
+})
+
+const suggestedTags = computed(() => {
+  return allExistingTags.value.filter((tag) => !tagsValue.value.includes(tag))
+})
+
+function parseTags(tagString) {
+  if (!tagString) return []
+  try {
+    return JSON.parse(tagString)
+  } catch {
+    return []
+  }
+}
+
+function addTag() {
+  const val = newTagInput.value.trim()
+  if (val && !tagsValue.value.includes(val)) {
+    tagsValue.value.push(val)
+  }
+  newTagInput.value = ''
+}
+
+function addSuggestedTag(tag) {
+  if (!tagsValue.value.includes(tag)) {
+    tagsValue.value.push(tag)
+  }
+}
+
+function removeTag(tag) {
+  tagsValue.value = tagsValue.value.filter((t) => t !== tag)
+}
+
+function openTagsDialog(item) {
+  tagsTarget.value = item
+  tagsValue.value = parseTags(item.tags)
+  newTagInput.value = ''
+  tagsDialog.value = true
+}
+
+async function saveTags() {
+  if (!tagsTarget.value) return
+  const serialized = JSON.stringify(tagsValue.value.map((t) => String(t).trim()).filter(Boolean))
+  await store.editTransaction(tagsTarget.value.FITID, {
+    tags: tagsValue.value.length ? serialized : null
+  })
+  tagsDialog.value = false
+  tagsTarget.value = null
 }
 
 // ── Split Transactions ────────────────────────────────────────────────────────
