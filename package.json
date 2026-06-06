@@ -1,7 +1,7 @@
 {
   "name": "YABA",
   "productName": "Yet Another Budget App",
-  "version": "2.0",
+  "version": "2.0.0",
   "description": "A personal finance management application built with Electron and Vue.js.",
   "license": "BSD-2-Clause",
   "main": "./out/main/index.js",
