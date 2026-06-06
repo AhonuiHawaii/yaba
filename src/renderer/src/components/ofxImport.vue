@@ -379,15 +379,19 @@
                   >
                     <v-icon start>mdi-check-circle</v-icon> Reconciled Perfectly!
                   </v-alert>
-                  <v-alert v-else type="warning" variant="flat" class="rounded-lg">
-                    <div class="mb-3">
-                      Discrepancy of
-                      <strong>{{
-                        formatCurrency(
-                          Math.abs(p.dbBalance + sumImporting(p) - Number(p.ledgerBalance.BALAMT))
-                        )
-                      }}</strong
-                      >. You may be missing historical transactions.
+                  <v-sheet v-else color="warning-container" rounded="lg" class="pa-4">
+                    <div class="d-flex align-start gap-2 mb-3">
+                      <v-icon color="on-warning-container" size="small" class="mt-1">
+                        mdi-alert-outline
+                      </v-icon>
+                      <div class="text-on-warning-container">
+                        Discrepancy of
+                        <strong>{{
+                          formatCurrency(
+                            Math.abs(p.dbBalance + sumImporting(p) - Number(p.ledgerBalance.BALAMT))
+                          )
+                        }}</strong>. You may be missing historical transactions.
+                      </div>
                     </div>
 
                     <div v-if="!p.adjustBalance" class="d-flex align-center gap-2">
@@ -395,29 +399,34 @@
                         v-model="p.targetBalance"
                         label="True Balance"
                         density="compact"
-                        variant="solo-filled"
+                        variant="outlined"
                         rounded="lg"
                         hide-details
                         prefix="$"
                         type="number"
+                        base-color="on-warning-container"
+                        color="on-warning-container"
                       />
                       <v-btn color="warning" variant="flat" @click="p.adjustBalance = true">
                         Fix Discrepancy
                       </v-btn>
                     </div>
-                    <div v-else class="text-success font-weight-bold d-flex align-center">
-                      <v-icon start>mdi-check</v-icon> Starting balance will be adjusted to ${{
-                        p.targetBalance
-                      }}.
+                    <div
+                      v-else
+                      class="text-on-warning-container font-weight-bold d-flex align-center"
+                    >
+                      <v-icon start color="on-warning-container">mdi-check</v-icon>
+                      Starting balance will be adjusted to ${{ p.targetBalance }}.
                       <v-btn
                         variant="text"
+                        color="on-warning-container"
                         size="small"
                         class="ml-2"
                         @click="p.adjustBalance = false"
                         >Undo</v-btn
                       >
                     </div>
-                  </v-alert>
+                  </v-sheet>
                 </div>
                 <div v-else class="bg-surface-variant rounded-lg pa-4">
                   <div class="d-flex justify-space-between align-center mb-4">
@@ -805,7 +814,7 @@ async function applyBulkRule(name, groupState) {
 }
 
 function sumImporting(p) {
-  const sumRules = p.rulesApplied.reduce((s, t) => s + Number(t.transaction.TRNAMT), 0)
+  const sumRules = p.rulesApplied.reduce((s, t) => s + Number(t.txn.TRNAMT), 0)
   const sumUncat = p.uncategorized.reduce((s, t) => s + Number(t.TRNAMT), 0)
   return sumRules + sumUncat
 }
